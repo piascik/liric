@@ -17,3 +17,14 @@ The instrument also has a starlight express filter wheel, and an IO board drivin
 * **filter_wheel** Starlight Express filter wheel control library
 
 The Makefile.common file is included in Makefile's to provide common root directory information.
+
+## Dependencies / Prerequisites
+
+* The Raptor SDK must be installed
+* The eSTAR config repo/package must be installed
+* The log_udp repo/package must be installed: https://github.com/LivTel/log_udp
+* The commandserver repo/package must be installed: https://github.com/LivTel/commandserver
+* The ngat repo/package must be installed: https://github.com/LivTel/ngat
+* The software can only be built from within an LT development environment
+
+* The ics_gui package should be installed on the machine you wish to control the instrument from.: ttps://github.com/LivTel/ics_gui
