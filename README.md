@@ -27,4 +27,4 @@ The Makefile.common file is included in Makefile's to provide common root direct
 * The ngat repo/package must be installed: https://github.com/LivTel/ngat
 * The software can only be built from within an LT development environment
 
-* The ics_gui package should be installed on the machine you wish to control the instrument from.: ttps://github.com/LivTel/ics_gui
+* The ics_gui package should be installed on the machine you wish to control the instrument from: https://github.com/LivTel/ics_gui
