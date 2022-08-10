@@ -1,0 +1,28 @@
+DEPLOYMENT README
+Version: $Revision$
+By $Author: Chris Mottram <C.Mottram@ljmu.ac.uk> $
+
+Raptor Installation
+-------------------
+Note, all logs are deleted during installation. Any configuration changes from the default will
+also be lost as all properties file in the /icc/bin tree are overwritten with the original version.
+To preserve changes, copy the properties files (*.properties) somewhere safe before installation.
+Better yet, update the originals on the ARI development account.
+
+===================================================================================
+= ENSURE the deployment is for the same machine architecture as the deployment OS =
+===================================================================================
+
+To install Raptor:
+------------------
+1. Download from http://ltdevsrv.livjm.ac.uk/~dev/raptor/deployment/:
+	icc_cshrc
+	icc_cshrc_edit.awk
+	README.DEPLOYMENT
+	raptor_tar_install
+	raptor_deployment_<machine name>.tar.gz
+	Put the files in ~eng/download/<todays date>
+2. Login as eng.
+3. sudo ./raptor_tar_install <machine name>
+4. cd /
+5. reboot
