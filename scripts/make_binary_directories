@@ -1,0 +1,8 @@
+#!/bin/csh
+if ( ! $?LT_BIN_HOME ) then
+   setenv LT_BIN_HOME "/home/dev/bin"
+endif
+setenv RAPTOR_BIN_HOME	${LT_BIN_HOME}/raptor
+mkdir -p ${RAPTOR_BIN_HOME}
+mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/c/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/test/${HOSTTYPE}/
