@@ -4,5 +4,8 @@ if ( ! $?LT_BIN_HOME ) then
 endif
 setenv RAPTOR_BIN_HOME	${LT_BIN_HOME}/raptor
 mkdir -p ${RAPTOR_BIN_HOME}
+mkdir -p ${RAPTOR_BIN_HOME}/scripts
 mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/test/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/c/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/test/${HOSTTYPE}/

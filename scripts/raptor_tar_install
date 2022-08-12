@@ -36,7 +36,7 @@ set deployment_tar 	= "raptor_deployment_${machine_name}.tar"
 echo "${current_dir}" | /bin/grep -q '/icc'
 set grep_status = $status
 if( ${grep_status} == 0 ) then
-    echo "Installation files under /icc. Move ALL file to ~eng/download/<date> and try again."
+    echo "Installation files under /icc. Move ALL file to ~eng/Downloads/raptor/<date> and try again."
     exit 1
 endif
 #

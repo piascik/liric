@@ -21,7 +21,7 @@ To install Raptor:
 	README.DEPLOYMENT
 	raptor_tar_install
 	raptor_deployment_<machine name>.tar.gz
-	Put the files in ~eng/download/<todays date>
+	Put the files in ~eng/Downloads/raptor/<todays date>
 2. Login as eng.
 3. sudo ./raptor_tar_install <machine name>
 4. cd /

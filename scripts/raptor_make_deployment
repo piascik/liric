@@ -107,8 +107,9 @@ echo "${dir_count} directories created."
 #
 echo "Copying jars..."
 set jar_list = "ngat_message_base.jar ngat_message_inst_dp.jar ngat_message_iss_inst.jar ngat_net.jar ngat_phase2.jar ngat_util.jar ngat_util_logging.jar"
+# ngat_raptor.jar 
 if( ${install_java_software} ) then
-    set jar_list = "${jar_list} ngat_fits.jar ngat_raptor.jar ngat_swing.jar ngat_sound.jar"
+    set jar_list = "${jar_list} ngat_fits.jar ngat_swing.jar ngat_sound.jar"
 endif
 set jar_count = 0
 foreach jar ( ${jar_list} )
@@ -296,10 +297,11 @@ echo "${file_count} scripts copied."
 #
 # in bin sub-directories
 echo "Copying machine configuration files..."
-set file_list = "autobooter/java/${machine_name}.autobooter.properties raptor/c/${HOSTTYPE}/${machine_name}.raptor.c.properties"
-if( ${install_java_software} ) then
-    set file_list = "${file_list} raptor/java/${machine_name}.fits.properties raptor/java/${machine_name}.raptor.net.properties raptor/java/${machine_name}.raptor.properties ics_gui/java/${machine_name}.ics_gui.properties ics_gui/java/${machine_name}.ics_gui_config.properties ics_gui/java/${machine_name}.ics_gui.fits.properties"
-endif
+# raptor/c/${HOSTTYPE}/${machine_name}.raptor.c.properties
+set file_list = "autobooter/java/${machine_name}.autobooter.properties "
+#if( ${install_java_software} ) then
+#    set file_list = "${file_list} raptor/java/${machine_name}.fits.properties raptor/java/${machine_name}.raptor.net.properties raptor/java/${machine_name}.raptor.properties ics_gui/java/${machine_name}.ics_gui.properties ics_gui/java/${machine_name}.ics_gui_config.properties ics_gui/java/${machine_name}.ics_gui.fits.properties"
+#endif
 set file_count = 0
 cd ${dev_dir}
 foreach file ( ${file_list} )
@@ -314,7 +316,8 @@ foreach file ( ${file_list} )
 end
 echo "${file_count} configuration files copied."
 echo "Copying camera configuration files..."
-set file_list = "config/${camera_name}.current.filter.properties"
+#set file_list = "config/${camera_name}.current.filter.properties"
+set file_list = ""
 set file_count = 0
 cd ${dev_dir}
 foreach file ( ${file_list} )
