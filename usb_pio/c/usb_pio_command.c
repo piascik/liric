@@ -92,7 +92,7 @@ int USB_PIO_Command_Outputs_Set(unsigned char outputs)
 	char expected_reply_string[COMMAND_STRING_LENGTH];
 	char reply_string[COMMAND_STRING_LENGTH];
 
-	Command_Error_Number = 1;
+	Command_Error_Number = 0;
 #if LOGGING > 0
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
 				   "USB_PIO_Command_Outputs_Set(outputs=%2.2X): Started.",outputs);
