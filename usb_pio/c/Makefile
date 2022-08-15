@@ -19,8 +19,8 @@ CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(
 LDFLAGS		= $(CONFIG_LDFLAGS)
 DOCFLAGS 	= -static
 
-SRCS 		= usb_pio_general.c usb_pio_connection.c 
-#usb_pio_command.c usb_pio_config.c
+SRCS 		= usb_pio_general.c usb_pio_connection.c usb_pio_command.c
+#usb_pio_config.c
 HEADERS		= $(SRCS:%.c=%.h)
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)

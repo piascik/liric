@@ -39,6 +39,11 @@
  */
 #define STRING_LENGTH                (256)
 /**
+ * Maximum length of commands/replies sent to the USB-PIO board.
+ */
+#define COMMAND_STRING_LENGTH        (32)
+
+/**
  * Data type holding local data to usb_pio_connection. This consists of the following:
  * <dl>
  * <dt>Fd</dt> <dd>The file descriptor of the Linux ttyACM device opened to connect with the usb-pio board.</dd>
@@ -228,6 +233,196 @@ int USB_PIO_Connection_Close(void)
 	return TRUE;	
 }
 
+/**
+ * Routine to send a command string over the opened connection, receive a reply, and potentially check it against
+ * an expected reply.
+ * <ul>
+ * <li>We check the command string is not NULL, and is not too long (COMMAND_STRING_LENGTH).
+ * <li>If compiled in the mutex is obtained.
+ * <li>We copy the command string to an internal buffer, and terminate it with a carridge return '\r'.
+ * <li>We write the command string to the open connection Fd (file descriptor).
+ * <li>If the reply_string is NOT NULL, we:
+ *     <ul>
+ *     <li>We read up to reply_string_length bytes from the open connection Fd to the reply_string.
+ *     <li>We check the last character returned in the reply_string was a carridge return '\r', and replace it
+ *         with a NULL terminator '\0'.
+ *      <li>If the expected_reply_string is NOT NULL, we check the reply_string matches the expected_reply_string.
+ *     </ul>
+ * <li>If compiled in the mutex is released.
+ * </ul>
+ * @param command_string A NULL terminated string containing the command to send over the open connection.
+ * @param expected_reply_string A NULL terminated string containing the expected reply to the command. This can
+ *        be set to NULL, if no reply is expected, or no checking is required.
+ * @param reply_string A character array of length reply_string_length. On a successful command invocation, on exit
+ *        this string will contain any reply received. This can be passed in as NULL, if no reply is required to be
+ *        read.
+ * @param reply_string_length The length of the reply_string buffer, in bytes.
+ * @return The routine returns TRUE on success and FALSE if an error occurs.
+ * @see #COMMAND_STRING_LENGTH
+ * @see #Connection_Data
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see usb_pio_general.html#USB_PIO_General_Log_Format
+ * @see usb_pio_general.html#USB_PIO_General_Mutex_Lock
+ * @see usb_pio_general.html#USB_PIO_General_Mutex_Unlock
+ */
+int USB_PIO_Connection_Command(char *command_string,char *expected_reply_string,
+			       char *reply_string,int reply_string_length)
+{
+	char internal_command_string[COMMAND_STRING_LENGTH];
+	int retval,write_errno,read_errno,reply_length;
+	
+	if(command_string == NULL)
+	{
+		Connection_Error_Number = 11;
+		sprintf(Connection_Error_String,"USB_PIO_Connection_Command: command_string was NULL.");
+		return FALSE;
+	}
+	/* check command string is not too long for internal buffer - allow for '\r' terminator to be added */
+	if((strlen(command_string)+1) >= COMMAND_STRING_LENGTH)
+	{
+		Connection_Error_Number = 12;
+		sprintf(Connection_Error_String,
+			"USB_PIO_Connection_Command: command_string '%s' was too long (%ld vs %d).",command_string,
+			(strlen(command_string)+1),COMMAND_STRING_LENGTH);
+		return FALSE;
+	}
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_TERSE,"USB_PIO_Connection_Command(%s): Started.",command_string);
+#endif /* LOGGING */
+	/* initialise error number */
+	Connection_Error_Number = 0;
+#ifdef MUTEXED
+	if(!USB_PIO_General_Mutex_Lock())
+	{
+		Connection_Error_Number = 13;
+		sprintf(Connection_Error_String,"USB_PIO_Connection_Command: failed to lock mutex.");
+		return FALSE;
+	}
+#endif /* MUTEXED */
+	/* prepare internal command string */
+	strcpy(internal_command_string,command_string);
+	strcat(internal_command_string,"\r");
+	/* write to fd */
+	retval = write(Connection_Data.Fd,internal_command_string,strlen(internal_command_string));
+	if(retval == -1)
+	{
+		write_errno = errno;
+		Connection_Error_Number = 14;
+		sprintf(Connection_Error_String,"USB_PIO_Connection_Command: write failed (%s,%d,%s).",
+			command_string,write_errno,strerror(write_errno));
+		return FALSE;
+		
+	}
+	/* do we need to get a reply ? */
+	if(reply_string != NULL)
+	{
+		/* read reply */
+		reply_length = read(Connection_Data.Fd,reply_string,reply_string_length);
+		if(reply_length < 0)
+		{
+			read_errno = errno;
+			Connection_Error_Number = 15;
+			sprintf(Connection_Error_String,"USB_PIO_Connection_Command: read failed (%s,%d,%s).",
+				command_string,read_errno,strerror(read_errno));
+			return FALSE;
+		}
+		/* remove \r from reply string, and null terminate */
+		if(reply_string[reply_length-1] != '\r')
+		{
+			reply_string[reply_length] = '\0'; /* null terminate full reply for error message */
+			Connection_Error_Number = 16;
+			sprintf(Connection_Error_String,
+				"USB_PIO_Connection_Command: read reply not terminated with a carridge return (command=%s,reply=%s).",
+				command_string,reply_string);
+			return FALSE;
+		}
+		reply_string[reply_length-1] = '\0';
+#if LOGGING > 3
+		USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"USB_PIO_Connection_Command(%s): Reply = '%s'.",
+					   command_string,reply_string);
+#endif /* LOGGING */
+		/* do we need to check the reply_string ? */
+		if(expected_reply_string != NULL)
+		{
+			if(strcmp(reply_string,expected_reply_string) != 0)
+			{
+				Connection_Error_Number = 17;
+				sprintf(Connection_Error_String,
+					"USB_PIO_Connection_Command: Unexpected reply (command=%s,reply=%s,expected_reply=%s).",
+					command_string,reply_string,expected_reply_string);
+				return FALSE;
+			}
+		}
+	}/* end if reply_string != NULL */
+#ifdef MUTEXED
+	if(!USB_PIO_General_Mutex_Unlock())
+	{
+		Connection_Error_Number = 18;
+		sprintf(Connection_Error_String,"USB_PIO_Connection_Command: failed to unlock mutex.");
+		return FALSE;
+	}
+#endif /* MUTEXED */
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_TERSE,"USB_PIO_Connection_Command: Finished.");
+#endif /* LOGGING */
+	return TRUE;
+}
+
+/**
+ * Get the current value of the error number.
+ * @return The current value of the error number.
+ * @see #Connection_Error_Number
+ */
+int USB_PIO_Connection_Get_Error_Number(void)
+{
+	return Connection_Error_Number;
+}
+
+/**
+ * The error routine that reports any errors occuring in a standard way.
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see usb_pio_general.html#USB_PIO_General_Get_Current_Time_String
+ */
+void USB_PIO_Connection_Error(void)
+{
+	char time_string[32];
+
+	USB_PIO_General_Get_Current_Time_String(time_string,32);
+	/* if the error number is zero an error message has not been set up
+	** This is in itself an error as we should not be calling this routine
+	** without there being an error to display */
+	if(Connection_Error_Number == 0)
+		sprintf(Connection_Error_String,"Logic Error:No Error defined");
+	fprintf(stderr,"%s USB_PIO_Connection:Error(%d) : %s\n",time_string,
+		Connection_Error_Number,Connection_Error_String);
+}
+
+/**
+ * The error routine that reports any errors occuring in a standard way. This routine places the
+ * generated error string at the end of a passed in string argument.
+ * @param error_string A string to put the generated error in. This string should be initialised before
+ * being passed to this routine. The routine will try to concatenate it's error string onto the end
+ * of any string already in existance.
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see usb_pio_general.html#USB_PIO_General_Get_Current_Time_String
+ */
+void USB_PIO_Connection_Error_String(char *error_string)
+{
+	char time_string[32];
+
+	USB_PIO_General_Get_Current_Time_String(time_string,32);
+	/* if the error number is zero an error message has not been set up
+	** This is in itself an error as we should not be calling this routine
+	** without there being an error to display */
+	if(Connection_Error_Number == 0)
+		sprintf(Connection_Error_String,"Logic Error:No Error defined");
+	sprintf(error_string+strlen(error_string),"%s USB_PIO_Connection:Error(%d) : %s\n",time_string,
+		Connection_Error_Number,Connection_Error_String);
+}
+
 /* =======================================
 **  internal functions 
 ** ======================================= */
@@ -264,26 +459,25 @@ static int Connection_Set_Serial_Attributes(void)
 	cfsetospeed(&tty, baudrate);
 	cfsetispeed(&tty, baudrate);
 
-	tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
-	// Disable IGNBRK for mismatched baud tests; otherwise receive break as \000 chars
-	tty.c_iflag &= ~IGNBRK; // disable break processing
+	tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     /* 8-bit chars*/
+	/* Disable IGNBRK for mismatched baud tests; otherwise receive break as \000 chars */
+	tty.c_iflag &= ~IGNBRK; /* disable break processing */
 
-	tty.c_lflag     = 0;    // no signaling chars, no echo,
-	tty.c_oflag     = 0;    // no remapping, no delays
-	tty.c_cc[VMIN]  = 0;    // read doesn't block
-	tty.c_cc[VTIME] = 5;    // 0.5 seconds read timeout
+	tty.c_lflag     = 0;    /* no signaling chars, no echo, */
+	tty.c_oflag     = 0;    /* no remapping, no delays */
+	tty.c_cc[VMIN]  = 0;    /* read doesn't block */
+	tty.c_cc[VTIME] = 5;    /* 0.5 seconds read timeout */
 
-	tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
-	tty.c_cflag |=  (CLOCAL | CREAD);       // ignore modem controls,
-	tty.c_cflag &= ~(PARENB | PARODD);      // shut off parity
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY); /* shut off xon/xoff ctrl */
+	tty.c_cflag |=  (CLOCAL | CREAD);       /* ignore modem controls, */
+	tty.c_cflag &= ~(PARENB | PARODD);      /* shut off parity */
 	/* tty.c_cflag |=  parity; parity set to 0 */
 	tty.c_cflag &= ~CSTOPB;
 	tty.c_cflag &= ~CRTSCTS;
-
 #if LOGGING > 5
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERBOSE,"Connection_Set_Serial_Attributes: Set attributes.");
 #endif /* LOGGING */
-	retval = tcsetattr (Connection_Data.Fd, TCSANOW, &tty);
+	retval = tcsetattr(Connection_Data.Fd, TCSANOW, &tty);
 	if(retval != 0)
 	{
 		Connection_Error_Number = 8;
@@ -331,7 +525,7 @@ static int Connection_Set_Blocking(int blocking)
 #if LOGGING > 5
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERBOSE,"Connection_Set_Blocking: Set attributes.");
 #endif /* LOGGING */
-	retval = tcsetattr (Connection_Data.Fd, TCSANOW, &tty);
+	retval = tcsetattr(Connection_Data.Fd, TCSANOW, &tty);
 	if(retval != 0)
 	{
 		Connection_Error_Number = 10;

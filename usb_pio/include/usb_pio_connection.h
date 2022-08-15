@@ -5,6 +5,8 @@
 
 extern int USB_PIO_Connection_Open(const char* device_name);
 extern int USB_PIO_Connection_Close(void);
+extern int USB_PIO_Connection_Command(char *command_string,char *expected_reply_string,
+				      char *reply_string,int reply_string_length);
 extern int USB_PIO_Connection_Get_Error_Number(void);
 extern void USB_PIO_Connection_Error(void);
 extern void USB_PIO_Connection_Error_String(char *error_string);

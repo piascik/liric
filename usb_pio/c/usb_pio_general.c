@@ -26,6 +26,7 @@
 #include <pthread.h>
 #endif
 #include "usb_pio_general.h"
+#include "usb_pio_command.h"
 #include "usb_pio_connection.h"
 
 /* defines */
@@ -105,12 +106,15 @@ static char General_Error_String[USB_PIO_GENERAL_ERROR_STRING_LENGTH] = "";
  * Routine to return whether an error has been set in the library.
  * @return The routine returns TRUE if an error has been set, and FALSE if no error has been set.
  * @see #General_Error_Number
+ * @see usb_pio_command.html#USB_PIO_Command_Get_Error_Number
  * @see usb_pio_connection.html#USB_PIO_Connection_Get_Error_Number
  */
 int USB_PIO_General_Is_Error(void)
 {
 	int found = FALSE;
 
+	if(USB_PIO_Command_Get_Error_Number() != 0)
+		found = TRUE;
 	if(USB_PIO_Connection_Get_Error_Number() != 0)
 		found = TRUE;
 	if(General_Error_Number != 0)
@@ -123,6 +127,8 @@ int USB_PIO_General_Is_Error(void)
  * @see #General_Error_Number
  * @see #General_Error_String
  * @see #USB_PIO_General_Get_Current_Time_String
+ * @see usb_pio_command.html#USB_PIO_Command_Get_Error_Number
+ * @see usb_pio_command.html#USB_PIO_Command_Error
  * @see usb_pio_connection.html#USB_PIO_Connection_Get_Error_Number
  * @see usb_pio_connection.html#USB_PIO_Connection_Error
  */
@@ -131,6 +137,11 @@ void USB_PIO_General_Error(void)
 	char time_string[32];
 	int found = FALSE;
 
+	if(USB_PIO_Command_Get_Error_Number() != 0)
+	{
+		found = TRUE;
+		USB_PIO_Command_Error();
+	}
 	if(USB_PIO_Connection_Get_Error_Number() != 0)
 	{
 		found = TRUE;
@@ -157,6 +168,8 @@ void USB_PIO_General_Error(void)
  * @see #General_Error_Number
  * @see #General_Error_String
  * @see #USB_PIO_General_Get_Current_Time_String
+ * @see usb_pio_command.html#USB_PIO_Command_Get_Error_Number
+ * @see usb_pio_command.html#USB_PIO_Command_Error_String
  * @see usb_pio_connection.html#USB_PIO_Connection_Get_Error_Number
  * @see usb_pio_connection.html#USB_PIO_Connection_Error_String
  */
@@ -165,6 +178,10 @@ void USB_PIO_General_Error_To_String(char *error_string)
 	char time_string[32];
 
 	strcpy(error_string,"");
+	if(USB_PIO_Command_Get_Error_Number() != 0)
+	{
+		USB_PIO_Command_Error_String(error_string);
+	}
 	if(USB_PIO_Connection_Get_Error_Number() != 0)
 	{
 		USB_PIO_Connection_Error_String(error_string);
