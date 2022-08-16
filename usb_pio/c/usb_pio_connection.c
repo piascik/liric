@@ -327,14 +327,16 @@ int USB_PIO_Connection_Command(char *command_string,char *expected_reply_string,
 				command_string,read_errno,strerror(read_errno));
 			return FALSE;
 		}
-		/* remove \r from reply string, and null terminate */
-		if(reply_string[reply_length-1] != '\r')
+		/* remove \n from reply string, and null terminate, 
+		** commands seem to return a newline '\n' not a carridge return '\r' contrary to the documentation. */
+		if(reply_string[reply_length-1] != '\n')
 		{
 			reply_string[reply_length] = '\0'; /* null terminate full reply for error message */
 			Connection_Error_Number = 16;
 			sprintf(Connection_Error_String,
-				"USB_PIO_Connection_Command: read reply not terminated with a carridge return (command=%s,reply=%s).",
-				command_string,reply_string);
+				"USB_PIO_Connection_Command: read reply not terminated with a carridge return "
+				"(command=%s,reply=%s,reply_length=%d,nlch=%d,nl=%d).",
+				command_string,reply_string,reply_length,reply_string[reply_length-1],'\n');
 			return FALSE;
 		}
 		reply_string[reply_length-1] = '\0';
@@ -345,7 +347,9 @@ int USB_PIO_Connection_Command(char *command_string,char *expected_reply_string,
 		/* do we need to check the reply_string ? */
 		if(expected_reply_string != NULL)
 		{
-			if(strcmp(reply_string,expected_reply_string) != 0)
+			/* only check up to length of expected_reply_string, there may be extra
+			** characters in the actual reply (i.e. actual values returned) */
+			if(strncmp(reply_string,expected_reply_string,strlen(expected_reply_string)) != 0)
 			{
 				Connection_Error_Number = 17;
 				sprintf(Connection_Error_String,

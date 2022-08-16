@@ -89,7 +89,6 @@ int USB_PIO_Command_Output_Set(int output,int onoff)
 int USB_PIO_Command_Outputs_Set(unsigned char outputs)
 {
 	char command_string[COMMAND_STRING_LENGTH];
-	char expected_reply_string[COMMAND_STRING_LENGTH];
 	char reply_string[COMMAND_STRING_LENGTH];
 
 	Command_Error_Number = 0;
@@ -98,12 +97,19 @@ int USB_PIO_Command_Outputs_Set(unsigned char outputs)
 				   "USB_PIO_Command_Outputs_Set(outputs=%2.2X): Started.",outputs);
 #endif /* LOGGING */
 	/* set output port to output */
+#if LOGGING > 5
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"USB_PIO_Command_Outputs_Set: Set port %d to output %#x.",
+				   OUTPUT_PORT,USB_PIO_PORT_TYPE_OUTPUT);
+#endif /* LOGGING */
 	if(!USB_PIO_Command_Port_Set(OUTPUT_PORT,USB_PIO_PORT_TYPE_OUTPUT))
 		return FALSE;
 	/* set outputs */
+#if LOGGING > 5
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"USB_PIO_Command_Outputs_Get: Set output port %d to %2.2X.",
+				   OUTPUT_PORT,outputs);
+#endif /* LOGGING */
 	sprintf(command_string,"@00P%d%2.2X",OUTPUT_PORT,outputs);
-	sprintf(expected_reply_string,"!00%2.2X",outputs);
-	if(!USB_PIO_Connection_Command(command_string,expected_reply_string,reply_string,COMMAND_STRING_LENGTH))
+	if(!USB_PIO_Connection_Command(command_string,"!00",reply_string,COMMAND_STRING_LENGTH))
 		return FALSE;
 #if LOGGING > 0
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
@@ -141,9 +147,17 @@ int USB_PIO_Command_Outputs_Get(unsigned char *outputs)
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"USB_PIO_Command_Outputs_Get: Started.");
 #endif /* LOGGING */
 	/* set output port to output */
+#if LOGGING > 5
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"USB_PIO_Command_Outputs_Get: Set port %d to output %#x.",
+				   OUTPUT_PORT,USB_PIO_PORT_TYPE_OUTPUT);
+#endif /* LOGGING */
 	if(!USB_PIO_Command_Port_Set(OUTPUT_PORT,USB_PIO_PORT_TYPE_OUTPUT))
 		return FALSE;
-	/* set outputs query command */
+	/* get outputs query command */
+#if LOGGING > 5
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"USB_PIO_Command_Outputs_Get: Query output port %d.",
+				   OUTPUT_PORT);
+#endif /* LOGGING */
 	sprintf(command_string,"@00P%d?",OUTPUT_PORT);
 	strcpy(expected_reply_string,"!00");
 	if(!USB_PIO_Connection_Command(command_string,expected_reply_string,reply_string,COMMAND_STRING_LENGTH))
@@ -192,9 +206,17 @@ int USB_PIO_Command_Inputs_Get(unsigned char *inputs)
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"USB_PIO_Command_Inputs_Get: Started.");
 #endif /* LOGGING */
 	/* set input port to input */
+#if LOGGING > 5
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"USB_PIO_Command_Inputs_Get: Set port %d to input %#x.",
+				   INPUT_PORT,USB_PIO_PORT_TYPE_INPUT);
+#endif /* LOGGING */
 	if(!USB_PIO_Command_Port_Set(INPUT_PORT,USB_PIO_PORT_TYPE_INPUT))
 		return FALSE;
-	/* set inputs query command */
+	/* get inputs query command */
+#if LOGGING > 5
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"USB_PIO_Command_Inputs_Get: Query input port %d.",
+				   INPUT_PORT);
+#endif /* LOGGING */
 	sprintf(command_string,"@00P%d?",INPUT_PORT);
 	strcpy(expected_reply_string,"!00");
 	if(!USB_PIO_Connection_Command(command_string,expected_reply_string,reply_string,COMMAND_STRING_LENGTH))
@@ -233,7 +255,6 @@ int USB_PIO_Command_Input_Get(int input,int *onoff)
 int USB_PIO_Command_Port_Set(int port,enum USB_PIO_PORT_TYPE port_type)
 {
 	char command_string[COMMAND_STRING_LENGTH];
-	char expected_reply_string[COMMAND_STRING_LENGTH];
 	char reply_string[COMMAND_STRING_LENGTH];
 	int retval;
 	
@@ -255,8 +276,8 @@ int USB_PIO_Command_Port_Set(int port,enum USB_PIO_PORT_TYPE port_type)
 				   "USB_PIO_Command_Port_Set(port=%d,port_type=%d): Started.",port,port_type);
 #endif /* LOGGING */
 	sprintf(command_string,"@00D%d%2.2X",port,port_type);
-	sprintf(expected_reply_string,"!00%2.2X",port_type);
-	if(!USB_PIO_Connection_Command(command_string,expected_reply_string,reply_string,COMMAND_STRING_LENGTH))
+	/* it appears a port set just returns "!00", this is different to the documentation */
+	if(!USB_PIO_Connection_Command(command_string,"!00",reply_string,COMMAND_STRING_LENGTH))
 		return FALSE;
 #if LOGGING > 0
 	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
