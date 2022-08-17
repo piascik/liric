@@ -14,7 +14,7 @@ CFLAGS 		= -g -I$(INCDIR) $(LOG_UDP_CFLAGS)
 DOCFLAGS 	= -static
 
 SRCS 		= usb_pio_test_get_inputs.c usb_pio_test_get_outputs.c usb_pio_test_set_outputs.c \
-		usb_pio_test_get_input.c usb_pio_test_get_output.c usb_pio_test_set_output.c 
+		usb_pio_test_get_input.c usb_pio_test_get_output.c usb_pio_test_set_output.c usb_pio_test_move.c
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 PROGS 		= $(SRCS:%.c=$(BINDIR)/%)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
