@@ -41,14 +41,30 @@
 /**
  * Macro to determine whether the specified port type is valid.
  * @param n The port type, should be one of USB_PIO_PORT_TYPE_OUTPUT or USB_PIO_PORT_TYPE_INPUT to be valid.
+ * @return The macro returns TRUE if the port type is valid, and FALSE if it is NOT valid.
  * @see #USB_PIO_PORT_TYPE
  */
 #define COMMAND_PORT_TYPE_IS_VALID(n) ((n == USB_PIO_PORT_TYPE_OUTPUT)||(n == USB_PIO_PORT_TYPE_INPUT))
 /**
  * Macro to determine whether the specified port is valid.
  * @param n The port, should be one of 0 (=A), 1 (=B) or 2 (=C) to be valid.
+ * @return The macro returns TRUE if the port is valid, and FALSE if it is NOT valid.
  */
 #define COMMAND_PORT_IS_VALID(n) ((n == 0)||(n == 1)||(n == 2))
+/**
+ * Macro to determine whether the specified input is valid.
+ * @param valus The input number, should be between 1 and 8 to be valid (as marked on the board). The bit to be
+ *        set when communicating with the board is one less than this i.e. 0..7.
+ * @return The macro returns TRUE if the port is valid, and FALSE if it is NOT valid.
+ */
+#define COMMAND_INPUT_IS_VALID(value)	(((value) > 0)&&((value) < 9))
+/**
+ * Macro to determine whether the specified output is valid.
+ * @param valus The output number, should be between 1 and 8 to be valid (as marked on the board). The bit to be
+ *        set when communicating with the board is one less than this i.e. 0..7.
+ * @return The macro returns TRUE if the port is valid, and FALSE if it is NOT valid.
+ */
+#define COMMAND_OUTPUT_IS_VALID(value)	(((value) > 0)&&((value) < 9))
 
 /* internal variables */
 /**
@@ -69,15 +85,70 @@ static char Command_Error_String[USB_PIO_GENERAL_ERROR_STRING_LENGTH] = "";
 /* =======================================
 **  external functions 
 ** ======================================= */
+/**
+ * Set the specified output on the BMCM OR8 I/O board to be on or off.
+ * We retieve the current outpus using USB_PIO_Command_Outputs_Get, set or clear the relevant output bit
+ * in the outputs, and write the new value back to the board using USB_PIO_Command_Outputs_Set.
+ * @param output Which output to modify, from 1..8 (as marked on the board). The bit to be
+ *        set when communicating with the board is one less than this i.e. 0..7.
+ * @param onoff A boolean, TRUE turns the specified output on, FALSE turns it off.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #COMMAND_OUTPUT_IS_VALID
+ * @see #Command_Error_Number
+ * @see #Command_Error_String
+ * @see #USB_PIO_Command_Outputs_Set
+ * @see #USB_PIO_Command_Outputs_Get
+ */
 int USB_PIO_Command_Output_Set(int output,int onoff)
 {
-	/* diddly */
+	int output_bit;
+	unsigned char outputs;
+	
+	Command_Error_Number = 0;
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Output_Set(output=%d,onoff=%d): Started.",output,onoff);
+#endif /* LOGGING */
+	if(!COMMAND_OUTPUT_IS_VALID(output))
+	{
+		Command_Error_Number = 5;
+		sprintf(Command_Error_String,"USB_PIO_Command_Output_Set: output '%d' is invalid.",output);
+		return FALSE;
+	}
+	if(!USB_PIO_IS_BOOLEAN(onoff))
+	{
+		Command_Error_Number = 6;
+		sprintf(Command_Error_String,"USB_PIO_Command_Output_Set: onoff '%d' is not a boolean.",onoff);
+		return FALSE;
+	}
+	/* get the current outputs */
+	if(!USB_PIO_Command_Outputs_Get(&outputs))
+		return FALSE;
+	/* output_bit is one less than the output number i.e. 1..8 -> 0..7 */
+	output_bit = output - 1;
+	if(onoff)
+	{
+		/* turn output_bit on */
+		outputs |= (1<<output_bit);
+	}
+	else
+	{
+		/* turn output_bit off */
+		outputs &= ~(1<<output_bit);
+	}
+	/* set the new output bits */
+	if(!USB_PIO_Command_Outputs_Set(outputs))
+		return FALSE;
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Output_Set(output=%d,onoff=%d): Finished.",output,onoff);
+#endif /* LOGGING */
 	return TRUE;
 }
 
 /**
  * Set the outputs on the BMCM OR8 I/O board
- * @param outputs An unsigned char representing the output bits to turn on.
+ * @param outputs An unsigned char representing the output bits to turn on. This should be in the range 0..255.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see #USB_PIO_PORT_TYPE
  * @see #OUTPUT_PORT
@@ -171,9 +242,54 @@ int USB_PIO_Command_Outputs_Get(unsigned char *outputs)
 	return TRUE;
 }
 
+/**
+ * Routine to get whether the specified output is on or off.
+ * @param output Which output to query, from 1..8 (as marked on the board). The bit to be
+ *        set when communicating with the board is one less than this i.e. 0..7.
+ * @param onoff The address of an integer, on return from a successful invocation this will contain a boolean,
+ *        TRUE if the specified output was on, and FALSE if the specified output was off.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #COMMAND_OUTPUT_IS_VALID
+ * @see #Command_Error_Number
+ * @see #Command_Error_String
+ * @see #USB_PIO_Command_Outputs_Get
+ */
 int USB_PIO_Command_Output_Get(int output,int *onoff)
 {
-	/* diddly */
+	int output_bit;
+	unsigned char outputs;
+	
+	Command_Error_Number = 0;
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Output_Get(output=%d): Started.",output);
+#endif /* LOGGING */
+	if(onoff == NULL)
+	{
+		Command_Error_Number = 7;
+		sprintf(Command_Error_String,"USB_PIO_Command_Output_Get: onoff was NULL.");
+		return FALSE;
+	}
+	if(!COMMAND_OUTPUT_IS_VALID(output))
+	{
+		Command_Error_Number = 8;
+		sprintf(Command_Error_String,"USB_PIO_Command_Output_Get: output '%d' is invalid.",output);
+		return FALSE;
+	}
+	/* get the current outputs */
+	if(!USB_PIO_Command_Outputs_Get(&outputs))
+		return FALSE;
+	/* output_bit is one less than the output number i.e. 1..8 -> 0..7 */
+	output_bit = output - 1;
+	/* check whether the specified output is set in the outputs bits, and set onoff accordingly */
+	if((outputs&(1<<output_bit)) > 0)
+		(*onoff) = TRUE;
+	else
+		(*onoff) = FALSE;
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Output_Get(output=%d): Returned.",output,(*onoff));
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -230,9 +346,54 @@ int USB_PIO_Command_Inputs_Get(unsigned char *inputs)
 	return TRUE;
 }
 
+/**
+ * Routine to get whether the specified input is on or off.
+ * @param input Which input to query, from 1..8 (as marked on the board). The bit to be
+ *        set when communicating with the board is one less than this i.e. 0..7.
+ * @param onoff The address of an integer, on return from a successful invocation this will contain a boolean,
+ *        TRUE if the specified input was on (high), and FALSE if the specified input was off (low).
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #COMMAND_INPUT_IS_VALID
+ * @see #Command_Error_Number
+ * @see #Command_Error_String
+ * @see #USB_PIO_Command_Inputs_Get
+ */
 int USB_PIO_Command_Input_Get(int input,int *onoff)
 {
-	/* diddly */
+	int input_bit;
+	unsigned char inputs;
+	
+	Command_Error_Number = 0;
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Input_Get(input=%d): Started.",input);
+#endif /* LOGGING */
+	if(onoff == NULL)
+	{
+		Command_Error_Number = 9;
+		sprintf(Command_Error_String,"USB_PIO_Command_Input_Get: onoff was NULL.");
+		return FALSE;
+	}
+	if(!COMMAND_INPUT_IS_VALID(input))
+	{
+		Command_Error_Number = 10;
+		sprintf(Command_Error_String,"USB_PIO_Command_Input_Get: input '%d' is invalid.",input);
+		return FALSE;
+	}
+	/* get the current inputs */
+	if(!USB_PIO_Command_Inputs_Get(&inputs))
+		return FALSE;
+	/* input_bit is one less than the input number i.e. 1..8 -> 0..7 */
+	input_bit = input - 1;
+	/* check whether the specified input is set in the inputs bits, and set onoff accordingly */
+	if((inputs&(1<<input_bit)) > 0)
+		(*onoff) = TRUE;
+	else
+		(*onoff) = FALSE;
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Input_Get(input=%d): Returned.",input,(*onoff));
+#endif /* LOGGING */
 	return TRUE;
 }
 
