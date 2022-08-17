@@ -1,4 +1,4 @@
-/* usb_pio_test_set_outputs.c */
+/* usb_pio_test_set_output.c */
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -7,7 +7,7 @@
 #include "usb_pio_connection.h"
 #include "usb_pio_general.h"
 /**
- * Test program to set the digital outputs using the USB-PIO BMCM OR8 I/O card.
+ * Test program to set a specified digital output to on or off using the USB-PIO BMCM OR8 I/O card.
  */
 /**
  * Length of some of the strings used in this program.
@@ -23,14 +23,15 @@ static int Log_Level = LOG_VERBOSITY_VERY_VERBOSE;
  */
 static char Device_Name[STRING_LENGTH];
 /**
- * A unsigned character, each bit representing an outpt. If the bit is set, the output is turned on.
- * This variable is set in Parse_Arguments and then used to control the digital outputs.
+ * Which output to turn on or off, 1..8.
  */
-static unsigned char Outputs;
+static int Output = 0;
 /**
- * A boolean, initialised to FALSE, and set TRUE when a new set of outputs are set in Parse_Arguments.
+ * A boolean, if TRUE turn the spcified output on, otherwise turn it off.
  */
-static int Outputs_Set = FALSE;
+static int On = FALSE;
+
+/* internal functions */
 static int Parse_Arguments(int argc, char *argv[]);
 static void Help(void);
 
@@ -44,8 +45,8 @@ static void Help(void);
  * @param argv An array of argument strings.
  * @see #Parse_Arguments
  * @see #Device_Name
- * @see #Outputs
- * @see #Outputs_Set
+ * @see #Output
+ * @see #On
  * @see #Log_Level
  * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Level
  * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Function
@@ -56,35 +57,35 @@ static void Help(void);
  * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Error
  * @see ../cdocs/usb_pio_connection.html#USB_PIO_Connection_Open
  * @see ../cdocs/usb_pio_connection.html#USB_PIO_Connection_Close
- * @see ../cdocs/usb_pio_command.html#USB_PIO_Command_Outputs_Set
+ * @see ../cdocs/usb_pio_command.html#USB_PIO_Command_Output_Set
  */
 int main(int argc, char *argv[])
 {
        	/* parse arguments */
-	fprintf(stdout,"usb_pio_test_set_outputs : Parsing Arguments.\n");
+	fprintf(stdout,"usb_pio_test_set_output : Parsing Arguments.\n");
 	if(!Parse_Arguments(argc,argv))
 		return 1;
-	if(Outputs_Set == FALSE)
+	if((Output < 1)||(Output > 8))
 	{
-		fprintf(stderr, "usb_pio_test_set_outputs : Please set which outputs to turn on.\n");
+		fprintf(stderr, "usb_pio_test_set_output : Output not specified / out of range (%d).\n",Output);
 		return 2;
 	}
 	USB_PIO_General_Set_Log_Filter_Level(Log_Level);
 	USB_PIO_General_Set_Log_Filter_Function(USB_PIO_General_Log_Filter_Level_Absolute);
 	USB_PIO_General_Set_Log_Handler_Function(USB_PIO_General_Log_Handler_Stdout);
          /* open device */
-	USB_PIO_General_Log(LOG_VERBOSITY_TERSE,"usb_pio_test_set_outputs : Connecting to controller.");
+	USB_PIO_General_Log(LOG_VERBOSITY_TERSE,"usb_pio_test_set_output : Connecting to controller.");
 	if(!USB_PIO_Connection_Open(Device_Name))
 	{
 		USB_PIO_General_Error();
 		return 3;
 	}
-	if(!USB_PIO_Command_Outputs_Set(Outputs))
+	if(!USB_PIO_Command_Output_Set(Output,On))
 	{
 		USB_PIO_General_Error();
 		return 4;
 	}
-	fprintf(stdout,"usb_pio_test_set_outputs:Closing connection.\n");
+	fprintf(stdout,"usb_pio_test_set_output:Closing connection.\n");
 	USB_PIO_Connection_Close();
 	return 0;
 }
@@ -98,12 +99,12 @@ int main(int argc, char *argv[])
  * @param argv An array of argument strings.
  * @see #Device_Name
  * @see #Log_Level
- * @see #Outputs
- * @see #Outputs_Set
+ * @see #Output
+ * @see #On
  */
 static int Parse_Arguments(int argc, char *argv[])
 {
-	int i,retval,output_i;
+	int i,retval;
 
 	for(i=1;i<argc;i++)
 	{
@@ -144,24 +145,22 @@ static int Parse_Arguments(int argc, char *argv[])
 				return FALSE;
 			}
 		}
-		else if((strcmp(argv[i],"-o")==0)||(strcmp(argv[i],"-outputs")==0))
+		else if((strcmp(argv[i],"-o")==0)||(strcmp(argv[i],"-output")==0))
 		{
 			if((i+1)<argc)
 			{
-				retval = sscanf(argv[i+1],"%d",&output_i);
+				retval = sscanf(argv[i+1],"%d",&Output);
 				if(retval != 1)
 				{
-					fprintf(stderr,"Parse_Arguments:Failed to parse outputs %s.\n",argv[i+1]);
+					fprintf(stderr,"Parse_Arguments:Failed to parse output %s.\n",argv[i+1]);
 					return FALSE;
 				}
-				if((output_i < 0)||(output_i > 255))
+				if((Output < 1)||(Output > 8))
 				{
-					fprintf(stderr,"Parse_Arguments: outputs %s out of range 0..255.\n",argv[i+1]);
+					fprintf(stderr,"Parse_Arguments: output %s out of range 1..8.\n",argv[i+1]);
 					return FALSE;
 					
 				}
-				Outputs = (unsigned char)output_i;
-				Outputs_Set = TRUE;
 				i++;
 			}
 			else
@@ -169,6 +168,14 @@ static int Parse_Arguments(int argc, char *argv[])
 				fprintf(stderr,"Parse_Arguments:-outputs requires a number 0..255.\n");
 				return FALSE;
 			}
+		}
+		else if((strcmp(argv[i],"-off")==0))
+		{
+			On = FALSE;
+		}
+		else if((strcmp(argv[i],"-on")==0))
+		{
+			On = TRUE;
 		}
 		else
 		{
@@ -184,8 +191,8 @@ static int Parse_Arguments(int argc, char *argv[])
  */
 static void Help(void)
 {
-	fprintf(stdout,"Test USB PIO Set Outputs:Help.\n");
-	fprintf(stdout,"This program sets the digital outputs on the USB-PIO BMCM OR8 I/O board.\n");
-	fprintf(stdout,"usb_pio_test_set_outputs -d[evice_name] <USB device> [-help]\n");
-	fprintf(stdout,"\t[-l[og_level <0..5>][-o[utputs <0..255>].\n");
+	fprintf(stdout,"Test USB PIO Set Output:Help.\n");
+	fprintf(stdout,"This program sets the specified digital output to either on or off using the USB-PIO BMCM OR8 I/O board.\n");
+	fprintf(stdout,"usb_pio_test_set_output -d[evice_name] <USB device> -o[utput <1..8> -on|-off [-help]\n");
+	fprintf(stdout,"\t[-l[og_level] <0..5>] .\n");
 }
