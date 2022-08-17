@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 			if(fdifftime(current_time,loop_start_time) > Timeout)
 			{
 				USB_PIO_General_Log_Format(LOG_VERBOSITY_TERSE,
-			        "usb_pio_test_move : Timeed out after %.2f seconds waiting for Input %d to be high.",
+			        "usb_pio_test_move : Timed out after %.2f seconds waiting for Input %d to be high.",
 						    fdifftime(current_time,loop_start_time),Input);
 				
 				done = TRUE;
