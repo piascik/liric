@@ -492,7 +492,6 @@ int USB_PIO_Command_Port_Get(int port,enum USB_PIO_PORT_TYPE *port_type)
 	sprintf(command_string,"@00D%d?",port);
 	if(!USB_PIO_Connection_Command(command_string,"!00",reply_string,COMMAND_STRING_LENGTH))
 		return FALSE;
-	/* diddly */
 	/* parse reply_string - hex representation of the port_type should be in characters 3 and 4 i.e. '!00xx' */
 	(*port_type) = strtol( &reply_string[3], NULL, 16);
 	if(!COMMAND_PORT_TYPE_IS_VALID((*port_type)))
