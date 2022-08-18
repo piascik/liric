@@ -4,6 +4,10 @@ include ../../../Makefile.common
 include ../../Makefile.common
 include ../Makefile.common
 
+# Do we wish to link with CFITSIO routines?
+FITSCFLAGS = -DCFITSIO=1 -I$(CFITSIOINCDIR) 
+CFITSIOLIB = -L$(LT_LIB_HOME) -lcfitsio
+
 # estar_config
 CONFIG_CFLAGS	= -I$(eSTAR_SRC_HOME)/config/include/
 CONFIG_LDFLAGS	= -L$(eSTAR_LIB_HOME) -lestar_config
@@ -14,12 +18,12 @@ DOCSDIR 	= $(DETECTOR_DOC_HOME)/cdocs
 
 LOGGING_CFLAGS	= -DLOGGING=10
 MUTEX_CFLAGS	= -DMUTEXED
-CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(CONFIG_CFLAGS) \
+CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(FITSCFLAGS) $(CONFIG_CFLAGS) \
 		$(SHARED_LIB_CFLAGS) 
-LDFLAGS		= $(CONFIG_LDFLAGS)
+LDFLAGS		= $(CONFIG_LDFLAGS) $(CFITSIOLIB)
 DOCFLAGS 	= -static
 
-SRCS 		= detector_general.c detector_fits_filename.c
+SRCS 		= detector_general.c detector_fits_filename.c detector_fits_header.c
 HEADERS		= $(SRCS:%.c=%.h)
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
