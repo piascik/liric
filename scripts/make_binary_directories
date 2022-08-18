@@ -5,6 +5,8 @@ endif
 setenv RAPTOR_BIN_HOME	${LT_BIN_HOME}/raptor
 mkdir -p ${RAPTOR_BIN_HOME}
 mkdir -p ${RAPTOR_BIN_HOME}/scripts
+mkdir -p ${RAPTOR_BIN_HOME}/detector/c/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/detector/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/c/${HOSTTYPE}/

@@ -4,6 +4,8 @@ if ( ! $?LT_DOC_HOME ) then
 endif
 setenv RAPTOR_DOC_HOME	${LT_DOC_HOME}/raptor
 mkdir -p ${RAPTOR_DOC_HOME}
+mkdir -p ${RAPTOR_DOC_HOME}/detector/cdocs/
+mkdir -p ${RAPTOR_DOC_HOME}/detector/test/
 mkdir -p ${RAPTOR_DOC_HOME}/filter_wheel/cdocs/
 mkdir -p ${RAPTOR_DOC_HOME}/filter_wheel/test/
 mkdir -p ${RAPTOR_DOC_HOME}/usb_pio/cdocs/
