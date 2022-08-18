@@ -23,7 +23,7 @@ CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(
 LDFLAGS		= $(CONFIG_LDFLAGS) $(CFITSIOLIB)
 DOCFLAGS 	= -static
 
-SRCS 		= detector_general.c detector_fits_filename.c detector_fits_header.c
+SRCS 		= detector_general.c detector_fits_filename.c detector_fits_header.c detector_setup.c
 HEADERS		= $(SRCS:%.c=%.h)
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
