@@ -447,9 +447,65 @@ int USB_PIO_Command_Port_Set(int port,enum USB_PIO_PORT_TYPE port_type)
 	return TRUE;
 }
 
+/**
+ * Find out whether the specified USB-PIO port is currently set to be an input or output port. 
+ * The BMCM USB-PIO has 3 ports (0..2), the
+ * BMCM OR8 I/O board has one port with 8 inputs, and one port with eight outputs. These can be re-configured 
+ * by moving ICs U10-U16 around. As delivered the BMCM OR8 I/O board has port A (=0) configured as outputs and
+ * port B (=1) configured as inputs.
+ * @param port The port to query, port A (=0) or port B (=1), or port C (=2).
+ * @param port_type The address of a USB_PIO_PORT_TYPE variable, on a successful invocation this is filled in with the 
+ *                  the ports type: input or output.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #USB_PIO_PORT_TYPE
+ * @see #COMMAND_STRING_LENGTH
+ * @see #COMMAND_PORT_TYPE_IS_VALID
+ * @see #COMMAND_PORT_IS_VALID
+ * @see #Command_Error_Number
+ * @see #Command_Error_String
+ * @see usb_pio_connection.html#USB_PIO_Connection_Command
+ */
 int USB_PIO_Command_Port_Get(int port,enum USB_PIO_PORT_TYPE *port_type)
 {
+	char command_string[COMMAND_STRING_LENGTH];
+	char reply_string[COMMAND_STRING_LENGTH];
+	int retval;
+	
+	Command_Error_Number = 0;
+	if(!COMMAND_PORT_IS_VALID(port))
+	{
+		Command_Error_Number = 11;
+		sprintf(Command_Error_String,"USB_PIO_Command_Port_Get: Illegal port %d.",port);
+		return FALSE;
+	}
+	if(port_type == NULL)
+	{
+		Command_Error_Number = 12;
+		sprintf(Command_Error_String,"USB_PIO_Command_Port_Get: port_type was NULL.");
+		return FALSE;
+	}
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Port_Get(port=%d): Started.",port);
+#endif /* LOGGING */
+	/* query port type */
+	sprintf(command_string,"@00D%d?",port);
+	if(!USB_PIO_Connection_Command(command_string,"!00",reply_string,COMMAND_STRING_LENGTH))
+		return FALSE;
 	/* diddly */
+	/* parse reply_string - hex representation of the port_type should be in characters 3 and 4 i.e. '!00xx' */
+	(*port_type) = strtol( &reply_string[3], NULL, 16);
+	if(!COMMAND_PORT_TYPE_IS_VALID((*port_type)))
+	{
+		Command_Error_Number = 13;
+		sprintf(Command_Error_String,"USB_PIO_Command_Port_Get: Parsed Illegal port_type %2.2X from reply '%s'.",
+			(*port_type),reply_string);
+		return FALSE;
+	}
+#if LOGGING > 0
+	USB_PIO_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				   "USB_PIO_Command_Port_Get(port=%d) returned port_type=%d.",port,(*port_type));
+#endif /* LOGGING */
 	return TRUE;
 }
 
