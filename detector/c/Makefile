@@ -12,6 +12,10 @@ CFITSIOLIB = -L$(LT_LIB_HOME) -lcfitsio
 CONFIG_CFLAGS	= -I$(eSTAR_SRC_HOME)/config/include/
 CONFIG_LDFLAGS	= -L$(eSTAR_LIB_HOME) -lestar_config
 
+# raptor xclib
+XCLIB_CFLAGS	= -I/usr/local/xclib/inc
+XCLIB_LDFLAGS	= /usr/local/xclib/lib/xclib_x86_64.a
+
 INCDIR 		= $(DETECTOR_SRC_HOME)/include
 BINDIR		= $(DETECTOR_BIN_HOME)/c/$(HOSTTYPE)
 DOCSDIR 	= $(DETECTOR_DOC_HOME)/cdocs
@@ -19,8 +23,8 @@ DOCSDIR 	= $(DETECTOR_DOC_HOME)/cdocs
 LOGGING_CFLAGS	= -DLOGGING=10
 MUTEX_CFLAGS	= -DMUTEXED
 CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(FITSCFLAGS) $(CONFIG_CFLAGS) \
-		$(SHARED_LIB_CFLAGS) 
-LDFLAGS		= $(CONFIG_LDFLAGS) $(CFITSIOLIB)
+		$(XCLIB_CFLAGS) $(SHARED_LIB_CFLAGS) 
+LDFLAGS		= $(XCLIB_LDFLAGS) $(CONFIG_LDFLAGS) $(CFITSIOLIB)
 DOCFLAGS 	= -static
 
 SRCS 		= detector_general.c detector_fits_filename.c detector_fits_header.c detector_setup.c

@@ -25,8 +25,17 @@
 #include "log_udp.h"
 #include "detector_setup.h"
 #include "detector_general.h"
+#include "xcliball.h"
 
 /* hash defines */
+/**
+ * Define which camera we are talking to the xclib way, the first one.
+ */
+#define UNITS	                  1
+/**
+ * Define a bitwise definition of which cameras we are talking to, to pass into XCLIB functions.
+ */
+#define UNITSMAP                  ((1<<UNITS)-1) 
 
 /* data types */
 /**

@@ -30,7 +30,6 @@
 #include "detector_general.h"
 #include "detector_setup.h"
 
-
 /* defines */
 /**
  * How long some buffers are when generating logging messages.
