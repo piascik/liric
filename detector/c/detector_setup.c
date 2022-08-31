@@ -9,11 +9,13 @@
 /**
  * This hash define is needed before including source files give us POSIX.4/IEEE1003.1b-1993 prototypes.
  */
-#define _POSIX_SOURCE 1
+/* These POSIX prototypes don't work with xclibsc.h: uint is not found 
+** #define _POSIX_SOURCE 1*/
 /**
  * This hash define is needed before including source files give us POSIX.4/IEEE1003.1b-1993 prototypes.
  */
-#define _POSIX_C_SOURCE 199309L
+/*These POSIX prototypes don't work with xclibsc.h: uint is not found 
+** #define _POSIX_C_SOURCE 199309L*/
 
 #include <errno.h>
 #include <stdio.h>
