@@ -82,6 +82,136 @@ static char Setup_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
+ * Routine to initialise the Raptor detector.
+ * <ul>
+ * <li>Detector_Setup_Open is called with the specified format_file.
+ * </ul>
+ * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Setup_Error_Number/Setup_Error_String are set.
+ * @see #Setup_Error_Number
+ * @see #Setup_Error_String
+ * @see #Detector_Setup_Open
+ */
+int Detector_Setup_Startup(char *format_filename)
+{
+	int retval;
+	
+	Setup_Error_Number = 0;
+	if(format_filename == NULL)
+	{
+		Setup_Error_Number = 3;
+		sprintf(Setup_Error_String,"Detector_Setup_Startup:format_file was NULL.");
+		return FALSE;
+	}
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				    "Detector_Setup_Startup(format_file=%s):Started.",
+				    format_filename);
+#endif
+	if(!Detector_Setup_Open("","",format_filename))
+	{
+		/* Setup_Error_Number / Setup_Error_String set in Detector_Setup_Open */
+		return FALSE;
+	}
+	
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Startup:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to close the connection to the Raptor detector.
+ * <ul>
+ * <li>Detector_Setup_Close is called.
+ * </ul>
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Setup_Error_Number/Setup_Error_String are set.
+ * @see #Setup_Error_Number
+ * @see #Setup_Error_String
+ * @see #Detector_Setup_Close
+ */
+int Detector_Setup_Shutdown(void)
+{
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Shutdown:Started.");
+#endif
+	if(!Detector_Setup_Close())
+	{
+		/* Setup_Error_Number / Setup_Error_String set in Detector_Setup_Close */
+		return FALSE;
+	}
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Shutdown:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to open a connection to the library/driver, using the xclib pxd_PIXCIopen routine.
+ * @param driverparms A driver configuration parameter string.
+ * @param formatname The video format as a string, We usually set this to a blank string and use the formatfile instead.
+ * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Setup_Error_Number/Setup_Error_String are set.
+ * @see #Setup_Error_Number
+ * @see #Setup_Error_String
+ */
+int Detector_Setup_Open(char *driverparms,char *formatname, char *formatfile)
+{
+	int retval;
+	
+	Setup_Error_Number = 0;
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Setup_Open(driverparms=%s,formatname=%s,formatfile=%s):Started.",
+				    driverparms,formatname,formatfile);
+#endif
+	retval = pxd_PIXCIopen(driverparms,formatname,formatfile);
+	if(retval < 0)
+	{
+		Setup_Error_Number = 1;
+		sprintf(Setup_Error_String,"Detector_Setup_Open:pxd_PIXCIopen failed: %s (%d).",
+			pxd_mesgErrorCode(retval),retval);
+		return FALSE;
+	}
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Setup_Open:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to close the previously opened connection to the library/driver, using the xclib pxd_PIXCIclose routine.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Setup_Error_Number/Setup_Error_String are set.
+ * @see #Setup_Error_Number
+ * @see #Setup_Error_String
+ */
+int Detector_Setup_Close(void)
+{
+	int retval;
+	
+	Setup_Error_Number = 0;
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Setup_Close:Started.");
+#endif
+	retval = pxd_PIXCIclose();
+	if(retval < 0)
+	{
+		Setup_Error_Number = 2;
+		sprintf(Setup_Error_String,"Detector_Setup_Close:pxd_PIXCIclose failed: %s (%d).",
+			pxd_mesgErrorCode(retval),retval);
+		return FALSE;
+	}
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Setup_Close:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Get the current value of the error number.
  * @return The current value of the error number.
  * @see #Setup_Error_Number
