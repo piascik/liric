@@ -4,14 +4,13 @@
 
 extern int Detector_Setup_Startup(char *format_filename);
 extern int Detector_Setup_Shutdown(void);
-extern int Detector_Setup_Dimensions(void);
-
-extern int Detector_Setup_Get_Sensor_Width(void);
-extern int Detector_Setup_Get_Sensor_Height(void);
-extern int Detector_Setup_Get_Image_Size_Bytes(void);
 
 extern int Detector_Setup_Open(char *driverparms,char *formatname, char *formatfile);
 extern int Detector_Setup_Close(void);
+
+extern int Detector_Setup_Get_Sensor_Size_X(void);
+extern int Detector_Setup_Get_Sensor_Size_Y(void);
+extern int Detector_Setup_Get_Image_Size_Pixels(void);
 
 extern int Detector_Setup_Get_Error_Number(void);
 extern void Detector_Setup_Error(void);
