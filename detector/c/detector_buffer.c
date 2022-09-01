@@ -21,7 +21,7 @@
  * <dt>Size_X</dt> <dd>The size of the buffer image in the X direction, in pixels.</dd>
  * <dt>Size_Y</dt> <dd>The size of the buffer image in the Y direction, in pixels.</dd>
  * <dt>Mono_Image</dt> <dd>A pointer to an allocated block of unsigned short memory,
- *                     of size Size_X * Size_Y * sizeof(ushort) bytes. 
+ *                     of size Size_X * Size_Y * sizeof(unsigned short) bytes. 
  *                     Used for storing an individual readout from the detector.</dd>
  * <dt>Coadd_Image</dt> <dd>A pointer to an allocated block of integer memory,
  *                      of size Size_X * Size_Y * sizeof(int) bytes.
@@ -35,7 +35,7 @@ struct Buffer_Struct
 {
 	int Size_X;
 	int Size_Y;
-	ushort *Mono_Image;
+	unsigned short *Mono_Image;
 	int *Coadd_Image;
 	double *Mean_Image;
 };
@@ -113,7 +113,7 @@ int Detector_Buffer_Allocate(int size_x,int size_y)
 	Buffer_Data.Size_X = size_x;
 	Buffer_Data.Size_Y = size_y;
 	/* allocate mono image */
-	Buffer_Data.Mono_Image = (ushort *)malloc(Buffer_Data.Size_X*Buffer_Data.Size_Y*sizeof(ushort));
+	Buffer_Data.Mono_Image = (unsigned short *)malloc(Buffer_Data.Size_X*Buffer_Data.Size_Y*sizeof(unsigned short));
 	if(Buffer_Data.Mono_Image == NULL)
 	{
 		Buffer_Error_Number = 3;
@@ -307,7 +307,7 @@ int Detector_Buffer_Create_Mean_Image(int coadds)
  * @return An unsigned short pointer to the previously allocated unsigned short image buffer.
  * @see #Buffer_Data
  */
-ushort* Detector_Buffer_Get_Mono_Image(void)
+unsigned short* Detector_Buffer_Get_Mono_Image(void)
 {
 	return Buffer_Data.Mono_Image;
 }

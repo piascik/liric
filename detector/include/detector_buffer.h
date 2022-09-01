@@ -9,7 +9,7 @@ extern int Detector_Buffer_Initialise_Coadd_Image(void);
 extern int Detector_Buffer_Add_Mono_To_Coadd_Image(void);
 extern int Detector_Buffer_Create_Mean_Image(int coadds);
 
-extern ushort* Detector_Buffer_Get_Mono_Image(void);
+extern unsigned short* Detector_Buffer_Get_Mono_Image(void);
 extern double* Detector_Buffer_Get_Mean_Image(void);
 extern int Detector_Buffer_Get_Size_X(void);
 extern int Detector_Buffer_Get_Size_Y(void);
