@@ -25,6 +25,7 @@
 #ifdef MUTEXED
 #include <pthread.h>
 #endif
+#include "detector_buffer.h"
 #include "detector_fits_filename.h"
 #include "detector_fits_header.h"
 #include "detector_general.h"
@@ -105,6 +106,7 @@ static char General_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * Routine to return whether an error has been set in the library.
  * @return The routine returns TRUE if an error has been set, and FALSE if no error has been set.
  * @see #General_Error_Number
+ * @see  detector_buffer.html#Detector_Buffer_Get_Error_Number
  * @see  detector_fits_filename.html#Detector_Fits_Filename_Get_Error_Number
  * @see  detector_fits_header.html#Detector_Fits_Header_Get_Error_Number
  * @see  detector_setup.html#Detector_Setup_Get_Error_Number
@@ -113,6 +115,8 @@ int Detector_General_Is_Error(void)
 {
 	int found = FALSE;
 
+	if(Detector_Buffer_Get_Error_Number() != 0)
+		found = TRUE;
 	if(Detector_Fits_Filename_Get_Error_Number() != 0)
 		found = TRUE;
 	if(Detector_Fits_Header_Get_Error_Number() != 0)
@@ -129,6 +133,8 @@ int Detector_General_Is_Error(void)
  * @see #General_Error_Number
  * @see #General_Error_String
  * @see #Detector_General_Get_Current_Time_String
+ * @see detector_buffer.html#Detector_Buffer_Get_Error_Number
+ * @see detector_buffer.html#Detector_Buffer_Error
  * @see detector_fits_filename.html#Detector_Fits_Filename_Get_Error_Number
  * @see detector_fits_filename.html#Detector_Fits_Filename_Error
  * @see detector_fits_header.html#Detector_Fits_Header_Get_Error_Number
@@ -141,6 +147,11 @@ void Detector_General_Error(void)
 	char time_string[32];
 	int found = FALSE;
 
+	if(Detector_Buffer_Get_Error_Number() != 0)
+	{
+		found = TRUE;
+		Detector_Buffer_Error();
+	}
 	if(Detector_Fits_Filename_Get_Error_Number() != 0)
 	{
 		found = TRUE;
@@ -177,6 +188,8 @@ void Detector_General_Error(void)
  * @see #General_Error_Number
  * @see #General_Error_String
  * @see #Detector_General_Get_Current_Time_String
+ * @see detector_buffer.html#Detector_Buffer_Get_Error_Number
+ * @see detector_buffer.html#Detector_Buffer_Error_String
  * @see detector_fits_filename.html#Detector_Fits_Filename_Get_Error_Number
  * @see detector_fits_filename.html#Detector_Fits_Filename_Error_String
  * @see detector_fits_header.html#Detector_Fits_Header_Get_Error_Number
@@ -189,6 +202,10 @@ void Detector_General_Error_To_String(char *error_string)
 	char time_string[32];
 
 	strcpy(error_string,"");
+	if(Detector_Buffer_Get_Error_Number() != 0)
+	{
+		Detector_Buffer_Error_String(error_string);
+	}
 	if(Detector_Fits_Filename_Get_Error_Number() != 0)
 	{
 		Detector_Fits_Filename_Error_String(error_string);

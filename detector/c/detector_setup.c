@@ -1,4 +1,4 @@
-/* deetctor_setup.c
+/* detector_setup.c
 ** Raptor Ninox-640 Infrared detector library : setup routines.
 */
 /**
@@ -6,16 +6,6 @@
  * @author Chris Mottram
  * @version $Revision$
  */
-/**
- * This hash define is needed before including source files give us POSIX.4/IEEE1003.1b-1993 prototypes.
- */
-/* These POSIX prototypes don't work with xclibsc.h: uint is not found 
-** #define _POSIX_SOURCE 1*/
-/**
- * This hash define is needed before including source files give us POSIX.4/IEEE1003.1b-1993 prototypes.
- */
-/*These POSIX prototypes don't work with xclibsc.h: uint is not found 
-** #define _POSIX_C_SOURCE 199309L*/
 
 #include <errno.h>
 #include <stdio.h>
@@ -25,6 +15,7 @@
 #include <unistd.h>
 
 #include "log_udp.h"
+#include "detector_buffer.h"
 #include "detector_setup.h"
 #include "detector_general.h"
 #include "xcliball.h"
@@ -94,6 +85,7 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  * <li>We call Setup_Get_Dimensions to get the frame grabbers image dimensions from the frame grabber. We
  *     store the returned image dimensions in the setup data (Size_X/Size_Y).
  * <li>We log some more information from the frame grabber by calling pxd_imageCdim / pxd_imageBdim.
+ * <li>We initialise the detector library's buffers by calling Detector_Buffer_Allocate.
  * </ul>
  * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
  * @return The routine returns TRUE on success and FALSE on failure. 
@@ -104,6 +96,7 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  * @see #Setup_Data
  * @see #Detector_Setup_Open
  * @see #Setup_Get_Dimensions
+ * @see detector_buffer.html#Detector_Buffer_Allocate
  */
 int Detector_Setup_Startup(char *format_filename)
 {
@@ -149,7 +142,16 @@ int Detector_Setup_Startup(char *format_filename)
 				    pxd_imageCdim());
 	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,"Detector_Setup_Startup:Bits per pixel = %d.",
 				    pxd_imageCdim()*pxd_imageBdim());
-#endif	
+#endif
+	/* allocate image buffers */
+	if(!Detector_Buffer_Allocate(Setup_Data.Size_X,Setup_Data.Size_Y))
+	{
+		Setup_Error_Number = 8;
+		sprintf(Setup_Error_String,
+			"Detector_Setup_Startup:Detector_Buffer_Allocate(size_x = %d,size_y = %d) failed.",
+			Setup_Data.Size_X,Setup_Data.Size_Y);
+		return FALSE;
+	}
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Startup:Finished.");
 #endif
