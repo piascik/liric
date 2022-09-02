@@ -4,7 +4,7 @@
 /**
  * Routines to look after acquiring data (exposures) using the Raptor Ninox-640 Infrared detector.
  * @author Chris Mottram
- * @version $Revision$
+ * @version $Id$
  */
 #include <errno.h>
 #include <stdio.h>
@@ -157,6 +157,15 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  * <li>We create a mean image from the acquired coadds, by calling Detector_Buffer_Create_Mean_Image.
  * <li>We write the image to a FITS image by calling Exposure_Save.
  * </ul>
+ * Before this routine is called, the following must have been done:
+ * <ul>
+ * <li>The frame grabber should have been initialised, and the video mode set up, by calling Detector_Setup_Startup. 
+ *     This also allocates the detector library's image buffers (Detector_Buffer_Allocate).
+ * <li>The FITS header module should have been initialised by calling Detector_Fits_Header_Initialise.
+ * <li>The per coadd frame exposure length should have been set by calling 
+ *     Detector_Exposure_Set_Coadd_Frame_Exposure_Length. This setting must match the format_filename used in 
+ *     Detector_Setup_Startup.
+ * </ul>
  * @param exposure_length_ms The overall exposure length in milliseconds, used to determine the number of coadd frames
  *        retrieved from the detector and averaged.
  * @param fits_filename A string containing the FITS image filename to write the read out data into.
@@ -166,11 +175,13 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  * @see #Exposure_Error_Number
  * @see #Exposure_Error_String
  * @see #Exposure_Save
+ * @see #Detector_Exposure_Set_Coadd_Frame_Exposure_Length
  * @see detector_buffer.html#Detector_Buffer_Initialise_Coadd_Image
  * @see detector_buffer.html#Detector_Buffer_Get_Mono_Image
  * @see detector_buffer.html#Detector_Buffer_Get_Pixel_Count
  * @see detector_buffer.html#Detector_Buffer_Add_Mono_To_Coadd_Image
  * @see detector_buffer.html#Detector_Buffer_Create_Mean_Image
+ * @see detector_fits_header.html#Detector_Fits_Header_Initialise
  * @see detector_general.html#DETECTOR_GENERAL_ONE_MICROSECOND_NS
  * @see detector_general.html#DETECTOR_GENERAL_ONE_SECOND_MS
  * @see detector_general.html#Detector_General_Log_Format

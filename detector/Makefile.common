@@ -5,3 +5,16 @@ DETECTOR_BIN_HOME	= $(RAPTOR_BIN_HOME)/$(DETECTOR_HOME)
 DETECTOR_DOC_HOME	= $(RAPTOR_DOC_HOME)/$(DETECTOR_HOME)
 
 DETECTOR_LIBNAME	= $(RAPTOR_HOME)_$(DETECTOR_HOME)
+
+# Do we wish to link with CFITSIO routines?
+FITSCFLAGS = -DCFITSIO=1 -I$(CFITSIOINCDIR) 
+CFITSIOLIB = -L$(LT_LIB_HOME) -lcfitsio
+
+# raptor xclib
+XCLIB_CFLAGS	= -I/usr/local/xclib/inc
+XCLIB_LDFLAGS	= /usr/local/xclib/lib/xclib_x86_64.so
+
+# NGAT Astro MJD link informatiom
+MJDCFLAGS 	= -DNGATASTRO=1 -I${LT_SRC_HOME}/ngatastro/include
+MJDLIB		= -lngatastro
+

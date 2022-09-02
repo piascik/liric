@@ -4,31 +4,15 @@ include ../../../Makefile.common
 include ../../Makefile.common
 include ../Makefile.common
 
-# Do we wish to link with CFITSIO routines?
-FITSCFLAGS = -DCFITSIO=1 -I$(CFITSIOINCDIR) 
-CFITSIOLIB = -L$(LT_LIB_HOME) -lcfitsio
-
-# estar_config
-CONFIG_CFLAGS	= -I$(eSTAR_SRC_HOME)/config/include/
-CONFIG_LDFLAGS	= -L$(eSTAR_LIB_HOME) -lestar_config
-
-# raptor xclib
-XCLIB_CFLAGS	= -I/usr/local/xclib/inc
-XCLIB_LDFLAGS	= /usr/local/xclib/lib/xclib_x86_64.a
-
-# NGAT Astro MJD link informatiom
-MJDCFLAGS 	= -DNGATASTRO=1 -I${LT_SRC_HOME}/ngatastro/include
-MJDLIB		= -lngatastro
-
 INCDIR 		= $(DETECTOR_SRC_HOME)/include
 BINDIR		= $(DETECTOR_BIN_HOME)/c/$(HOSTTYPE)
 DOCSDIR 	= $(DETECTOR_DOC_HOME)/cdocs
 
 LOGGING_CFLAGS	= -DLOGGING=10
 MUTEX_CFLAGS	= -DMUTEXED
-CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(FITSCFLAGS) $(CONFIG_CFLAGS) \
+CFLAGS 		= -g -I$(INCDIR) $(LOGGING_CFLAGS) $(MUTEX_CFLAGS) $(LOG_UDP_CFLAGS) $(FITSCFLAGS) \
 		$(XCLIB_CFLAGS) $(MJDCFLAGS) $(SHARED_LIB_CFLAGS) 
-LDFLAGS		= $(XCLIB_LDFLAGS) $(CONFIG_LDFLAGS) $(MJDLIB) $(CFITSIOLIB)
+LDFLAGS		= $(XCLIB_LDFLAGS) $(MJDLIB) $(CFITSIOLIB)
 DOCFLAGS 	= -static
 
 SRCS 		= detector_buffer.c detector_exposure.c detector_fits_filename.c detector_fits_header.c \
