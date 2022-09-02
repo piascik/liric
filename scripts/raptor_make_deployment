@@ -82,7 +82,7 @@ endif
 #
 echo "Creating directory structure..."
 set dir_count = 0
-set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_icc_dir} ${deployment_bin_dir} ${deployment_dir}/icc/tmp ${deployment_dir}/icc/tmp/log_archive ${deployment_dir}/icc/log ${deployment_icc_dir}/config ${deployment_bin_dir}/scripts ${deployment_bin_dir}/raptor/scripts ${deployment_bin_dir}/raptor/test ${deployment_bin_dir}/raptor/java/ ${deployment_bin_dir}/ics_gui/java ${deployment_bin_dir}/ics_gui/java/wav ${deployment_bin_dir}/raptor/c/${HOSTTYPE} ${deployment_bin_dir}/raptor/detector/test/${HOSTTYPE} ${deployment_bin_dir}/raptor/filter_wheel/test/${HOSTTYPE} ${deployment_bin_dir}/raptor/usb_pio/test/${HOSTTYPE} ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/ccd/misc/${HOSTTYPE} ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/commandserver/test/${HOSTTYPE} ${deployment_bin_dir}/ngatastro/test/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/autobooter/java "
+set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_icc_dir} ${deployment_bin_dir} ${deployment_dir}/icc/tmp ${deployment_dir}/icc/tmp/log_archive ${deployment_dir}/icc/log ${deployment_icc_dir}/config ${deployment_bin_dir}/scripts ${deployment_bin_dir}/raptor/scripts ${deployment_bin_dir}/raptor/test ${deployment_bin_dir}/raptor/fmt ${deployment_bin_dir}/raptor/java/ ${deployment_bin_dir}/ics_gui/java ${deployment_bin_dir}/ics_gui/java/wav ${deployment_bin_dir}/raptor/c/${HOSTTYPE} ${deployment_bin_dir}/raptor/detector/test/${HOSTTYPE} ${deployment_bin_dir}/raptor/filter_wheel/test/${HOSTTYPE} ${deployment_bin_dir}/raptor/usb_pio/test/${HOSTTYPE} ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/ccd/misc/${HOSTTYPE} ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/commandserver/test/${HOSTTYPE} ${deployment_bin_dir}/ngatastro/test/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/autobooter/java "
 foreach dir ( ${dir_list} )
 	mkdir -p ${dir}
 	if ($status != 0) then
@@ -167,7 +167,7 @@ echo "${java_class_dir_count} Java class directories copied with ${java_class_fi
 # C libraries
 #
 echo "Copying C libraries..."
-set clib_list = "libcfitsio.so libngatastro.so libngatutil.so libestar_config.so liblog_udp.so libcommandserver.so libraptor_filter_wheel.so libraptor_usb_pio.so"
+set clib_list = "libcfitsio.so libngatastro.so libngatutil.so libestar_config.so liblog_udp.so libcommandserver.so libraptor_detector.so libraptor_filter_wheel.so libraptor_usb_pio.so"
 set clib_count = 0
 foreach clib ( ${clib_list} )
 	echo "C Library : ${clib}"
@@ -307,6 +307,21 @@ foreach file ( ${file_list} )
     @ file_count ++
 end
 echo "${file_count} camera configuration files copied."
+echo "Copying fmt files..."
+set file_list = "raptor/fmt/rap_1000ms.fmt raptor/fmt/rap_100ms.fmt raptor/fmt/rap_bias.fmt"
+set file_count = 0
+cd ${dev_dir}
+foreach file ( ${file_list} )
+    set new_file = `echo ${file} | sed "s#${camera_name}\.##"`
+    cp ${dev_bin_dir}/${file} ${deployment_bin_dir}/${new_file}
+    set cp_status = $status
+    if( ${cp_status} != 0 ) then
+	echo "Copy failed: ${dev_bin_dir}/${file} to ${deployment_bin_dir}/${new_file}"
+	exit 5
+    endif
+    @ file_count ++
+end
+echo "${file_count} fmt configuration files copied."
 #
 # /etc init scripts
 #

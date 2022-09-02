@@ -1,4 +1,9 @@
 #!/bin/csh
+if ( ! $?LT_SRC_HOME ) then
+   setenv LT_SRC_HOME "/home/dev/src"
+endif
+setenv RAPTOR_SRC_HOME	        ${LT_SRC_HOME}/raptor
+setenv RAPTOR_NOGIT_SRC_HOME	${LT_SRC_HOME}/raptor-nogit
 if ( ! $?LT_BIN_HOME ) then
    setenv LT_BIN_HOME "/home/dev/bin"
 endif
@@ -9,5 +14,16 @@ mkdir -p ${RAPTOR_BIN_HOME}/detector/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/detector/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/test/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/fmt
 mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/test/${HOSTTYPE}/
+#
+# Create fmt soft-links from raptor-nogit src directory
+#
+cd ${RAPTOR_BIN_HOME}/fmt
+foreach fmtfile ( rap_1000ms.fmt rap_100ms.fmt rap_bias.fmt )
+    set file = "${RAPTOR_NOGIT_SRC_HOME}/fmt/${fmtfile}"
+    if ( ! -e ${fmtfile} ) then
+	ln -s ${file}
+    endif
+end
