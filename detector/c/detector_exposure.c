@@ -117,19 +117,58 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  * The number of coadd frames is determined by dividing the exposure_length_ms parameter 
  * by the individual coadd frame exposure length Coadd_Frame_Exposure_Length_Ms. 
  * The resultant mean of the coadds is written to the specified FITS filename.
+ * All the above is implemented as follows:
+ * <ul>
+ * <li>We check the fits_filename is not NULL.
+ * <li>We compute the number of coadds, and check it is within range.
+ * <li>We initialise the coadd image buffer to 0 by calling Detector_Buffer_Initialise_Coadd_Image.
+ * <li>We take a timestamp for the start of this 'exposure' and store it in Exposure_Data.Exposure_Start_Timestamp.
+ * <li>We initialise last_buffer to 0.
+ * <li>We call pxd_goLivePair to start camera 1 saving frames to frame grabber buffers 1 and 2.
+ * <li>We enter a for loop over Exposure_Data.Coadd_Count:
+ *     <ul>
+ *     <li>We get a timestamp for the start of this coadd.
+ *     <li>We enter a loop until the last capture buffer changes: while (pxd_capturedBuffer(1) == last_buffer).
+ *         <ul>
+ *         <li>We sleep for a bit (500 us).
+ *         <li>We take a current timestamp.
+ *         <li>We check whether the current coadd has taken too long, and time out/abort if this is the case. 
+ *             The current timeout is 10 times per coadd frame time (Exposure_Data.Coadd_Frame_Exposure_Length_Ms).
+ *         </ul>
+ *     <li>We update last_buffer to the last captured buffer pxd_capturedBuffer(1).
+ *     <li>We call pxd_readushort to read out last_buffer from the frame grabber and put the image contents 
+ *         into the allocated mono image buffer (Detector_Buffer_Get_Mono_Image), which has allocated 
+ *         Detector_Buffer_Get_Pixel_Count pixels, reading out the whole image from (0,0) to 
+ *         (Detector_Setup_Get_Sensor_Size_X,Detector_Setup_Get_Sensor_Size_Y).
+ *     <li>We check pxd_readushort read out the whole image.
+ *     <li>We add the mono image buffer to the coadd image buffer by calling Detector_Buffer_Add_Mono_To_Coadd_Image.
+ *     </ul>
+ * <li>We stop the frame grabber acquiring data, by calling pxd_goAbortLive.
+ * <li>We create a mean image from the acquired coadds, by calling Detector_Buffer_Create_Mean_Image.
+ * <li>We write the image to a FITS image.
+ * </ul>
  * @param exposure_length_ms The overall exposure length in milliseconds, used to determine the number of coadd frames
  *        retrieved from the detector and averaged.
  * @param fits_filename A string containing the FITS image filename to write the read out data into.
  * @see #Exposure_Data
  * @see #Exposure_Error_Number
  * @see #Exposure_Error_String
+ * @see detector_buffer.html#Detector_Buffer_Initialise_Coadd_Image
+ * @see detector_buffer.html#Detector_Buffer_Get_Mono_Image
+ * @see detector_buffer.html#Detector_Buffer_Get_Pixel_Count
+ * @see detector_buffer.html#Detector_Buffer_Add_Mono_To_Coadd_Image
+ * @see detector_buffer.html#Detector_Buffer_Create_Mean_Image
  * @see detector_general.html#DETECTOR_GENERAL_ONE_MICROSECOND_NS
+ * @see detector_general.html#DETECTOR_GENERAL_ONE_SECOND_MS
+ * @see detector_general.html#Detector_General_Log_Format
  * @see detector_setup.html#Detector_Setup_Startup
+ * @see detector_setup.html#Detector_Setup_Get_Sensor_Size_X
+ * @see detector_setup.html#Detector_Setup_Get_Sensor_Size_Y
  */
 int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 {
 	struct timespec current_time,coadd_start_time,sleep_time;
-	pxbuffer_t lastbuf;
+	pxbuffer_t last_buffer;
 	int i,retval;
 	
 	Exposure_Error_Number = 0;
@@ -178,15 +217,24 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	}
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
+	/* initialise last_buffer */
+	last_buffer = 0;
 	/* turn on image capture into frame buffers 1 and 2 */
-	lastbuf = 0;
-	pxd_goLivePair(1,1,2);
+	retval = pxd_goLivePair(1,1,2);
+	if(retval < 0)
+	{
+		Exposure_Error_Number = 11;
+		sprintf(Exposure_Error_String,"Detector_Exposure_Expose:pxd_goLivePair failed: '%s' (%d).",
+			pxd_mesgErrorCode(retval),retval);
+		return FALSE;	
+	}
+	/* loop over coadds */
 	for(i=0; i < Exposure_Data.Coadd_Count; i ++)
 	{
 		/* get a timestamp for the start of this coadd */
 		clock_gettime(CLOCK_REALTIME,&coadd_start_time);
 		/* enter a loop until the last capture buffer changes */ 
-		while (pxd_capturedBuffer(1)==lastbuf)
+		while (pxd_capturedBuffer(1) == last_buffer)
 		{
 			/* sleep a bit (500 us) */
 			sleep_time.tv_sec = 0;
@@ -207,12 +255,12 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 				pxd_goAbortLive(1);
 				return FALSE;
 			}
-		}/* end while the frame grabber captured buffer is the lastbuf */
-		/* update lastbuf */
-		lastbuf = pxd_capturedBuffer(1);
+		}/* end while the frame grabber captured buffer is the last_buffer */
+		/* update last_buffer */
+		last_buffer = pxd_capturedBuffer(1);
 		/* copy frame grabber buffer into mono image buffer 
 		** Assuming UNITS = 1  here, e.g. 1 detector */
-		retval = pxd_readushort(1,lastbuf,0,0,
+		retval = pxd_readushort(1,last_buffer,0,0,
 					Detector_Setup_Get_Sensor_Size_X(),Detector_Setup_Get_Sensor_Size_Y(),
 					Detector_Buffer_Get_Mono_Image(),Detector_Buffer_Get_Pixel_Count(),"Grey");
 		if(retval < 0)
@@ -245,7 +293,14 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		}
 	}/* end for (i) on Coadd_Count */
 	/* stop the frame grabber acquiring data */
-	pxd_goAbortLive(1);
+	retval = pxd_goAbortLive(1);
+	if(retval < 0)
+	{
+		Exposure_Error_Number = 12;
+		sprintf(Exposure_Error_String,"Detector_Exposure_Expose:pxd_goAbortLive failed: '%s' (%d).",
+			pxd_mesgErrorCode(retval),retval);
+		return FALSE;	
+	}
 	/* create mean image from coadds */
 	if(!Detector_Buffer_Create_Mean_Image(Exposure_Data.Coadd_Count))
 	{
