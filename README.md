@@ -22,8 +22,9 @@ The Makefile.common file is included in Makefile's to provide common root direct
 ## Dependencies / Prerequisites
 
 * The Raptor SDK must be installed
-* The eSTAR config repo/package must be installed
+* The eSTAR config repo/package must be installed.
 * The log_udp repo/package must be installed: https://github.com/LivTel/log_udp
+* The ngatastro repo/package must be installed.
 * The commandserver repo/package must be installed: https://github.com/LivTel/commandserver
 * The ngat repo/package must be installed: https://github.com/LivTel/ngat
 * The software can only be built from within an LT development environment
