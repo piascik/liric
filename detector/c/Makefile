@@ -16,7 +16,7 @@ LDFLAGS		= $(XCLIB_LDFLAGS) $(MJDLIB) $(CFITSIOLIB)
 DOCFLAGS 	= -static
 
 SRCS 		= detector_buffer.c detector_exposure.c detector_fits_filename.c detector_fits_header.c \
-		detector_general.c detector_setup.c 
+		detector_general.c detector_serial.c detector_setup.c 
 HEADERS		= $(SRCS:%.c=%.h)
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
