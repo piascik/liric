@@ -32,6 +32,41 @@
  * Default length of time to wait for a reply to a command, in milliseconds.
  */
 #define DEFAULT_REPLY_TIMEOUT_MS  (1000)
+/**
+ * Serial command byte to read from the system status register.
+ */
+#define SERIAL_SYSTEM_STATUS_REGISTER_READ    (0x49)
+/**
+ * Command termintor / successful command acknowledge.
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ */
+#define SERIAL_ETX                            (0x50)
+/**
+ * Partial command packet received, camera timed out waiting for end of packet. Command not processed
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ */
+#define SERIAL_ETX_SER_TIMEOUT                (0x51)
+/**
+ * Check sum transmitted by host did not match that calculated for the packet. Command not processed.
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ */
+#define SERIAL_ETX_CK_SUM_ERR                 (0x52)
+/**
+ * An I2C command has been received from the Host but failed internally in the camera.
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ */
+#define SERIAL_ETX_I2C_ERR                    (0x53)
+/**
+ * Data was detected on serial line, command not recognized
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ */
+#define SERIAL_ETX_UNKNOWN_CMD                (0x54)
+/**
+ * Host Command to access the camera EPROM successfully received by camera but not processed as EPROM is busy. I.e.
+ * FPGA trying to boot.
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ */
+#define SERIAL_ETX_DONE_LOW                   (0x55)
 
 /* data types */
 /**
@@ -119,6 +154,67 @@ int Detector_Serial_Open(void)
 }
 
 /**
+ * Get the system status from the Raptor's serial interface, and parse the results.
+ * @param status An unsigned character byte, if not NULL, on return contains the raw status byte.
+ * @param checksum_enabled The address on an integer, if not NULL, on return contains a boolean, 
+ *        TRUE if checksum's are enabled.
+ * @param cmd_ack_enabled The address on an integer, if not NULL, on return contains a boolean, 
+ *        TRUE if command acknowledgements are enabled.
+ * @param fpga_booted The address on an integer, if not NULL, on return contains a boolean, 
+ *        TRUE if the FPGA has booted successfully.
+ * @param fpga_in_reset The address on an integer, if not NULL, on return contains a boolean, 
+ *        TRUE if the FPGA is held in RESET.
+ * @param eprom_comms_enabled The address on an integer, if not NULL, on return contains a boolean, 
+ *        TRUE if comms are enabled to the FPGA EPROM.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ */
+int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksum_enabled,
+						     int *cmd_ack_enabled,int *fpga_booted,int *fpga_in_reset,
+						     int *eprom_comms_enabled)
+{
+	unsigned char command_buffer[16];
+	unsigned char reply_buffer[16];
+	int command_buffer_length;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_System_Status:Started.");
+#endif
+	/* setup command buffer */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = SERIAL_SYSTEM_STATUS_REGISTER_READ;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send command and get reply. We don't know if checksums/acks are currently enabled, 
+	** so only expect the status byte */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,1))
+		return FALSE;
+	if(status != NULL)
+	{
+		(*status) = reply_buffer[0];
+	}
+	if(checksum_enabled != NULL)
+		(*checksum_enabled) = reply_buffer[0]&(1<<6);
+	if(cmd_ack_enabled != NULL)
+		(*cmd_ack_enabled) = reply_buffer[0]&(1<<4);
+	if(fpga_booted != NULL)
+		(*fpga_booted) = reply_buffer[0]&(1<<2);
+	if(fpga_in_reset != NULL)
+		(*fpga_in_reset) = (reply_buffer[0]&(1<<1)) == 0;
+	if(eprom_comms_enabled != NULL)
+		(*eprom_comms_enabled) = reply_buffer[0]&(1<<0);
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_System_Status:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Low level command to send a Raptor Ninox-640 command over the 
  * camera link's internal serial connection to the camera head, and optionally wait for a reply.
  * The amera link's internal serial connection should have been previously opened/configured 
@@ -126,7 +222,7 @@ int Detector_Serial_Open(void)
  * <ul>
  * <li>
  * </ul>
- * @param command_buffer A previously allocated array of characters of at least length command_buffer_length,
+ * @param command_buffer A previously allocated array of unsigned characters of at least length command_buffer_length,
  *      each character containing a byte to send to the Raptor Ninox-640 camera head. The command can be binary in
  *      nature and the 'string' is not NULL terminated (and may indeed include NULL bytes as command bytes/parameters).
  * @param command_buffer_length The number of bytes to send to the Raptor Ninox-640 camera head.
@@ -147,9 +243,10 @@ int Detector_Serial_Open(void)
  * @see detector_general.html#Detector_General_Log
  * @see detector_general.html#Detector_General_Log_Format
  */
-int Detector_Serial_Command(char *command_buffer,int command_buffer_length,
-			    char *reply_buffer,int expected_reply_length)
+int Detector_Serial_Command(unsigned char *command_buffer,int command_buffer_length,
+			    unsigned char *reply_buffer,int expected_reply_length)
 {
+	char print_buffer[DETECTOR_GENERAL_ERROR_STRING_LENGTH];
 	struct timespec reply_start_time,sleep_time,current_time;
 	int reply_bytes_read,retval;
 	
@@ -168,7 +265,8 @@ int Detector_Serial_Command(char *command_buffer,int command_buffer_length,
 	/* write command message */
 #if LOGGING > 9
 	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command:Writing '%s'.",
-				    Detector_Serial_Print_Command(command_buffer,command_buffer_length));
+				    Detector_Serial_Print_Command(command_buffer,command_buffer_length,
+								  print_buffer,DETECTOR_GENERAL_ERROR_STRING_LENGTH));
 #endif
 	retval = pxd_serialWrite(UNITSMAP,0,command_buffer,command_buffer_length);
 	if(retval < 0)
@@ -219,7 +317,8 @@ int Detector_Serial_Command(char *command_buffer,int command_buffer_length,
 		}/* end while not all reply read */
 #if LOGGING > 9
 		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command:Reply was '%s'.",
-					    Detector_Serial_Print_Command(reply_buffer,reply_bytes_read));
+					    Detector_Serial_Print_Command(reply_buffer,reply_bytes_read,
+					      print_buffer,DETECTOR_GENERAL_ERROR_STRING_LENGTH));
 #endif
 	}/* end if reply_buffer != NULL */
 #if LOGGING > 1
@@ -229,39 +328,221 @@ int Detector_Serial_Command(char *command_buffer,int command_buffer_length,
 }
 
 /**
- * Routine to translate a command/reply buffer into printable hex format.
- * @param buffer A character string containing buffer_length bytes, to print in a hex format.
- * @param buffer_length The number of characters in the buffer.
- * @return A pointer to a string (on the stack for this function call) containing the values in the buffer printed as
- *         '0xNN<spc>[0xNN}...'.
+ * This routine computes a checksum for the specified command buffer, and adds it to the end of the buffer.
+ * The command buffer should already have the ETX terminator byte included.
+ * @param buffer An array of unsigned chars, containing command bytes. The array should have memory allocated to it 
+ *        at least one byte larger than the inout buffer_length, so the checksum byte can be added to the buffer 
+ *        at buffer[(*buffer_length)].
+ * @param buffer_length The address of an integer. At the start of this function the integer should contain the 
+ *        number of bytes in the buffer. On successful execution of the function, this should have been incremented 
+ *        by 1, and a checksum byte appended to the end of the buffer 
+ *        (which should have extra memory allocated for this).
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Print_Command
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
  */
-char* Detector_Serial_Print_Command(char *buffer,int buffer_length)
+int Detector_Serial_Compute_Checksum(unsigned char *buffer,int *buffer_length)
 {
-	char buff[DETECTOR_GENERAL_ERROR_STRING_LENGTH];
+	char print_buffer[DETECTOR_GENERAL_ERROR_STRING_LENGTH];
+	unsigned char checksum_byte;
+	int i;
+	
+	Serial_Error_Number = 0;
+	if(buffer == NULL)
+	{
+		Serial_Error_Number = 12;
+		sprintf(Serial_Error_String,"Detector_Serial_Compute_Checksum:buffer is NULL.");
+		return FALSE;	
+	}
+	if(buffer_length == NULL)
+	{
+		Serial_Error_Number = 13;
+		sprintf(Serial_Error_String,"Detector_Serial_Compute_Checksum:buffer_length is NULL.");
+		return FALSE;	
+	}
+#if LOGGING > 5
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+				    "Detector_Serial_Compute_Checksum:Started with buffer '%s'.",
+				    Detector_Serial_Print_Command(buffer,(*buffer_length),print_buffer,
+								  DETECTOR_GENERAL_ERROR_STRING_LENGTH));
+#endif
+	/* do exclusive or of buffer contents */
+	checksum_byte = 0;
+	for(i=0; i < (*buffer_length); i++)
+	{
+		checksum_byte ^= buffer[i];
+	}
+	buffer[(*buffer_length)++] = checksum_byte;
+#if LOGGING > 5
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+				    "Detector_Serial_Compute_Checksum:Finished with buffer '%s'.",
+				    Detector_Serial_Print_Command(buffer,(*buffer_length),print_buffer,256));
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to translate a command/reply buffer into printable hex format.
+ * @param buffer An unsigned character string containing buffer_length bytes, to print in a hex format.
+ * @param buffer_length The number of characters in the buffer.
+ * @param string_buffer A string to store the hex string representation of buffer.
+ * @param string_buffer_length The allocated length of string_buffer.
+ * @return A pointer to string_buffer containing the values in the buffer printed as
+ *         '0xNN<spc>[0xNN}...'.
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
+ */
+char* Detector_Serial_Print_Command(unsigned char *buffer,int buffer_length,
+				    char *string_buffer,int string_buffer_length)
+{
 	char char_buff[16];
 	int i,done;
 
 	done = FALSE;
 	i=0;
-	strcpy(buff,"");
+	strcpy(string_buffer,"");
 	while(done == FALSE)
 	{
 		sprintf(char_buff,"%#02x ",buffer[i]);
-		if((strlen(buff)+strlen(char_buff)+1) < DETECTOR_GENERAL_ERROR_STRING_LENGTH)
+		if((strlen(string_buffer)+strlen(char_buff)+1) < string_buffer_length)
 		{
-			strcat(buff,char_buff);
+			strcat(string_buffer,char_buff);
 			i++;
 			done = (i == buffer_length);
 		}
 		else
 		{
-			if((strlen(buff)+strlen("...")+1) < DETECTOR_GENERAL_ERROR_STRING_LENGTH)
+			if((strlen(string_buffer)+strlen("...")+1) < string_buffer_length)
 			{
-				strcat(buff,"...");
+				strcat(string_buffer,"...");
 			}
+			else
+				strcat(string_buffer+(string_buffer_length-(strlen("...")+1)),"...");
 			done = TRUE;
 		}
 	}
+	return string_buffer;
+}
+
+/**
+ * Routine to parse a string of the form '0xNN [0xNN...]', representing a series of unsigned command bytes, 
+ * into a command buffer, suitable for sending over the serial link.
+ * @param string_buffer A string containing the bytes to put into the command buffer in the text form '0xNN [0xNN...]'.
+ * @param command_buffer A pointer to an unsigned character array (representing a serial of command bytes) 
+ *                       to put the parsed data into.
+ * @param command_buffer_max_length The allocated length of the command_buffer.
+ * @param command_buffer_length The address of an integer, on a successful return the number of parsed bytes put into
+ *        the command buffer is returned.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Print_Command
+ * @see detector_general.html#DETECTOR_GENERAL_ERROR_STRING_LENGTH
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
+ */
+int Detector_Serial_Parse_Hex_String(char *string_buffer,unsigned char *command_buffer,int command_buffer_max_length,
+				     int *command_buffer_length)
+{
+	char print_buffer[DETECTOR_GENERAL_ERROR_STRING_LENGTH];
+	int done,retval,string_buffer_index,char_count;
+	unsigned int value;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Parse_Hex_String:Started.");
+#endif
+	if(string_buffer == NULL)
+	{
+		Serial_Error_Number = 6;
+		sprintf(Serial_Error_String,"Detector_Serial_Parse_Hex_String:string_buffer is NULL.");
+		return FALSE;	
+	}
+	if(command_buffer == NULL)
+	{
+		Serial_Error_Number = 7;
+		sprintf(Serial_Error_String,"Detector_Serial_Parse_Hex_String:command_buffer is NULL.");
+		return FALSE;	
+	}
+	if(command_buffer_length == NULL)
+	{
+		Serial_Error_Number = 8;
+		sprintf(Serial_Error_String,"Detector_Serial_Parse_Hex_String:command_buffer_length is NULL.");
+		return FALSE;	
+	}
+	(*command_buffer_length) = 0;
+	string_buffer_index = 0;
+	done = FALSE;
+	while(done == FALSE)
+	{
+		retval = sscanf(string_buffer+string_buffer_index,"%x%n",&value,&char_count);
+		if(retval == 0) /* no conversion done, end of string ? */
+		{
+			done = TRUE;
+		}
+		else if(retval == 1) /* data parsed */
+		{
+			if(value > 255)
+			{
+				Serial_Error_Number = 9;
+				sprintf(Serial_Error_String,
+					"Detector_Serial_Parse_Hex_String:parse failed:"
+					"value too large value = %d (string = %s,string_buffer_index = %d).",
+					value,string_buffer,string_buffer_index);
+				return FALSE;	
+			}
+			if((*command_buffer_length) >= command_buffer_max_length)
+			{
+				Serial_Error_Number = 10;
+				sprintf(Serial_Error_String,
+					"Detector_Serial_Parse_Hex_String:parse failed:command buffer too short:"
+					"%d vs %d, value = %d (string = '%s',string_buffer_index = %d).",
+					(*command_buffer_length),command_buffer_max_length,value,
+					string_buffer,string_buffer_index);
+				return FALSE;	
+			}
+			command_buffer[(*command_buffer_length)] = value;
+#if LOGGING > 9
+			Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+						    "Detector_Serial_Parse_Hex_String:command buffer[%d] = %02x (%d).",
+						    (*command_buffer_length),command_buffer[(*command_buffer_length)],
+						    command_buffer[(*command_buffer_length)]);
+#endif
+			string_buffer_index += char_count;
+			(*command_buffer_length)++;
+		}
+		else
+		{
+			if(string_buffer_index = strlen(string_buffer))
+			{
+				/* we have reached the end of the input string */
+				done = TRUE;
+			}
+			else
+			{
+				Serial_Error_Number = 11;
+				sprintf(Serial_Error_String,"Detector_Serial_Parse_Hex_String:parse failed: "
+					"retval = %d (string = %s,string_buffer_index = %d).",
+					retval,string_buffer,string_buffer_index);
+				return FALSE;
+			}
+		}
+	}
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+				    "Detector_Serial_Parse_Hex_String:Finished with '%s' parsed as '%s'.",
+				    string_buffer,
+				    Detector_Serial_Print_Command(command_buffer,(*command_buffer_length),
+								  print_buffer,DETECTOR_GENERAL_ERROR_STRING_LENGTH));
+#endif
+	return TRUE;
 }
 
 /**
