@@ -88,8 +88,32 @@ static void Help(void);
  * Main program.
  * @param argc The number of arguments to the program.
  * @param argv An array of argument strings.
+ * @see #STRING_LENGTH
  * @see #Parse_Arguments
  * @see #Log_Level
+ * @see #FMT_Directory
+ * @see #Coadd_Frame_Exposure_Length_Ms
+ * @see #Exposure_Length_Ms
+ * @see #FITS_Directory
+ * @see #FITS_Filename
+ * @see ../cdocs/detector_exposure.html#Detector_Exposure_Set_Coadd_Frame_Exposure_Length
+ * @see ../cdocs/detector_exposure.html#Detector_Exposure_Expose
+ * @see ../cdocs/detector_fits_filename.html#Detector_Fits_Filename_Initialise
+ * @see ../cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_DEFAULT_INSTRUMENT_CODE
+ * @see ../cdocs/detector_fits_filename.html#Detector_Fits_Filename_Next_Multrun
+ * @see ../cdocs/detector_fits_filename.html#Detector_Fits_Filename_Next_Run
+ * @see ../cdocs/detector_fits_filename.html#Detector_Fits_Filename_Get_Filename
+ * @see ../cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_EXPOSURE_TYPE
+ * @see ../cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_PIPELINE_FLAG
+ * @see ../cdocs/detector_fits_header.html#Detector_Fits_Header_Initialise
+ * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Filter_Level
+ * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Filter_Function
+ * @see ../cdocs/detector_general.html#Detector_General_Log_Filter_Level_Absolute
+ * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Handler_Function
+ * @see ../cdocs/detector_general.html#Detector_General_Log_Handler_Stdout
+ * @see ../cdocs/detector_general.html#Detector_General_Error
+ * @see ../cdocs/detector_setup.html#Detector_Setup_Startup
+ * @see ../cdocs/detector_setup.html#Detector_Setup_Shutdown
  */
 int main(int argc, char *argv[])
 {
