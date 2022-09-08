@@ -149,6 +149,7 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * @see #Detector_Serial_Open
  * @see #Detector_Serial_Command_Get_System_Status
  * @see #Detector_Serial_Command_Set_System_State
+ * @see #Detector_Serial_Command_Get_Manufacturers_Data
  * @see detector_general.html#DETECTOR_GENERAL_ONE_MILLISECOND_NS
  * @see detector_general.html#fdifftime
  * @see detector_setup.html#Detector_Setup_Open
@@ -486,6 +487,8 @@ int Detector_Serial_Command_Set_System_State(int checksum_enable,int cmd_ack_ena
 int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,struct timespec *build_date,
 						   char *build_code,int *adc_zeroC,int *adc_fortyC,int *dac_zeroC,int *dac_fortyC)
 {
+	struct tm build_date_tm;
+	time_t build_date_s;
 	unsigned char command_buffer[32];
 	unsigned char reply_buffer[32];
 	int command_buffer_length,day,month,year;
@@ -543,7 +546,7 @@ int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,struct tim
 	/* add checksum */
 	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
 		return FALSE;
-	/* send 'read memory' command and get reply. We assume checksums and acks are currently enabled  */
+	/* send 'read memory' command and get reply. We assume checksums and acks are currently enabled, therefore expect 20 bytes back. */
 	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,20))
 		return FALSE;
 	/* reply message has 18 bytes of data, followed by the ACK byte, followed by the checksum byte */
@@ -581,7 +584,17 @@ int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,struct tim
 		day = reply_buffer[2];
 		month = reply_buffer[3];
 		year = reply_buffer[4];
-		/* diddly construct build_date timespec */
+		/* construct build_date timespec */
+		build_date_tm.tm_sec = 0;
+		build_date_tm.tm_min = 0;
+		build_date_tm.tm_hour = 0;
+		build_date_tm.tm_mday = day;
+		build_date_tm.tm_mon = month;
+		build_date_tm.tm_year = year+100; /* year is since 2000, tm_year is number of years since 1900. */
+		build_date_tm.tm_isdst = 0;
+		build_date_s = mktime(&build_date_tm);
+		(*build_date).tv_sec = build_date_s;
+		(*build_date).tv_nsec = 0;
 #if LOGGING > 9
 		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Build date = '%d/%d/%d'.",
 					    day,month,year);
