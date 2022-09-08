@@ -1,12 +1,15 @@
 /* detector_serial.h */
 #ifndef DETECTOR_SERIAL_H
 #define DETECTOR_SERIAL_H
+extern int Detector_Serial_Initialise(void);
 
 extern int Detector_Serial_Open(void);
+
 extern int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksum_enabled,
 						     int *cmd_ack_enabled,int *fpga_booted,int *fpga_in_reset,
 						     int *eprom_comms_enabled);
-extern int Detector_Serial_Command_Set_System_Status(int cmd_ack_enable,int checksum_enable,int eprom_comms_enable);
+extern int Detector_Serial_Command_Set_System_State(int checksum_enable,int cmd_ack_enabled,int reset_fpga,
+						    int eprom_comms_enable);
 
 extern int Detector_Serial_Command(unsigned char *command_buffer,int command_buffer_length,
 				   unsigned char *reply_buffer,int reply_buffer_length);

@@ -23,19 +23,27 @@
 /**
  * Define which camera we are talking to the xclib way, the first one.
  */
-#define UNITS	                  1
+#define UNITS	                              1
 /**
  * Define a bitwise definition of which cameras we are talking to, to pass into XCLIB functions.
  */
-#define UNITSMAP                  ((1<<UNITS)-1)
+#define UNITSMAP                              ((1<<UNITS)-1)
 /**
  * Default length of time to wait for a reply to a command, in milliseconds.
  */
-#define DEFAULT_REPLY_TIMEOUT_MS  (1000)
+#define DEFAULT_REPLY_TIMEOUT_MS              (1000)
+/**
+ * Default length of time to wait for the FPGA to boot during initialisation, in milliseconds.
+ */
+#define DEFAULT_FPGA_BOOT_TIMEOUT_MS          (10000)
 /**
  * Serial command byte to read from the system status register.
  */
 #define SERIAL_SYSTEM_STATUS_REGISTER_READ    (0x49)
+/**
+ * Serial command byte to write to the system status register.
+ */
+#define SERIAL_SYSTEM_STATUS_REGISTER_WRITE   (0x4F)
 /**
  * Command termintor / successful command acknowledge.
  * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
@@ -73,11 +81,13 @@
  * Data type holding local data to detector_setup. This consists of the following:
  * <dl>
  * <dt>Reply_Timeout_Ms</dt> <dd>The number of milliseconds to wait for a reply to a command.</dd>
+ * <dt>FPGA_Boot_Timeout_Ms</dt> <dd>The number of milliseconds to wait for the FPGA to boot during serial initialisation.</dd>
  * </dl>
  */
 struct Serial_Struct
 {
 	int Reply_Timeout_Ms;
+	int FPGA_Boot_Timeout_Ms;
 };
 
 /* internal variables */
@@ -89,12 +99,13 @@ static char rcsid[] = "$Id$";
  * The instance of Serial_Struct that contains local data for this module. This is initialised as follows:
  * <dl>
  * <dt>Reply_Timeout_Ms</dt> <dd>DEFAULT_REPLY_TIMEOUT_MS</dd>
+ * <dt>FPGA_Boot_Timeout_Ms</dt> <dd>DEFAULT_FPGA_BOOT_TIMEOUT_MS</dd>
  * </dl>
  * @see #DEFAULT_REPLY_TIMEOUT_MS
  */
 static struct Serial_Struct Serial_Data = 
 {
-	DEFAULT_REPLY_TIMEOUT_MS
+	DEFAULT_REPLY_TIMEOUT_MS,DEFAULT_FPGA_BOOT_TIMEOUT_MS
 };
 
 /**
@@ -113,7 +124,103 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Routine to configure and open the camera-link's internal serial connection to the 
+ * Routine toopen the camera-link's internal serial connection to the 
+ * Raptor Ninox-640 camera head, and configure it. This call only works if a connection has been opened to the library/driver
+ * by calling Detector_Setup_Open / Detector_Setup_Startup.
+ * See the Raptor Ninox-640 serial command manual (OWL_640_Cooled_IM_v1_0.pdf), Sec. 4.5.1 Example Initialisation Sequence (P28)
+ * for the basis of this routine.
+ * <ul>
+ * <li>We open the camera-link internal serial connection to the camera head by calling Detector_Serial_Open.
+ * <li>We enter a loop, waiting until Detector_Serial_Command_Get_System_Status returns that the fpga is booted. We sleep 1ms between tries,
+ *     and timeout after Serial_Data.FPGA_Boot_Timeout_Ms milliseconds.
+ * <li>We call Detector_Serial_Command_Set_System_State to set checksum_enable, cmd_ack_enable, 
+ *     and eprom_comms_enable (so we can get manufacturers data).
+ * <li>
+ * <li>
+ * <li>
+ * <li>We call Detector_Serial_Command_Set_System_State to set checksum_enable and cmd_ack_enable (thereby turning off eprom_comms_enable).
+ * </ul>
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #UNITSMAP
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Serial_Data
+ * @see #Detector_Serial_Open
+ * @see #Detector_Serial_Command_Get_System_Status
+ * @see #Detector_Serial_Command_Set_System_State
+ * @see detector_general.html#DETECTOR_GENERAL_ONE_MILLISECOND_NS
+ * @see detector_general.html#fdifftime
+ * @see detector_setup.html#Detector_Setup_Open
+ */
+int Detector_Serial_Initialise(void)
+{
+	struct timespec start_time,sleep_time,current_time;
+	int fpga_booted;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Serial_Initialise:Started.");
+#endif
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Opening serial connection.");
+#endif
+	/* open serial connection */
+	if(!Detector_Serial_Open())
+		return FALSE;
+	/* enter a loop until the fpga is booted (or timeout) */
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Waiting until FPGA is booted.");
+#endif
+	fpga_booted = FALSE;
+	/* get a timestamp for the start of waiting for a reply */
+	clock_gettime(CLOCK_REALTIME,&start_time);
+	while(fpga_booted == FALSE)
+	{
+		if(!Detector_Serial_Command_Get_System_Status(NULL,NULL,NULL,&fpga_booted,NULL,NULL))
+			return FALSE;
+		if(fpga_booted == FALSE)
+		{
+			/* sleep a bit (1ms) */
+			sleep_time.tv_sec = 0;
+			sleep_time.tv_nsec = DETECTOR_GENERAL_ONE_MILLISECOND_NS;
+			nanosleep(&sleep_time,&sleep_time);
+			/* check for timeout. Note fdifftime works in decimal seconds */
+			clock_gettime(CLOCK_REALTIME,&current_time);
+			if(fdifftime(current_time,start_time) >
+			   (((double)(Serial_Data.FPGA_Boot_Timeout_Ms))/DETECTOR_GENERAL_ONE_SECOND_MS))
+			{
+				Serial_Error_Number = 20;
+				sprintf(Serial_Error_String,"Detector_Serial_Initialise:Timed out waiting for FPGA to boot after %.3f s.",
+					fdifftime(current_time,start_time));
+				return FALSE;
+			}
+		}
+	}/* end while fpga not booted */
+	/* set system state to checksum_enable, cmd_ack_enabled, eprom_comms_enable. */
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,
+			     "Detector_Serial_Initialise:Set System state to checksum_enable, cmd_ack_enabled, eprom_comms_enable.");
+#endif
+	if(!Detector_Serial_Command_Set_System_State(TRUE,TRUE,FALSE,TRUE))
+		return FALSE;
+
+	/* set system state to checksum_enable, cmd_ack_enabled (turning off eprom_comms_enable). */
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,
+			     "Detector_Serial_Initialise:Set System state to checksum_enable, cmd_ack_enabled.");
+#endif
+	if(!Detector_Serial_Command_Set_System_State(TRUE,TRUE,FALSE,FALSE))
+		return FALSE;
+
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Serial_Initialise:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to open the camera-link's internal serial connection to the 
  * Raptor Ninox-640 camera head. This call only works if a connection has been opened to the library/driver
  * by calling Detector_Setup_Open / Detector_Setup_Startup.
  * <ul>
@@ -220,6 +327,123 @@ int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksu
 		(*eprom_comms_enabled) = reply_buffer[0]&(1<<0);
 #if LOGGING > 9
 	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_System_Status:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Set the system state using Raptor's serial interface.
+ * The detector's serial interface must have previously been opened before calling this command 
+ * (Detector_Serial_Open).
+ * @param checksum_enable A boolean integer, set to TRUE to enable checksum checking of the serial interface commands.
+ * @param cmd_ack_enable A boolean integer, set to TRUE to enable command acknowledgements.
+ * @param reset_fpga A boolean integer, set to TRUE to hold the fpga in reset 
+ *        (note internally the relevant bit is set to zero to hold the fpga in reset).
+ * @param eprom_comms_enable A boolean integer, set to TRUE to enable comms to the FPGA EPROM.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #SERIAL_SYSTEM_STATUS_REGISTER_WRITE
+ * @see #SERIAL_ETX
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
+ * @see detector_general.html#DETECTOR_IS_BOOLEAN
+ */
+int Detector_Serial_Command_Set_System_State(int checksum_enable,int cmd_ack_enabled,int reset_fpga,int eprom_comms_enable)
+{
+	unsigned char command_buffer[16];
+	unsigned char reply_buffer[16];
+	unsigned char status_byte;
+	int command_buffer_length,reply_length;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Set_System_Status:Started.");
+#endif
+	if(!DETECTOR_IS_BOOLEAN(checksum_enable))
+	{
+		Serial_Error_Number = 14;
+		sprintf(Serial_Error_String,"Detector_Serial_Command_Set_System_State:checksum_enable is not a boolean (%d).",
+			checksum_enable);
+		return FALSE;	
+	}
+	if(!DETECTOR_IS_BOOLEAN(cmd_ack_enabled))
+	{
+		Serial_Error_Number = 15;
+		sprintf(Serial_Error_String,"Detector_Serial_Command_Set_System_State:cmd_ack_enabled is not a boolean (%d).",
+			cmd_ack_enabled);
+		return FALSE;	
+	}
+	if(!DETECTOR_IS_BOOLEAN(reset_fpga))
+	{
+		Serial_Error_Number = 16;
+		sprintf(Serial_Error_String,"Detector_Serial_Command_Set_System_State:reset_fpga is not a boolean (%d).",
+			reset_fpga);
+		return FALSE;	
+	}
+	if(!DETECTOR_IS_BOOLEAN(eprom_comms_enable))
+	{
+		Serial_Error_Number = 17;
+		sprintf(Serial_Error_String,"Detector_Serial_Command_Set_System_State:eprom_comms_enable is not a boolean (%d).",
+			eprom_comms_enable);
+		return FALSE;	
+	}
+	/* setup status_byte */
+	status_byte = 0;
+	if(checksum_enable)
+		status_byte |= (1<<6);
+	if(cmd_ack_enabled)
+		status_byte |= (1<<4);
+	if(reset_fpga == FALSE) /* reset fpga logic is inverted from boolean */
+		status_byte |= (1<<1);
+	if(eprom_comms_enable)
+		status_byte |= (1<<0);
+	/* setup command buffer */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = SERIAL_SYSTEM_STATUS_REGISTER_WRITE;
+	command_buffer[command_buffer_length++] = status_byte;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send command and get reply. The length of the reply depends on whether cmd_ack_enable and checksum_enable have been set */
+	reply_length = 0;
+	if(cmd_ack_enabled)
+	{
+		reply_length = 1;
+		if(checksum_enable)
+			reply_length = 2;
+	}
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,reply_length))
+		return FALSE;
+	/* check reply bytes */
+	if(cmd_ack_enabled)
+	{
+		if(reply_buffer[0] != SERIAL_ETX)
+		{
+			Serial_Error_Number = 18;
+			sprintf(Serial_Error_String,
+				"Detector_Serial_Command_Set_System_State:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+			return FALSE;
+		}
+		if(checksum_enable)
+		{
+			/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+			if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+			{
+				Serial_Error_Number = 19;
+				sprintf(Serial_Error_String,
+					"Detector_Serial_Command_Set_System_State:Checksum mismatch (%#02x,%#02x).",
+					command_buffer[command_buffer_length-1],reply_buffer[1]);
+				return FALSE;
+				
+			}
+		}
+	}
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Set_System_Status:Finished.");
 #endif
 	return TRUE;
 }
