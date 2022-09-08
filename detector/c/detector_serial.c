@@ -135,8 +135,8 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  *     and timeout after Serial_Data.FPGA_Boot_Timeout_Ms milliseconds.
  * <li>We call Detector_Serial_Command_Set_System_State to set checksum_enable, cmd_ack_enable, 
  *     and eprom_comms_enable (so we can get manufacturers data).
- * <li>
- * <li>
+ * <li>We call Detector_Serial_Command_Get_Manufacturers_Data to get manufacturer data from the EPROM, including temperature ADC and DAC
+ *     ADU values at set-points.
  * <li>
  * <li>We call Detector_Serial_Command_Set_System_State to set checksum_enable and cmd_ack_enable (thereby turning off eprom_comms_enable).
  * </ul>
@@ -155,7 +155,9 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  */
 int Detector_Serial_Initialise(void)
 {
-	struct timespec start_time,sleep_time,current_time;
+	struct timespec start_time,sleep_time,current_time,build_date;
+	char build_code[8];
+	int serial_number,adc_zeroC,adc_fortyC,dac_zeroC,dac_fortyC;
 	int fpga_booted;
 	
 	Serial_Error_Number = 0;
@@ -179,6 +181,10 @@ int Detector_Serial_Initialise(void)
 	{
 		if(!Detector_Serial_Command_Get_System_Status(NULL,NULL,NULL,&fpga_booted,NULL,NULL))
 			return FALSE;
+#if LOGGING > 5
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Initialise:FPGA is booted = %s.",
+					    fpga_booted ? "TRUE" : "FALSE");
+#endif
 		if(fpga_booted == FALSE)
 		{
 			/* sleep a bit (1ms) */
@@ -204,7 +210,9 @@ int Detector_Serial_Initialise(void)
 #endif
 	if(!Detector_Serial_Command_Set_System_State(TRUE,TRUE,FALSE,TRUE))
 		return FALSE;
-
+	/* get manufacturers data */
+	if(!Detector_Serial_Command_Get_Manufacturers_Data(&serial_number,&build_date,build_code,&adc_zeroC,&adc_fortyC,&dac_zeroC,&dac_fortyC))
+		return FALSE;
 	/* set system state to checksum_enable, cmd_ack_enabled (turning off eprom_comms_enable). */
 #if LOGGING > 5
 	Detector_General_Log(LOG_VERBOSITY_VERBOSE,
@@ -212,7 +220,6 @@ int Detector_Serial_Initialise(void)
 #endif
 	if(!Detector_Serial_Command_Set_System_State(TRUE,TRUE,FALSE,FALSE))
 		return FALSE;
-
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Serial_Initialise:Finished.");
 #endif
@@ -444,6 +451,198 @@ int Detector_Serial_Command_Set_System_State(int checksum_enable,int cmd_ack_ena
 	}
 #if LOGGING > 9
 	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Set_System_Status:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Get the detector's manufacturer data from the Raptor's serial interface, and parse the results.
+ * The detector's serial interface must have previously been opened before calling this command 
+ * (Detector_Serial_Open). This command implementation also expects ACKS  and checksums to be enabled, 
+ * and communications to the EPROM to be enabled (this data is held in EPROM). Therefore Detector_Serial_Command_Set_System_State must
+ * have been called correctly before this call is made.
+ * @param serial_number The address of an integer, if not NULL, on return contains the detector serial number.
+ * @param build_date The address of a timespec structure, if not NULL, on return contains the build date.
+ * @param build_code A chacter string of at least 6 characters length, if not NULL, on return contains a build code (max length 5 characters).
+ * @param adc_zeroC The address of an integer, if not NULL, on return the ADU value the temperature analogue to digital converter returns when
+ *                  the temperature is zero degrees centigrade.
+ * @param adc_fortyC The address of an integer, if not NULL, on return the ADU value the temperature analogue to digital converter returns when
+ *                  the temperature is forty degrees centigrade.
+ * @param dac_zeroC The address of an integer, if not NULL, on return the ADU value the temperature digital to analogue converter requires
+ *                   for a temperature set-point of zero degrees centigrade.
+ * @param dac_fortyC The address of an integer, if not NULL, on return the ADU value the temperature digital to analogue converter requires
+ *                   for a temperature set-point of forty degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #SERIAL_SYSTEM_STATUS_REGISTER_READ
+ * @see #SERIAL_ETX
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
+ * @see #Detector_Serial_Command_Set_System_State
+ */
+int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,struct timespec *build_date,
+						   char *build_code,int *adc_zeroC,int *adc_fortyC,int *dac_zeroC,int *dac_fortyC)
+{
+	unsigned char command_buffer[32];
+	unsigned char reply_buffer[32];
+	int command_buffer_length,day,month,year;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Started.");
+#endif
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Send set address command.");
+#endif
+	/* setup 'set address' command buffer */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xAE;
+	command_buffer[command_buffer_length++] = 0x05;
+	command_buffer[command_buffer_length++] = 0x01;
+	command_buffer[command_buffer_length++] = 0x00;
+	command_buffer[command_buffer_length++] = 0x00;
+	command_buffer[command_buffer_length++] = 0x02;
+	command_buffer[command_buffer_length++] = 0x00;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'set address' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 21;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Manufacturers_Data:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 22;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_System_State:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+	/* send 'read memory' command */
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Send read memory command.");
+#endif
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xAF;
+	command_buffer[command_buffer_length++] = 0x12; /* number of bytes to read, 0x12 = 18. */
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'read memory' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,20))
+		return FALSE;
+	/* reply message has 18 bytes of data, followed by the ACK byte, followed by the checksum byte */
+	/* check ACK (in byte 19 of 20) (index 18 of 19) */
+	if(reply_buffer[18] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 23;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Manufacturers_Data:Reply ACK was an error code (%#02x).",reply_buffer[18]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and byte 20 of 20 (index 19 of 19) in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[19])
+	{
+		Serial_Error_Number = 24;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_System_State:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[19]);
+		return FALSE;	
+	}
+	/* parse results */
+	if(serial_number != NULL)
+	{
+		/* reply_buffer[0] reply_buffer[1] */
+		(*serial_number) = reply_buffer[0];
+		(*serial_number) += ((reply_buffer[1])<<8);
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:serial number = %d.",
+					    (*serial_number));
+#endif
+	}
+	if(build_date != NULL)
+	{
+		/* reply_buffer[2] reply_buffer[3] reply_buffer[4] */
+		day = reply_buffer[2];
+		month = reply_buffer[3];
+		year = reply_buffer[4];
+		/* diddly construct build_date timespec */
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Build date = '%d/%d/%d'.",
+					    day,month,year);
+#endif
+	}
+	if(build_code != NULL)
+	{
+		/* reply_buffer[5] reply_buffer[6] reply_buffer[7] reply_buffer[8] reply_buffer[9] */
+		build_code[0] = reply_buffer[5];
+		build_code[1] = reply_buffer[6];
+		build_code[2] = reply_buffer[7];
+		build_code[3] = reply_buffer[8];
+		build_code[4] = reply_buffer[9];
+		build_code[5] = '\0';
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Build code = '%s'.",
+					    build_code);
+#endif
+	}
+	if(adc_zeroC != NULL)
+	{
+		/* reply_buffer[10] reply_buffer[11] */
+		(*adc_zeroC) = reply_buffer[10];
+		(*adc_zeroC) += ((reply_buffer[11])<<8);
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:ADC at 0C = %d.",
+					    (*adc_zeroC));
+#endif
+	}
+	if(adc_fortyC != NULL)
+	{
+		/* reply_buffer[12] reply_buffer[13] */
+		(*adc_fortyC) = reply_buffer[12];
+		(*adc_fortyC) += ((reply_buffer[13])<<8);
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:ADC at 40C = %d.",
+					    (*adc_fortyC));
+#endif
+	}
+	if(dac_zeroC != NULL)
+	{
+		/* reply_buffer[14] reply_buffer[15] */
+		(*dac_zeroC) = reply_buffer[14];
+		(*dac_zeroC) += ((reply_buffer[15])<<8);
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:DAC at 0C = %d.",
+					    (*dac_zeroC));
+#endif
+	}
+	if(dac_fortyC != NULL)
+	{
+		/* reply_buffer[16] reply_buffer[17] */
+		(*dac_fortyC) = reply_buffer[16];
+		(*dac_fortyC) += ((reply_buffer[17])<<8);
+#if LOGGING > 9
+		Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:DAC at 40C = %d.",
+					    (*dac_fortyC));
+#endif
+	}
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_Manufacturers_Data:Finished.");
 #endif
 	return TRUE;
 }
