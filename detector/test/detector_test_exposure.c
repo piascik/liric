@@ -196,6 +196,7 @@ int main(int argc, char *argv[])
  * Routine to parse command line arguments.
  * @param argc The number of arguments sent to the program.
  * @param argv An array of argument strings.
+ * @see #STRING_LENGTH
  * @see #Coadd_Frame_Exposure_Length_Ms
  * @see #Exposure_Length_Ms
  * @see #FITS_Directory

@@ -113,10 +113,12 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Routine to configure and open the camera-link's internal serial connection to the Raptor Ninox-640 camera head.
+ * Routine to configure and open the camera-link's internal serial connection to the 
+ * Raptor Ninox-640 camera head. This call only works if a connection has been opened to the library/driver
+ * by calling Detector_Setup_Open / Detector_Setup_Startup.
  * <ul>
- * <li>We call pxd_serialConfigure to configure the camera-link's internal serial link to 115200 baud, 8 data bits, 
- *     1 stop bit.
+ * <li>We call pxd_serialConfigure to configure the camera-link's internal serial link to 115200 baud, 
+ *     8 data bits, 1 stop bit.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Serial_Error_Number/Serial_Error_String are set.
@@ -124,6 +126,7 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * @see #Serial_Error_Number
  * @see #Serial_Error_String
  * @see #Serial_Data
+ * @see detector_setup.html#Detector_Setup_Open
  */
 int Detector_Serial_Open(void)
 {
@@ -155,6 +158,8 @@ int Detector_Serial_Open(void)
 
 /**
  * Get the system status from the Raptor's serial interface, and parse the results.
+ * The detector's serial interface must have previously been opened before calling this command 
+ * (Detector_Serial_Open).
  * @param status An unsigned character byte, if not NULL, on return contains the raw status byte.
  * @param checksum_enabled The address on an integer, if not NULL, on return contains a boolean, 
  *        TRUE if checksum's are enabled.
@@ -174,6 +179,7 @@ int Detector_Serial_Open(void)
  * @see #Serial_Error_String
  * @see #Detector_Serial_Compute_Checksum
  * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
  */
 int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksum_enabled,
 						     int *cmd_ack_enabled,int *fpga_booted,int *fpga_in_reset,
@@ -221,7 +227,7 @@ int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksu
 /**
  * Low level command to send a Raptor Ninox-640 command over the 
  * camera link's internal serial connection to the camera head, and optionally wait for a reply.
- * The amera link's internal serial connection should have been previously opened/configured 
+ * The camera link's internal serial connection should have been previously opened/configured 
  * by calling Detector_Serial_Open.
  * <ul>
  * <li>We flush the serial port input and output stream, by calling pxd_serialFlush.
