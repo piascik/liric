@@ -44,11 +44,14 @@ static void Help(void);
  * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Handler_Function
  * @see ../cdocs/detector_general.html#Detector_General_Log_Handler_Stdout
  * @see ../cdocs/detector_general.html#Detector_General_Error
- * @see ../cdocs/detector_setup.html#Detector_Setup_Startup
- * @see ../cdocs/detector_setup.html#Detector_Setup_Shutdown
+ * @see ../cdocs/detector_serial.html#Detector_Serial_Open
+ * @see ../cdocs/detector_serial.html#Detector_Serial_Command_Get_System_Status
  */
 int main(int argc, char *argv[])
 {
+	unsigned char status;
+	int checksum_enabled,cmd_ack_enabled,fpga_booted,fpga_in_reset,eprom_comms_enabled;
+	
 	/* parse arguments */
 	fprintf(stdout,"detector_test_get_system_status : Parsing Arguments.\n");
 	if(!Parse_Arguments(argc,argv))
@@ -56,14 +59,32 @@ int main(int argc, char *argv[])
 	Detector_General_Set_Log_Filter_Level(Log_Level);
 	Detector_General_Set_Log_Filter_Function(Detector_General_Log_Filter_Level_Absolute);
 	Detector_General_Set_Log_Handler_Function(Detector_General_Log_Handler_Stdout);
-	/* open a connection */
-	
-	/* shutdown connection to the detector */
-	if(!Detector_Setup_Shutdown())
+	/* open a connection
+	** Just try opening a connection to the serial API of XCLIB, can we do this without a Detector_Setup_Open?  */
+	if(!Detector_Serial_Open())
 	{
 		Detector_General_Error();
 		return 3;
 	}
+	if(!Detector_Serial_Command_Get_System_Status(&status,&checksum_enabled,&cmd_ack_enabled,&fpga_booted,&fpga_in_reset,&eprom_comms_enabled))
+	{
+		Detector_General_Error();
+		return 4;
+	}
+	fprintf(stdout,"System status byte: %02x.\n",status);
+	fprintf(stdout,"Checksum enabled: %s.\n",checksum_enabled ? "TRUE" : "FALSE");
+	fprintf(stdout,"Command ACK enabled: %s.\n",cmd_ack_enabled ? "TRUE" : "FALSE");
+	fprintf(stdout,"FPGA booted: %s.\n",fpga_booted ? "TRUE" : "FALSE");
+	fprintf(stdout,"FPGA in RESET: %s.\n",fpga_in_reset ? "TRUE" : "FALSE");
+	fprintf(stdout,"EPROM comms enabled: %s.\n",eprom_comms_enabled ? "TRUE" : "FALSE");
+	/* How do we close the connection to the serial port? */
+	/*
+	if(!Detector_Serial_Shutdown())
+	{
+		Detector_General_Error();
+		return 3;
+	}
+	*/
 	fprintf(stdout,"detector_test_get_system_status : Finished.\n");		
 	return 0;
 }

@@ -168,8 +168,12 @@ int Detector_Serial_Open(void)
  *        TRUE if comms are enabled to the FPGA EPROM.
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #SERIAL_SYSTEM_STATUS_REGISTER_READ
+ * @see #SERIAL_ETX
  * @see #Serial_Error_Number
  * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
  */
 int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksum_enabled,
 						     int *cmd_ack_enabled,int *fpga_booted,int *fpga_in_reset,
@@ -220,11 +224,26 @@ int Detector_Serial_Command_Get_System_Status(unsigned char *status,int *checksu
  * The amera link's internal serial connection should have been previously opened/configured 
  * by calling Detector_Serial_Open.
  * <ul>
+ * <li>We flush the serial port input and output stream, by calling pxd_serialFlush.
+ * <li>We write command_buffer_length bytes of command_buffer to the serial stream by calling pxd_serialWrite.
+ * <li>If reply_buffer is NOT NULL, we are expecting a reply, therefore we:
+ *     <ul>
+ *     <li>Initialise reply_bytes_read to zero and take a timestamp reply_start_time.
+ *     <li>Enter a loop while reply_bytes_read is less than the expected_reply_length:
+ *         <ul>
+ *         <li>Read some serial data into reply_buffer by callling pxd_serialRead.
+ *         <li>If we received no bytes, sleep a while (500uS) before trying again.
+ *         <li>Take a timestamp, and if the elapsed time between reply_start_time and now is greater than 
+ *             Serial_Data.Reply_Timeout_Ms timeout as an error.
+ *         </ul>
+ *     </ul>
  * <li>
  * </ul>
  * @param command_buffer A previously allocated array of unsigned characters of at least length command_buffer_length,
  *      each character containing a byte to send to the Raptor Ninox-640 camera head. The command can be binary in
  *      nature and the 'string' is not NULL terminated (and may indeed include NULL bytes as command bytes/parameters).
+ *      The command buffer should normally terminate with an ETX byte and a checksum byte 
+ *      (if checksums have been switched on).
  * @param command_buffer_length The number of bytes to send to the Raptor Ninox-640 camera head.
  * @param reply_buffer A previously allocated array of characters of at least length expected_reply_length. 
  *                     Any reply read from the camera head will be stored in this arry. 
