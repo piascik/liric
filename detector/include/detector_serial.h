@@ -13,6 +13,7 @@ extern int Detector_Serial_Command_Set_System_State(int checksum_enable,int cmd_
 extern int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,struct timespec *build_date,
 							  char *build_code,int *adc_zeroC,int *adc_fortyC,
 							  int *dac_zeroC,int *dac_fortyC);
+extern int Detector_Serial_Command_Get_Sensor_Temp(int *adc_value);
 
 extern int Detector_Serial_Command(unsigned char *command_buffer,int command_buffer_length,
 				   unsigned char *reply_buffer,int reply_buffer_length);

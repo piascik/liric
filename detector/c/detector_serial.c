@@ -661,6 +661,194 @@ int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,struct tim
 }
 
 /**
+ * Get the Sensor's temperature ADU value.
+ * The detector's serial interface must have previously been opened before calling this command (Detector_Serial_Open).
+ * The following commands are sent:
+ * <ul>
+ * <li>A command to set the address to read to be 0x6E.
+ * <li>A command to read a data byte from the set address.
+ * <li>A command to set the address to read to be 0x6F.
+ * <li>A command to read a data byte from the set address.
+ * </ul>
+ * The return value is then constructed from the read bytes.
+ * @param adc_value The address of an integer, on return from  a successful invocation this will be filled with a 12 bit unsigned integer
+ *        representing the ADC value from the sensor's temperature sensor. We can use the ADC calibration value's from 
+ *        Detector_Serial_Command_Get_Manufacturers_Data (adc_zeroC / adc_fortyC) with linear interpolation to get the 
+ *       actual temperature in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #SERIAL_ETX
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
+ */
+int Detector_Serial_Command_Get_Sensor_Temp(int *adc_value)
+{
+	unsigned char command_buffer[16];
+	unsigned char reply_buffer[16];
+	unsigned char msb,lsb;
+	int command_buffer_length;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Started.");
+#endif
+	if(adc_value == NULL)
+	{
+		Serial_Error_Number = 25;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:adc_value was NULL.");
+		return FALSE;
+	}
+	/* Read First byte at (0x6E) */
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Send set address command (0x6E).");
+#endif
+	/* setup 'set address' command buffer (0x6E) */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE0;
+	command_buffer[command_buffer_length++] = 0x01;
+	command_buffer[command_buffer_length++] = 0x6E;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'set address' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 26;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 27;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+	/* send 'read memory' command  (0x6E) */
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Send read memory command (0x6E).");
+#endif
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xe1;
+	command_buffer[command_buffer_length++] = 0x01; /* number of bytes to read, 1 */
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'read memory' command and get reply. We assume checksums and acks are currently enabled, therefore expect 3 bytes back. */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,3))
+		return FALSE;
+	/* reply message has 1 byte of data, followed by the ACK byte, followed by the checksum byte */
+	/* check ACK (in byte 2 of 3) (index 1 of 2) */
+	if(reply_buffer[1] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 28;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Reply ACK was an error code (%#02x).",reply_buffer[1]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and byte 3 of 3 (index 2 of 2) in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[2])
+	{
+		Serial_Error_Number = 29;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[2]);
+		return FALSE;	
+	}
+	/* reply_buffer[0] contains data byte, bites 3..0 are temp bits 11..8 */
+	msb = reply_buffer[0];
+	/* Read second byte at (0x6F) */
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Send set address command (0x6F).");
+#endif
+	/* setup 'set address' command buffer (0x6F) */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE0;
+	command_buffer[command_buffer_length++] = 0x01;
+	command_buffer[command_buffer_length++] = 0x6F;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'set address' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 30;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 31;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+	/* send 'read memory' command  (0x6F) */
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Send read memory command (0x6F).");
+#endif
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xe1;
+	command_buffer[command_buffer_length++] = 0x01; /* number of bytes to read, 1 */
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'read memory' command and get reply. We assume checksums and acks are currently enabled, therefore expect 3 bytes back. */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,3))
+		return FALSE;
+	/* reply message has 1 byte of data, followed by the ACK byte, followed by the checksum byte */
+	/* check ACK (in byte 2 of 3) (index 1 of 2) */
+	if(reply_buffer[1] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 32;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Reply ACK was an error code (%#02x).",reply_buffer[1]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and byte 3 of 3 (index 2 of 2) in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[2])
+	{
+		Serial_Error_Number = 33;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_Sensor_Temp:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[2]);
+		return FALSE;	
+	}
+	/* reply_buffer[0] contains data byte, bites 7..0 are temp bits 7..0 */
+	lsb = reply_buffer[0];
+	/* construct actial ADC value */
+	(*adc_value) = lsb|(msb<<8);
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Low level command to send a Raptor Ninox-640 command over the 
  * camera link's internal serial connection to the camera head, and optionally wait for a reply.
  * The camera link's internal serial connection should have been previously opened/configured 
