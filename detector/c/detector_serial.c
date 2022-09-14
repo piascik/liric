@@ -781,6 +781,11 @@ int Detector_Serial_Command_Get_Sensor_Temp(int *adc_value)
 	}
 	/* reply_buffer[0] contains data byte, bites 3..0 are temp bits 11..8 */
 	msb = reply_buffer[0];
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+	      "Detector_Serial_Command_Get_Sensor_Temp:memory location 0x6E contained (most significant) byte %#02x.",
+				    msb);
+#endif
 	/* Read second byte at (0x6F) */
 #if LOGGING > 9
 	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Send set address command (0x6F).");
@@ -850,10 +855,16 @@ int Detector_Serial_Command_Get_Sensor_Temp(int *adc_value)
 	}
 	/* reply_buffer[0] contains data byte, bites 7..0 are temp bits 7..0 */
 	lsb = reply_buffer[0];
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+	    "Detector_Serial_Command_Get_Sensor_Temp:memory location 0x6F contained (least significant) byte %#02x.",
+				    lsb);
+#endif
 	/* construct actial ADC value */
 	(*adc_value) = lsb|(msb<<8);
 #if LOGGING > 9
-	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_Sensor_Temp:Finished.");
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Serial_Command_Get_Sensor_Temp:Finished with ADC value %d.",(*adc_value));
 #endif
 	return TRUE;
 }
