@@ -1,0 +1,165 @@
+/* detector_temperature.c
+** Raptor Ninox-640 Infrared detector library : temperature status and control routines.
+*/
+/**
+ * Routines to control and monitor the detector temperature of  the Raptor Ninox-640 Infrared detector.
+ * @author Chris Mottram
+ * @version $Revision$
+ */
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "log_udp.h"
+#include "detector_general.h"
+#include "detector_serial.h"
+#include "detector_temperature.h"
+#include "xcliball.h"
+
+/* hash defines */
+/* data types */
+/**
+ * Data type holding local data to detector_setup. This consists of the following:
+ * <dl>
+ * <dt>ADC_Zero_C</dt> <dd>The ADU value the temperature analogue to digital converter returns when
+ *                         the temperature is zero degrees centigrade.</dd>
+ * <dt>ADC_Forty_C</dt> <dd>The ADU value the temperature analogue to digital converter returns when
+ *                          the temperature is forty degrees centigrade.</dd>
+ * <dt>DAC_Zero_C</dt> <dd>The ADU value the temperature digital to analogue converter requires
+ *                         for a temperature set-point of zero degrees centigrade.</dd>
+ * <dt>DAC_Forty_C</dt> <dd>The ADU value the temperature digital to analogue converter requires
+ *                          for a temperature set-point of forty degrees centigrade.</dd>
+ * </dl>
+ */
+struct Temperature_Struct
+{
+	int ADC_Zero_C;
+	int ADC_Forty_C;
+	int DAC_Zero_C;
+	int DAC_Forty_C;
+};
+
+/* internal variables */
+/**
+ * Revision Control System identifier.
+ */
+static char rcsid[] = "$Id$";
+/**
+ * The instance of Temperature_Struct that contains local data for this module. This is initialised as follows:
+ * <dl>
+ * <dt>ADC_Zero_C</dt> <dd>0</dd>
+ * <dt>ADC_Forty_C</dt> <dd>0</dd>
+ * <dt>DAC_Zero_C</dt> <dd>0</dd>
+ * <dt>DAC_Forty_C</dt> <dd>0</dd>
+ * </dl>
+ */
+static struct Temperature_Struct Temperature_Data = 
+{
+	0,0,0,0
+};
+/**
+ * Variable holding error code of last operation performed.
+ */
+static int Temperature_Error_Number = 0;
+/**
+ * Local variable holding description of the last error that occured.
+ * @see detector_general.html#DETECTOR_GENERAL_ERROR_STRING_LENGTH
+ */
+static char Temperature_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
+
+/* internal functions */
+
+/* --------------------------------------------------------
+** External Functions
+** -------------------------------------------------------- */
+/**
+ * Initialisation routine for the temperature module.
+ * @param adc_zeroC An integer, the ADU value the temperature analogue to digital converter returns when
+ *                  the temperature is zero degrees centigrade.
+ * @param adc_fortyC An integer, the ADU value the temperature analogue to digital converter returns when
+ *                  the temperature is forty degrees centigrade.
+ * @param dac_zeroC An integer, the ADU value the temperature digital to analogue converter requires
+ *                   for a temperature set-point of zero degrees centigrade.
+ * @param dac_fortyC An integer, the ADU value the temperature digital to analogue converter requires
+ *                   for a temperature set-point of forty degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ */
+int Detector_Temperature_Initialise(int adc_zeroC,int adc_fortyC,int dac_zeroC,int dac_fortyC)
+{
+	Temperature_Error_Number = 0;
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Initialise:Started.");
+#endif
+	Temperature_Data.ADC_Zero_C = adc_zeroC;
+	Temperature_Data.ADC_Forty_C = adc_fortyC;
+	Temperature_Data.DAC_Zero_C = dac_zeroC;
+	Temperature_Data.DAC_Forty_C = dac_fortyC;
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Initialise:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Get the current value of the error number.
+ * @return The current value of the error number.
+ * @see #Temperature_Error_Number
+ */
+int Detector_Temperature_Get_Error_Number(void)
+{
+	return Temperature_Error_Number;
+}
+
+/**
+ * The error routine that reports any errors occuring in a standard way.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ * @see detector_general.html#Detector_General_Get_Current_Time_String
+ */
+void Detector_Temperature_Error(void)
+{
+	char time_string[32];
+
+	Detector_General_Get_Current_Time_String(time_string,32);
+	/* if the error number is zero an error message has not been set up
+	** This is in itself an error as we should not be calling this routine
+	** without there being an error to display */
+	if(Temperature_Error_Number == 0)
+		sprintf(Temperature_Error_String,"Logic Error:No Error defined");
+	fprintf(stderr,"%s Detector_Temperature:Error(%d) : %s\n",time_string,Temperature_Error_Number,
+		Temperature_Error_String);
+}
+
+/**
+ * The error routine that reports any errors occuring in a standard way. This routine places the
+ * generated error string at the end of a passed in string argument.
+ * @param error_string A string to put the generated error in. This string should be initialised before
+ * being passed to this routine. The routine will try to concatenate it's error string onto the end
+ * of any string already in existance.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ * @see detector_general.html#Detector_General_Get_Current_Time_String
+ */
+void Detector_Temperature_Error_String(char *error_string)
+{
+	char time_string[32];
+
+	Detector_General_Get_Current_Time_String(time_string,32);
+	/* if the error number is zero an error message has not been set up
+	** This is in itself an error as we should not be calling this routine
+	** without there being an error to display */
+	if(Temperature_Error_Number == 0)
+		sprintf(Temperature_Error_String,"Logic Error:No Error defined");
+	sprintf(error_string+strlen(error_string),"%s Detector_Temperature:Error(%d) : %s\n",time_string,
+		Temperature_Error_Number,Temperature_Error_String);
+}
+
+/* =======================================
+**  internal functions 
+** ======================================= */

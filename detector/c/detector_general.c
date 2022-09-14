@@ -32,6 +32,7 @@
 #include "detector_general.h"
 #include "detector_serial.h"
 #include "detector_setup.h"
+#include "detector_temperature.h"
 
 /* defines */
 /**
@@ -114,6 +115,7 @@ static char General_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * @see  detector_fits_header.html#Detector_Fits_Header_Get_Error_Number
  * @see  detector_serial.html#Detector_Serial_Get_Error_Number
  * @see  detector_setup.html#Detector_Setup_Get_Error_Number
+ * @see  detector_temperature.html#Detector_Temperature_Get_Error_Number
  */
 int Detector_General_Is_Error(void)
 {
@@ -130,6 +132,8 @@ int Detector_General_Is_Error(void)
 	if(Detector_Serial_Get_Error_Number() != 0)
 		found = TRUE;
 	if(Detector_Setup_Get_Error_Number() != 0)
+		found = TRUE;
+	if(Detector_Temperature_Get_Error_Number() != 0)
 		found = TRUE;
 	if(General_Error_Number != 0)
 		found = TRUE;
@@ -153,6 +157,8 @@ int Detector_General_Is_Error(void)
  * @see detector_serial.html#Detector_Serial_Error
  * @see detector_setup.html#Detector_Setup_Get_Error_Number
  * @see detector_setup.html#Detector_Setup_Error
+ * @see detector_temperature.html#Detector_Temperature_Get_Error_Number
+ * @see detector_temperature.html#Detector_Temperature_Error
  */
 void Detector_General_Error(void)
 {
@@ -189,6 +195,11 @@ void Detector_General_Error(void)
 		found = TRUE;
 		Detector_Serial_Error();
 	}
+	if(Detector_Temperature_Get_Error_Number() != 0)
+	{
+		found = TRUE;
+		Detector_Temperature_Error();
+	}
 	if(General_Error_Number != 0)
 	{
 		found = TRUE;
@@ -222,6 +233,8 @@ void Detector_General_Error(void)
  * @see detector_serial.html#Detector_Serial_Error_String
  * @see detector_setup.html#Detector_Setup_Get_Error_Number
  * @see detector_setup.html#Detector_Setup_Error_String
+ * @see detector_temperature.html#Detector_Temperature_Get_Error_Number
+ * @see detector_temperature.html#Detector_Temperature_Error_String
  */
 void Detector_General_Error_To_String(char *error_string)
 {
@@ -251,6 +264,10 @@ void Detector_General_Error_To_String(char *error_string)
 	if(Detector_Setup_Get_Error_Number() != 0)
 	{
 		Detector_Setup_Error_String(error_string);
+	}
+	if(Detector_Temperature_Get_Error_Number() != 0)
+	{
+		Detector_Temperature_Error_String(error_string);
 	}
 	if(General_Error_Number != 0)
 	{

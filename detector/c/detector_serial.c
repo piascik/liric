@@ -137,7 +137,6 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  *     and eprom_comms_enable (so we can get manufacturers data).
  * <li>We call Detector_Serial_Command_Get_Manufacturers_Data to get manufacturer data from the EPROM, including temperature ADC and DAC
  *     ADU values at set-points.
- * <li>
  * <li>We call Detector_Serial_Command_Set_System_State to set checksum_enable and cmd_ack_enable (thereby turning off eprom_comms_enable).
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. 
