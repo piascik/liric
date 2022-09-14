@@ -1019,7 +1019,7 @@ int Detector_Serial_Command_Get_Sensor_PCB_Temp(double *pcb_temp)
 	}
 	/* send 'read memory' command  (0x71) */
 #if LOGGING > 9
-	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_PCB_Temp:Send read memory command (0x6F).");
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_Sensor_PCB_Temp:Send read memory command (0x71).");
 #endif
 	command_buffer_length = 0;
 	command_buffer[command_buffer_length++] = 0x53;
