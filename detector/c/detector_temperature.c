@@ -28,18 +28,26 @@
  *                         the temperature is zero degrees centigrade.</dd>
  * <dt>ADC_Forty_C</dt> <dd>The ADU value the temperature analogue to digital converter returns when
  *                          the temperature is forty degrees centigrade.</dd>
+ * <dt>ADC_M</dt> <dd>The computed slope/gradient of the ADC (x) to temperature (Y) equation of the line (y=mx+c).</dd>
+ * <dt>ADC_C</dt> <dd>The computed intercept of the ADC (x) to temperature (Y) equation of the line (y=mx+c).</dd>
  * <dt>DAC_Zero_C</dt> <dd>The ADU value the temperature digital to analogue converter requires
  *                         for a temperature set-point of zero degrees centigrade.</dd>
  * <dt>DAC_Forty_C</dt> <dd>The ADU value the temperature digital to analogue converter requires
  *                          for a temperature set-point of forty degrees centigrade.</dd>
+ * <dt>DAC_M</dt> <dd>The computed slope/gradient of the temperature (x) to DAC (Y) equation of the line (y=mx+c).</dd>
+ * <dt>DAC_C</dt> <dd>The computed intercept of the temperature (x) to DAC (Y) equation of the line (y=mx+c).</dd>
  * </dl>
  */
 struct Temperature_Struct
 {
 	int ADC_Zero_C;
 	int ADC_Forty_C;
+	double ADC_M;
+	double ADC_C;
 	int DAC_Zero_C;
 	int DAC_Forty_C;
+	double DAC_M;
+	double DAC_C;
 };
 
 /* internal variables */
@@ -52,13 +60,17 @@ static char rcsid[] = "$Id$";
  * <dl>
  * <dt>ADC_Zero_C</dt> <dd>0</dd>
  * <dt>ADC_Forty_C</dt> <dd>0</dd>
+ * <dt>ADC_M</dt> <dd>0.0</dd>
+ * <dt>ADC_C</dt> <dd>0.0</dd>
  * <dt>DAC_Zero_C</dt> <dd>0</dd>
  * <dt>DAC_Forty_C</dt> <dd>0</dd>
+ * <dt>DAC_M</dt> <dd>0.0</dd>
+ * <dt>DAC_C</dt> <dd>0.0</dd>
  * </dl>
  */
 static struct Temperature_Struct Temperature_Data = 
 {
-	0,0,0,0
+	0,0,0.0,0.0,0,0,0.0,0.0
 };
 /**
  * Variable holding error code of last operation performed.
@@ -77,6 +89,10 @@ static char Temperature_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 ** -------------------------------------------------------- */
 /**
  * Initialisation routine for the temperature module.
+ * The manuafacturers data supplied as arguments to this routine are stored in Temperature_Data, 
+ * and the slope and intercept (M and C)
+ * parameters of the y=mx+c line are computed for the ADC (temp = (ADC_M * adc) + ADC_C), 
+ * and DAC (dac = (DAC_M * temp) +DAC_C).
  * @param adc_zeroC An integer, the ADU value the temperature analogue to digital converter returns when
  *                  the temperature is zero degrees centigrade.
  * @param adc_fortyC An integer, the ADU value the temperature analogue to digital converter returns when
@@ -87,6 +103,7 @@ static char Temperature_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  *                   for a temperature set-point of forty degrees centigrade.
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Data
  * @see #Temperature_Error_Number
  * @see #Temperature_Error_String
  */
@@ -100,9 +117,101 @@ int Detector_Temperature_Initialise(int adc_zeroC,int adc_fortyC,int dac_zeroC,i
 	Temperature_Data.ADC_Forty_C = adc_fortyC;
 	Temperature_Data.DAC_Zero_C = dac_zeroC;
 	Temperature_Data.DAC_Forty_C = dac_fortyC;
+#if LOGGING > 5
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Temperature_Initialise:adc_zeroC = %d,adc_fortyC = %d,"
+				    "dac_zeroC = %d,dac_fortyC = %d.",
+				    Temperature_Data.ADC_Zero_C,Temperature_Data.ADC_Forty_C,
+				    Temperature_Data.DAC_Zero_C,Temperature_Data.DAC_Forty_C);
+#endif
+	/* compute m and c for the adc and dac slopes
+	** See OWL_640_Cooled_IM_v1_0.pdf, Sec 3.1.2, P10 */
+	/* ADC, X is ADC and Y is temperature */
+	Temperature_Data.ADC_M = -40.0/(double)((Temperature_Data.ADC_Zero_C-Temperature_Data.ADC_Forty_C));
+	Temperature_Data.ADC_C = 40.0-(Temperature_Data.ADC_M*((double)Temperature_Data.ADC_Forty_C));
+#if LOGGING > 5
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Temperature_Initialise:y (temp) = (adc * ADC_M %.3f) + ADC_C %.3f .",
+				    Temperature_Data.ADC_M,Temperature_Data.ADC_C);
+#endif
+	/* DAC, X is temperature and Y is DAC */
+	Temperature_Data.DAC_M = (double)((Temperature_Data.DAC_Zero_C-Temperature_Data.DAC_Forty_C))/-40.0;
+	Temperature_Data.DAC_C = ((double)Temperature_Data.DAC_Forty_C)-(Temperature_Data.DAC_M*40.0);
+#if LOGGING > 5
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Temperature_Initialise:y (DAC) = (temp (C) * DAC_M %.3f) + DAC_C %.3f .",
+				    Temperature_Data.DAC_M,Temperature_Data.DAC_C);
+#endif
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Initialise:Finished.");
 #endif
+	return TRUE;
+}
+
+/**
+ * Routine to get the detector temperature. The setup, serial and temperature modules must have previously been
+ * initialsed / opened for this call to work.
+ * @param detector_temperature_C The address of a double, on return this is filled in with the detector
+ *        temperature in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ * @see #Detector_Temperature_ADC_To_Temp
+ * @see detector_serial.html#Detector_Serial_Command_Get_Sensor_Temp
+ */
+int Detector_Temperature_Get(double *detector_temperature_C)
+{
+	int adc_value;
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Get:Starteded.");
+#endif
+	Temperature_Error_Number = 0;
+	if(detector_temperature_C == NULL)
+	{
+		Temperature_Error_Number = 1;
+		sprintf(Temperature_Error_String,"Detector_Temperature_Get:detector_temperature_C was NULL.");
+		return FALSE;
+	}
+	/* get adc count from the detector via the serial interface */
+	if(!Detector_Serial_Command_Get_Sensor_Temp(&adc_value))
+	{
+		Temperature_Error_Number = 2;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Get:Detector_Serial_Command_Get_Sensor_Temp failed.");
+		return FALSE;
+	}
+	/* convert to degrees centigrade */
+	if(!Detector_Temperature_ADC_To_Temp(adc_value,detector_temperature_C))
+		return FALSE;
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				    "Detector_Temperature_Get:Finished with temperature %.3f C.",
+				    (*detector_temperature_C));
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to convert an ADC value read from the detector temperature sensor, to a temperature in degrees centigrade.
+ * @param adc_value The Analogue to digital converter value read from the camera ahead.
+ * @param detector_temperature_C The address of a double. On a successful conversion, on return the temperature
+ *        will be returned in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Data
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ */
+int Detector_Temperature_ADC_To_Temp(int adc_value,double *detector_temperature_C)
+{
+	if(detector_temperature_C == NULL)
+	{
+		Temperature_Error_Number = 3;
+		sprintf(Temperature_Error_String,"Detector_Temperature_ADC_To_Temp:detector_temperature_C was NULL.");
+		return FALSE;
+	}
+	(*detector_temperature_C) = (((double)adc_value)*Temperature_Data.ADC_M)+Temperature_Data.ADC_C;
 	return TRUE;
 }
 

@@ -17,6 +17,7 @@
 #include "log_udp.h"
 #include "detector_general.h"
 #include "detector_serial.h"
+#include "detector_temperature.h"
 #include "xcliball.h"
 
 /* hash defines */
@@ -138,6 +139,8 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * <li>We call Detector_Serial_Command_Get_Manufacturers_Data to get manufacturer data from the EPROM, including temperature ADC and DAC
  *     ADU values at set-points.
  * <li>We call Detector_Serial_Command_Set_System_State to set checksum_enable and cmd_ack_enable (thereby turning off eprom_comms_enable).
+ * <li>We call Detector_Temperature_Initialise with the ADC and DAC calibrated set-points, to configure temperature
+ *     settings/ status retrieval.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Serial_Error_Number/Serial_Error_String are set.
@@ -152,6 +155,7 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * @see detector_general.html#DETECTOR_GENERAL_ONE_MILLISECOND_NS
  * @see detector_general.html#fdifftime
  * @see detector_setup.html#Detector_Setup_Open
+ * @see detector_temperature.html#Detector_Temperature_Initialise
  */
 int Detector_Serial_Initialise(void)
 {
@@ -220,6 +224,13 @@ int Detector_Serial_Initialise(void)
 #endif
 	if(!Detector_Serial_Command_Set_System_State(TRUE,TRUE,FALSE,FALSE))
 		return FALSE;
+	/* initialise the temperature module */
+	if(!Detector_Temperature_Initialise(adc_zeroC,adc_fortyC,dac_zeroC,dac_fortyC))
+	{
+		Serial_Error_Number = 34;
+		sprintf(Serial_Error_String,"Detector_Serial_Initialise:Detector_Temperature_Initialise failed.");
+		return FALSE;
+	}
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Serial_Initialise:Finished.");
 #endif
