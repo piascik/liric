@@ -80,6 +80,7 @@ static void Help(void);
  * @see ../cdocs/detector_setup.html#Detector_Setup_Open
  * @see ../cdocs/detector_setup.html#Detector_Setup_Close
  * @see ../cdocs/detector_serial.html#Detector_Serial_Initialise
+ * @see ../cdocs/detector_temperature.html#Detector_Temperature_Get
  */
 int main(int argc, char *argv[])
 {

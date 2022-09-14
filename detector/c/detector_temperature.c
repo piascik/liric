@@ -193,6 +193,20 @@ int Detector_Temperature_Get(double *detector_temperature_C)
 }
 
 /**
+ * Get the Sensor's PCB temperature. This routine just wraps Detector_Serial_Command_Get_Sensor_PCB_Temp,
+ * which does all the work.
+ * @param pcb_temp The address of an double, on return from a successful invocation this will be filled with the PCB
+ *                 temperature in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see detector_serial.html#Detector_Serial_Command_Get_Sensor_PCB_Temp
+ */
+int Detector_Temperature_PCB_Get(double *detector_temperature_C)
+{
+	return Detector_Serial_Command_Get_Sensor_PCB_Temp(detector_temperature_C);
+}
+
+/**
  * Routine to convert an ADC value read from the detector temperature sensor, to a temperature in degrees centigrade.
  * @param adc_value The Analogue to digital converter value read from the camera ahead.
  * @param detector_temperature_C The address of a double. On a successful conversion, on return the temperature
