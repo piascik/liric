@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	Detector_General_Set_Log_Filter_Function(Detector_General_Log_Filter_Level_Absolute);
 	Detector_General_Set_Log_Handler_Function(Detector_General_Log_Handler_Stdout);
 	/* create format filename and setup connection to the detector/ XCLIB library */
-	fprintf(stdout,"detector_test_get_system_status : Initialising Detector library.\n");
+	fprintf(stdout,"detector_test_serial_initialise : Initialising Detector library.\n");
 	sprintf(format_filename,"%s/rap_%dms.fmt",FMT_Directory,Coadd_Frame_Exposure_Length_Ms);
 	if(!Detector_Setup_Open("","",format_filename))
 	{

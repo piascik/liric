@@ -13,7 +13,7 @@ CFLAGS 		= -g -I$(INCDIR) $(LOG_UDP_CFLAGS) $(FITSCFLAGS) $(XCLIB_CFLAGS) $(MJDC
 DOCFLAGS 	= -static
 
 SRCS 		= detector_test_exposure.c detector_test_hex_parsing.c detector_test_get_system_status.c \
-		  detector_test_serial_initialise.c
+		  detector_test_serial_initialise.c detector_test_temperature_get.c
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 PROGS 		= $(SRCS:%.c=$(BINDIR)/%)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
