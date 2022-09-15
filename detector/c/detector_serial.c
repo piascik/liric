@@ -1086,12 +1086,12 @@ int Detector_Serial_Command_Get_Sensor_PCB_Temp(double *pcb_temp)
  * <li>A command to read a data byte from the set address.
  * </ul>
  * The status byte is the return value data byte.
- * @param status_byte The address of an integer, on return from a successful invocation this will be filled with the
- *        FPGA status byte.
+ * @param status_byte The address of an unsigned character, on return from a successful invocation 
+ *        this will be filled with the FPGA status byte.
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Serial_Error_Number/Serial_Error_String are set.
- * @see DETECTOR_SERIAL_FPGA_STATUS_FAN_ENABLED
- * @see DETECTOR_SERIAL_FPGA_STATUS_TEC_ENABLED
+ * @see DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
+ * @see DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
  * @see #SERIAL_ETX
  * @see #Serial_Error_Number
  * @see #Serial_Error_String
@@ -1188,6 +1188,69 @@ int Detector_Serial_Command_Get_FPGA_Status(unsigned char *status_byte)
 #if LOGGING > 9
 	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
 		"Detector_Serial_Command_Get_FPGA_Status:Finished with status byte %02#x .",(*status_byte));
+#endif
+	return TRUE;
+}
+
+/**
+ * Set the FPGA control byte.
+ * The detector's serial interface must have previously been opened before calling this command (Detector_Serial_Open).
+ * @param ctrl_byte An unsigned character, containing the FPGA control bits.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
+ * @see DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
+ * @see #SERIAL_ETX
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
+ */
+int Detector_Serial_Command_Set_FPGA_Control(unsigned char ctrl_byte)
+{
+	unsigned char command_buffer[16];
+	unsigned char reply_buffer[16];
+	int command_buffer_length;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Serial_Command_Set_FPGA_Control:Started with ctrl byte %#02x.",ctrl_byte);
+#endif
+	/* setup command buffer */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE0;
+	command_buffer[command_buffer_length++] = 0x02;
+	command_buffer[command_buffer_length++] = 0x00; /* address */
+	command_buffer[command_buffer_length++] = ctrl_byte;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 50;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_FPGA_Control:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 51;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_FPGA_Control:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Set_FPGA_Control:Finished.");
 #endif
 	return TRUE;
 }

@@ -149,6 +149,118 @@ int Detector_Temperature_Initialise(int adc_zeroC,int adc_fortyC,int dac_zeroC,i
 }
 
 /**
+ * Routine to turn the Raptor Ninox 640 fan on or off. 
+ * @param onoff A boolean, TRUE to turn the fan on, and FALSE to turn it off.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ * @see detector_serial.html##DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
+ * @see detector_serial.html#Detector_Serial_Command_Get_FPGA_Status
+ * @see detector_serial.html#Detector_Serial_Command_Set_FPGA_Control
+ */
+int Detector_Temperature_Set_Fan(int onoff)
+{
+	unsigned char ctrl_byte;
+	
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Set_Fan:Started with fan %d.",onoff);
+#endif
+	Temperature_Error_Number = 0;
+	if(!DETECTOR_IS_BOOLEAN(onoff))
+	{
+		Temperature_Error_Number = 4;
+		sprintf(Temperature_Error_String,"Detector_Temperature_Set_Fan:onoff was not a boolean (%d).",onoff);
+		return FALSE;
+	}
+	/* get current FPGA crtl (status) byte */
+	if(!Detector_Serial_Command_Get_FPGA_Status(&ctrl_byte))
+	{
+		Temperature_Error_Number = 5;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Set_Fan:Detector_Serial_Command_Get_FPGA_Status failed.");
+		return FALSE;
+	}
+	/* twiddle fan bit as specified */
+	if(onoff)
+	{
+		ctrl_byte |= DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED;	
+	}
+	else
+	{
+		ctrl_byte &= ~(DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED);
+	}
+	/* write new FPGA crtl byte */
+	if(!Detector_Serial_Command_Set_FPGA_Control(ctrl_byte))
+	{
+		Temperature_Error_Number = 6;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Set_Fan:Detector_Serial_Command_Set_FPGA_Control failed.");
+		return FALSE;
+	}
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Set_Fan:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Routine to turn the Raptor Ninox 640 TEC (thermo electric cooler) on or off. 
+ * @param onoff A boolean, TRUE to turn the TEC on, and FALSE to turn it off.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ * @see detector_serial.html##DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
+ * @see detector_serial.html#Detector_Serial_Command_Get_FPGA_Status
+ * @see detector_serial.html#Detector_Serial_Command_Set_FPGA_Control
+ */
+int Detector_Temperature_Set_TEC(int onoff)
+{
+	unsigned char ctrl_byte;
+	
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Set_TEC:Started with TEC %d.",onoff);
+#endif
+	Temperature_Error_Number = 0;
+	if(!DETECTOR_IS_BOOLEAN(onoff))
+	{
+		Temperature_Error_Number = 7;
+		sprintf(Temperature_Error_String,"Detector_Temperature_Set_TEC:onoff was not a boolean (%d).",onoff);
+		return FALSE;
+	}
+	/* get current FPGA crtl (status) byte */
+	if(!Detector_Serial_Command_Get_FPGA_Status(&ctrl_byte))
+	{
+		Temperature_Error_Number = 8;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Set_FTEC:Detector_Serial_Command_Get_FPGA_Status failed.");
+		return FALSE;
+	}
+	/* twiddle TEC bit as specified */
+	if(onoff)
+	{
+		ctrl_byte |= DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED;	
+	}
+	else
+	{
+		ctrl_byte &= ~(DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED);
+	}
+	/* write new FPGA crtl byte */
+	if(!Detector_Serial_Command_Set_FPGA_Control(ctrl_byte))
+	{
+		Temperature_Error_Number = 9;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Set_Tec:Detector_Serial_Command_Set_FPGA_Control failed.");
+		return FALSE;
+	}
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Set_TEC:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Routine to get the detector temperature. The setup, serial and temperature modules must have previously been
  * initialsed / opened for this call to work.
  * @param detector_temperature_C The address of a double, on return this is filled in with the detector
