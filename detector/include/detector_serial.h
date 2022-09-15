@@ -1,6 +1,16 @@
 /* detector_serial.h */
 #ifndef DETECTOR_SERIAL_H
 #define DETECTOR_SERIAL_H
+
+/**
+ * FPGA status bit, this is 1 if the fan is enabled (OWL 640 cooled variant only).
+ */
+#define DETECTOR_SERIAL_FPGA_STATUS_FAN_ENABLED (1<<2)
+/**
+ * FPGA status bit, this is 1 if the TEC (thermo-electric cooler) is enabled.
+ */
+#define DETECTOR_SERIAL_FPGA_STATUS_TEC_ENABLED (1<<0)
+
 extern int Detector_Serial_Initialise(void);
 
 extern int Detector_Serial_Open(void);
@@ -15,6 +25,7 @@ extern int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,str
 							  int *dac_zeroC,int *dac_fortyC);
 extern int Detector_Serial_Command_Get_Sensor_Temp(int *adc_value);
 extern int Detector_Serial_Command_Get_Sensor_PCB_Temp(double *pcb_temp);
+extern int Detector_Serial_Command_Get_FPGA_Status(unsigned char *status_byte);
 
 extern int Detector_Serial_Command(unsigned char *command_buffer,int command_buffer_length,
 				   unsigned char *reply_buffer,int reply_buffer_length);

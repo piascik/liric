@@ -1078,6 +1078,121 @@ int Detector_Serial_Command_Get_Sensor_PCB_Temp(double *pcb_temp)
 }
 
 /**
+ * Get the FPGA status byte.
+ * The detector's serial interface must have previously been opened before calling this command (Detector_Serial_Open).
+ * The following commands are sent:
+ * <ul>
+ * <li>A command to set the address to read to be 0x0.
+ * <li>A command to read a data byte from the set address.
+ * </ul>
+ * The status byte is the return value data byte.
+ * @param status_byte The address of an integer, on return from a successful invocation this will be filled with the
+ *        FPGA status byte.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see DETECTOR_SERIAL_FPGA_STATUS_FAN_ENABLED
+ * @see DETECTOR_SERIAL_FPGA_STATUS_TEC_ENABLED
+ * @see #SERIAL_ETX
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
+ */
+int Detector_Serial_Command_Get_FPGA_Status(unsigned char *status_byte)
+{
+	unsigned char command_buffer[16];
+	unsigned char reply_buffer[16];
+	int command_buffer_length;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Get_FPGA_Status:Started.");
+#endif
+	if(status_byte == NULL)
+	{
+		Serial_Error_Number = 44;
+		sprintf(Serial_Error_String,"Detector_Serial_Command_Get_FPGA_Status:status_byte was NULL.");
+		return FALSE;
+	}
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,
+			     "Detector_Serial_Command_Get_FPGA_Status:Send set address command (0x0).");
+#endif
+	/* setup 'set address' command buffer (0x0) */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE0;
+	command_buffer[command_buffer_length++] = 0x01;
+	command_buffer[command_buffer_length++] = 0x0; /* address */
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'set address' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 45;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_FPGA_Status:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 46;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_FPGA_Status:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+	/* send 'read memory' command  (0x0) */
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,
+			     "Detector_Serial_Command_Get_FPGA_Status:Send read memory command (0x0).");
+#endif
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE1;
+	command_buffer[command_buffer_length++] = 0x01; /* number of bytes to read, 1 */
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'read memory' command and get reply. We assume checksums and acks are currently enabled, therefore expect 3 bytes back. */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,3))
+		return FALSE;
+	/* reply message has 1 byte of data, followed by the ACK byte, followed by the checksum byte */
+	/* check ACK (in byte 2 of 3) (index 1 of 2) */
+	if(reply_buffer[1] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 47;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_FPGA_Status:Reply ACK was an error code (%#02x).",reply_buffer[1]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and byte 3 of 3 (index 2 of 2) in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[2])
+	{
+		Serial_Error_Number = 48;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Get_FPGA_Status:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[2]);
+		return FALSE;	
+	}
+	/* reply_buffer[0] contains FPGA status byte */
+	(*status_byte) = reply_buffer[0];
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+		"Detector_Serial_Command_Get_FPGA_Status:Finished with status byte %02#x .",(*status_byte));
+#endif
+	return TRUE;
+}
+
+/**
  * Low level command to send a Raptor Ninox-640 command over the 
  * camera link's internal serial connection to the camera head, and optionally wait for a reply.
  * The camera link's internal serial connection should have been previously opened/configured 
