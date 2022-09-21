@@ -209,12 +209,10 @@ static int Parse_Arguments(int argc, char *argv[])
 		else if((strcmp(argv[i],"-off")==0))
 		{
 			TEC_OnOff = FALSE;
-			return FALSE;
 		}
 		else if((strcmp(argv[i],"-on")==0))
 		{
 			TEC_OnOff = TRUE;
-			return FALSE;
 		}
 		else
 		{
