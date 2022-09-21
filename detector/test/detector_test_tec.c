@@ -1,6 +1,6 @@
-/* detector_test_fan.c */
+/* detector_test_tec.c */
 /**
- * Test program to test fan control of the Raptor Ninox-640 camera head.
+ * Test program to test TEC (thermo electric cooler) control of the Raptor Ninox-640 camera head.
  * @author Chris Mottram
  * @version $Id$
  */
@@ -54,10 +54,10 @@ static int Coadd_Frame_Exposure_Length_Ms = DEFAULT_COADD_FRAME_EXPOSURE_LENGTH;
  */
 static char FMT_Directory[STRING_LENGTH] = DEFAULT_FMT_DIRECTORY;
 /**
- * A boolean, if TRUE turn the fan on, if FALSE turn the fan off. This variable is initialised to -1,
+ * A boolean, if TRUE turn the TEC on, if FALSE turn the TEC off. This variable is initialised to -1,
  * which should cause an error if one of the '-on' or '-off' command line arguments is not specified.
  */
-static int Fan_OnOff = -1;
+static int TEC_OnOff = -1;
 
 /* internal functions */
 static int Parse_Arguments(int argc, char *argv[]);
@@ -75,7 +75,7 @@ static void Help(void);
  * @see #Log_Level
  * @see #FMT_Directory
  * @see #Coadd_Frame_Exposure_Length_Ms
- * @see #Fan_OnOff
+ * @see #TEC_OnOff
  * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Filter_Level
  * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Filter_Function
  * @see ../cdocs/detector_general.html#Detector_General_Log_Filter_Level_Absolute
@@ -85,7 +85,7 @@ static void Help(void);
  * @see ../cdocs/detector_setup.html#Detector_Setup_Open
  * @see ../cdocs/detector_setup.html#Detector_Setup_Close
  * @see ../cdocs/detector_serial.html#Detector_Serial_Initialise
- * @see ../cdocs/detector_temperature.html#Detector_Temperature_Set_Fan
+ * @see ../cdocs/detector_temperature.html#Detector_Temperature_Set_TEC
  */
 int main(int argc, char *argv[])
 {
@@ -93,14 +93,14 @@ int main(int argc, char *argv[])
 	double temperature;
 	
 	/* parse arguments */
-	fprintf(stdout,"detector_test_fan : Parsing Arguments.\n");
+	fprintf(stdout,"detector_test_tec : Parsing Arguments.\n");
 	if(!Parse_Arguments(argc,argv))
 		return 1;
 	Detector_General_Set_Log_Filter_Level(Log_Level);
 	Detector_General_Set_Log_Filter_Function(Detector_General_Log_Filter_Level_Absolute);
 	Detector_General_Set_Log_Handler_Function(Detector_General_Log_Handler_Stdout);
 	/* create format filename and setup connection to the detector/ XCLIB library */
-	fprintf(stdout,"detector_test_fan : Initialising Detector library.\n");
+	fprintf(stdout,"detector_test_tec : Initialising Detector library.\n");
 	sprintf(format_filename,"%s/rap_%dms.fmt",FMT_Directory,Coadd_Frame_Exposure_Length_Ms);
 	if(!Detector_Setup_Open("","",format_filename))
 	{
@@ -114,9 +114,9 @@ int main(int argc, char *argv[])
 		Detector_Setup_Close();
 		return 3;
 	}
-	fprintf(stdout,"detector_test_fan : Setting fan to '%s'.\n",Fan_OnOff ? "On" : "Off");
-	/* Turn the detector's fan on or off. */
-	if(!Detector_Temperature_Set_Fan(Fan_OnOff))
+	fprintf(stdout,"detector_test_tec : Setting TEC to '%s'.\n",TEC_OnOff ? "On" : "Off");
+	/* Turn the detector's TEC on or off. */
+	if(!Detector_Temperature_Set_TEC(TEC_OnOff))
 	{
 		Detector_General_Error();
 		Detector_Setup_Close();
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 		Detector_General_Error();
 		return 3;
 	}
-	fprintf(stdout,"detector_test_fan : Finished.\n");		
+	fprintf(stdout,"detector_test_tec : Finished.\n");		
 	return 0;
 }
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
  * @param argv An array of argument strings.
  * @see #STRING_LENGTH
  * @see #Coadd_Frame_Exposure_Length_Ms
- * @see #Fan_OnOff
+ * @see #TEC_OnOff
  * @see #FMT_Directory
  * @see #Log_Level
  */
@@ -208,12 +208,12 @@ static int Parse_Arguments(int argc, char *argv[])
 		}
 		else if((strcmp(argv[i],"-off")==0))
 		{
-			Fan_OnOff = FALSE;
+			TEC_OnOff = FALSE;
 			return FALSE;
 		}
 		else if((strcmp(argv[i],"-on")==0))
 		{
-			Fan_OnOff = TRUE;
+			TEC_OnOff = TRUE;
 			return FALSE;
 		}
 		else
@@ -230,9 +230,9 @@ static int Parse_Arguments(int argc, char *argv[])
  */
 static void Help(void)
 {
-	fprintf(stdout,"Detector Test turning the detector fan on or off:Help.\n");
-	fprintf(stdout,"This program tests controlling the fan of the Raptor Ninox-640 camera head.\n");
-	fprintf(stdout,"detector_test_fan -on|-off [-coadd[_exposure_length] <ms>][-fmt[_directory] <dir>]\n");
+	fprintf(stdout,"Detector Test turning the detector TEC (thermo electric cooler) on or off:Help.\n");
+	fprintf(stdout,"This program tests controlling the thermo electric cooler of the Raptor Ninox-640 camera head.\n");
+	fprintf(stdout,"detector_test_tec -on|-off [-coadd[_exposure_length] <ms>][-fmt[_directory] <dir>]\n");
 	fprintf(stdout,"\t[-help][-l[og_level <0..5>].\n");
 	fprintf(stdout,"The exposure length of an individual coadd is specified in milliseconds (-coadd_exposure_length),\n");
 	fprintf(stdout,"this defaults to %d, a valid '.fmt' file for that exposure length must exist \n",
