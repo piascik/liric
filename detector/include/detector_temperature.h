@@ -6,8 +6,10 @@ extern int Detector_Temperature_Set_Fan(int onoff);
 extern int Detector_Temperature_Set_TEC(int onoff);
 extern int Detector_Temperature_Get(double *detector_temperature_C);
 extern int Detector_Temperature_PCB_Get(double *detector_temperature_C);
+extern int Detector_Temperature_Get_TEC_Setpoint(double *setpoint_temperature_C);
 
 extern int Detector_Temperature_ADC_To_Temp(int adc_value,double *detector_temperature_C);
+extern int Detector_Temperature_DAC_To_Temp(int dac_value,double *temperature_C);
 
 extern int Detector_Temperature_Get_Error_Number(void);
 extern void Detector_Temperature_Error(void);

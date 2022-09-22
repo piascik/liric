@@ -27,6 +27,8 @@ extern int Detector_Serial_Command_Get_Manufacturers_Data(int *serial_number,str
 							  int *dac_zeroC,int *dac_fortyC);
 extern int Detector_Serial_Command_Get_Sensor_Temp(int *adc_value);
 extern int Detector_Serial_Command_Get_Sensor_PCB_Temp(double *pcb_temp);
+extern int Detector_Serial_Command_Get_TEC_Setpoint(int *adc_value);
+
 extern int Detector_Serial_Command_Get_FPGA_Status(unsigned char *status_byte);
 extern int Detector_Serial_Command_Set_FPGA_Control(unsigned char ctrl_byte);
 

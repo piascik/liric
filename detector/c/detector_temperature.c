@@ -319,6 +319,52 @@ int Detector_Temperature_PCB_Get(double *detector_temperature_C)
 }
 
 /**
+ * Routine to get the TEC (thermo electric cooler) set-point temperature. The setup, serial and temperature modules must have previously been
+ * initialsed / opened for this call to work.
+ * @param setpoint_temperature_C The address of a double, on return this is filled in with the TEC set-point
+ *        temperature in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ * @see #Detector_Temperature_DAC_To_Temp
+ * @see detector_serial.html#Detector_Serial_Command_Get_TEC_Setpoint
+ */
+int Detector_Temperature_Get_TEC_Setpoint(double *setpoint_temperature_C)
+{
+	int dac_value;
+
+#if LOGGING > 1
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Temperature_Get_TEC_Setpoint:Starteded.");
+#endif
+	Temperature_Error_Number = 0;
+	if(setpoint_temperature_C == NULL)
+	{
+		Temperature_Error_Number = 10;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Get_TEC_Setpoint:setpoint_temperature_C was NULL.");
+		return FALSE;
+	}
+	/* get dac count from the camera head via the serial interface */
+	if(!Detector_Serial_Command_Get_TEC_Setpoint(&dac_value))
+	{
+		Temperature_Error_Number = 11;
+		sprintf(Temperature_Error_String,
+			"Detector_Temperature_Get_TEC_Setpoint:Detector_Serial_Command_Get_TEC_Setpoint failed.");
+		return FALSE;
+	}
+	/* convert to degrees centigrade */
+	if(!Detector_Temperature_DAC_To_Temp(dac_value,setpoint_temperature_C))
+		return FALSE;
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				    "Detector_Temperature_Get_TEC_Setpoint:Finished with set-point temperature %.3f C.",
+				    (*setpoint_temperature_C));
+#endif
+	return TRUE;
+}
+
+/**
  * Routine to convert an ADC value read from the detector temperature sensor, to a temperature in degrees centigrade.
  * @param adc_value The Analogue to digital converter value read from the camera ahead.
  * @param detector_temperature_C The address of a double. On a successful conversion, on return the temperature
@@ -338,6 +384,29 @@ int Detector_Temperature_ADC_To_Temp(int adc_value,double *detector_temperature_
 		return FALSE;
 	}
 	(*detector_temperature_C) = (((double)adc_value)*Temperature_Data.ADC_M)+Temperature_Data.ADC_C;
+	return TRUE;
+}
+
+/**
+ * Routine to convert an DAC value read from the camera head, to a temperature in degrees centigrade.
+ * @param dac_value The Digital to Analogue Converter value read from the camera head.
+ * @param temperature_C The address of a double. On a successful conversion, on return the temperature
+ *        will be returned in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
+ * @see #Temperature_Data
+ * @see #Temperature_Error_Number
+ * @see #Temperature_Error_String
+ */
+int Detector_Temperature_DAC_To_Temp(int dac_value,double *temperature_C)
+{
+	if(temperature_C == NULL)
+	{
+		Temperature_Error_Number = 12;
+		sprintf(Temperature_Error_String,"Detector_Temperature_DAC_To_Temp:temperature_C was NULL.");
+		return FALSE;
+	}
+	(*temperature_C) = (((double)dac_value)*Temperature_Data.DAC_M)+Temperature_Data.DAC_C;
 	return TRUE;
 }
 
