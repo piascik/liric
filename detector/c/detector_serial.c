@@ -1455,6 +1455,120 @@ int Detector_Serial_Command_Set_FPGA_Control(unsigned char ctrl_byte)
 }
 
 /**
+ * Set the Raptor Ninox-640 camera head's TEC (thermo electric cooler) setpoint.
+ * The detector's serial interface must have previously been opened before calling this command (Detector_Serial_Open).
+ * The following commands are sent:
+ * <ul>
+ * <li>A command to write the Most Significant Bits from the dac_value to address 0xFB.
+ * <li>A command to write the Least Significant Bits from the dac_value to address 0xFA.
+ * </ul>
+ * @param dac_value An integer, filled with a 12 bit integer
+ *        representing the DAC value to be used as the set-point for the TEC. 
+ *        We can calclulate this value using the DAC calibration value's from 
+ *        Detector_Serial_Command_Get_Manufacturers_Data (dac_zeroC / dac_fortyC) with linear interpolation to 
+ *        convert a set-point temperature in degrees centigrade.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Serial_Error_Number/Serial_Error_String are set.
+ * @see #SERIAL_ETX
+ * @see #Serial_Error_Number
+ * @see #Serial_Error_String
+ * @see #Detector_Serial_Compute_Checksum
+ * @see #Detector_Serial_Command
+ * @see #Detector_Serial_Open
+ */
+int Detector_Serial_Command_Set_TEC_Setpoint(int dac_value)
+{
+	unsigned char command_buffer[16];
+	unsigned char reply_buffer[16];
+	unsigned char msb,lsb;
+	int command_buffer_length;
+	
+	Serial_Error_Number = 0;
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Serial_Command_Set_TEC_Setpoint:Started with dac_value %#02x.",dac_value);
+#endif
+	msb = ((dac_value&0xFF00)>>8);
+	lsb = (dac_value&0xFF);
+	/* Write MSB byte to (0xFB) */
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+				    "Detector_Serial_Command_Set_TEC_Setpoint:Write MSB %#02x to address 0xFB.",msb);
+#endif
+	/* setup 'write byte' command buffer (0xFB) */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE0;
+	command_buffer[command_buffer_length++] = 0x02;
+	command_buffer[command_buffer_length++] = 0xFB;
+	command_buffer[command_buffer_length++] = msb;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'write byte' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 60;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_TEC_Setpoint:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 61;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_TEC_Setpoint:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+	/* Write LSB byte to (0xFA) */
+#if LOGGING > 9
+	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
+				    "Detector_Serial_Command_Get_TEC_Setpoint:Write LSB %#02x to address 0xFA.",lsb);
+#endif
+	/* setup 'write byte' command buffer (0xFA) */
+	command_buffer_length = 0;
+	command_buffer[command_buffer_length++] = 0x53;
+	command_buffer[command_buffer_length++] = 0xE0;
+	command_buffer[command_buffer_length++] = 0x02;
+	command_buffer[command_buffer_length++] = 0xFA;
+	command_buffer[command_buffer_length++] = lsb;
+	command_buffer[command_buffer_length++] = SERIAL_ETX;
+	/* add checksum */
+	if(!Detector_Serial_Compute_Checksum(command_buffer,&command_buffer_length))
+		return FALSE;
+	/* send 'set address' command and get reply. We assume checksums and acks are currently enabled  */
+	if(!Detector_Serial_Command(command_buffer,command_buffer_length,reply_buffer,2))
+		return FALSE;
+	/* check ACK */
+	if(reply_buffer[0] != SERIAL_ETX)
+	{
+		Serial_Error_Number = 62;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_TEC_Setpoint:Reply ACK was an error code (%#02x).",reply_buffer[0]);
+		return FALSE;
+	}
+	/* checksum sent should be last byte in the command buffer, and second byte in the reply_buffer */
+	if(command_buffer[command_buffer_length-1] != reply_buffer[1])
+	{
+		Serial_Error_Number = 63;
+		sprintf(Serial_Error_String,
+			"Detector_Serial_Command_Set_TEC_Setpoint:Checksum mismatch (%#02x,%#02x).",
+			command_buffer[command_buffer_length-1],reply_buffer[1]);
+		return FALSE;	
+	}
+#if LOGGING > 9
+	Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Command_Set_TEC_Setpoint:Finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Low level command to send a Raptor Ninox-640 command over the 
  * camera link's internal serial connection to the camera head, and optionally wait for a reply.
  * The camera link's internal serial connection should have been previously opened/configured 

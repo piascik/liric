@@ -15,7 +15,7 @@ DOCFLAGS 	= -static
 SRCS 		= detector_test_exposure.c detector_test_hex_parsing.c detector_test_get_system_status.c \
 		  detector_test_serial_initialise.c \
 		  detector_test_temperature_get.c detector_test_temperature_pcb_get.c \
-		  detector_test_tec_setpoint_get.c \
+		  detector_test_tec_setpoint_get.c detector_test_tec_setpoint_set.c \
 		  detector_test_fan.c detector_test_tec.c
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 PROGS 		= $(SRCS:%.c=$(BINDIR)/%)
