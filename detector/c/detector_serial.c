@@ -1155,7 +1155,7 @@ int Detector_Serial_Command_Get_TEC_Setpoint(int *dac_value)
 	}
 	/* send 'read memory' command  (0xFB) */
 #if LOGGING > 9
-	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_TEC_Setpoint:Send read memory command (0x6E).");
+	Detector_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Detector_Serial_Command_Get_TEC_Setpoint:Send read memory command (0xFB).");
 #endif
 	command_buffer_length = 0;
 	command_buffer[command_buffer_length++] = 0x53;
@@ -1267,7 +1267,7 @@ int Detector_Serial_Command_Get_TEC_Setpoint(int *dac_value)
 	    "Detector_Serial_Command_Get_TEC_Setpoint:memory location 0xFA contained (least significant) byte %#02x.",
 				    lsb);
 #endif
-	/* construct actial ADC value */
+	/* construct actual ADC value */
 	(*dac_value) = lsb|(msb<<8);
 #if LOGGING > 9
 	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
