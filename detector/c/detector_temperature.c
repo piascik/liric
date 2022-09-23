@@ -444,15 +444,23 @@ int Detector_Temperature_DAC_To_Temp(int dac_value,double *temperature_C)
 		sprintf(Temperature_Error_String,"Detector_Temperature_DAC_To_Temp:temperature_C was NULL.");
 		return FALSE;
 	}
-	(*temperature_C) = (((double)dac_value)*Temperature_Data.DAC_M)+Temperature_Data.DAC_C;
+	/* test whether the slope is near 0, if so this is an error (division by zero) */
+	if((Temperature_Data.DAC_M < 0.000001)&&(Temperature_Data.DAC_M > -0.000001))
+	{
+		Temperature_Error_Number = 14;
+		sprintf(Temperature_Error_String,"Detector_Temperature_DAC_To_Temp:DAC_M was close to zero %.6f.",
+			Temperature_Data.DAC_M);
+		return FALSE;
+	}
+	(*temperature_C) = (((double)dac_value)-Temperature_Data.DAC_C)/Temperature_Data.DAC_M;
 	return TRUE;
 }
 
 /**
- * Routine to convert an DAC value read from the camera head, to a temperature in degrees centigrade.
- * @param dac_value The Digital to Analogue Converter value read from the camera head.
- * @param temperature_C The address of a double. On a successful conversion, on return the temperature
- *        will be returned in degrees centigrade.
+ * Routine to convert a temperature in degrees centigrade to a DAC that can be written to the camera head.
+ * @param temperature_C A temperature in degrees centigrade.
+ * @param dac_value The address of an integer, On a successful conversion, on return the Digital to Analogue Converter value 
+ *                  equivalent to the input temperature.
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Temperature_Error_Number/Temperature_Error_String are set.
  * @see #Temperature_Data
@@ -467,15 +475,7 @@ int Detector_Temperature_Temp_To_DAC(double temperature_C,int *dac_value)
 		sprintf(Temperature_Error_String,"Detector_Temperature_Temp_To_DAC:dac_value was NULL.");
 		return FALSE;
 	}
-	/* test whether the slope is near 0, if so this is an error (division by zero) */
-	if((Temperature_Data.DAC_M < 0.000001)&&(Temperature_Data.DAC_M > -0.000001))
-	{
-		Temperature_Error_Number = 14;
-		sprintf(Temperature_Error_String,"Detector_Temperature_Temp_To_DAC:DAC_M was close to zero %.6f.",
-			Temperature_Data.DAC_M);
-		return FALSE;
-	}
-	(*dac_value) = (int)((temperature_C-Temperature_Data.DAC_C)/Temperature_Data.DAC_M);
+	(*dac_value) = (int)(temperature_C*Temperature_Data.DAC_M)+Temperature_Data.DAC_C;
 	return TRUE;
 }
 
