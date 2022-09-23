@@ -1386,7 +1386,7 @@ int Detector_Serial_Command_Get_FPGA_Status(unsigned char *status_byte)
 	(*status_byte) = reply_buffer[0];
 #if LOGGING > 9
 	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
-		"Detector_Serial_Command_Get_FPGA_Status:Finished with status byte %02#x .",(*status_byte));
+		"Detector_Serial_Command_Get_FPGA_Status:Finished with status byte %#02x.",(*status_byte));
 #endif
 	return TRUE;
 }
