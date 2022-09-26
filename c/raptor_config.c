@@ -201,7 +201,7 @@ int Raptor_Config_Get_Character(char *key, char *value)
 		Raptor_General_Error_Number = 311;
 		sprintf(Raptor_General_Error_String,
 			"Raptor_Config_Get_Character(%s) failed:returned string '%s' was too long.",key,string_value);
-		eSTAR_Config_Error_To_String(Raptor_General_Error_String+strlen(MRaptor_General_Error_String));
+		eSTAR_Config_Error_To_String(Raptor_General_Error_String+strlen(Raptor_General_Error_String));
 		return FALSE;
 	}
 	(*value) = string_value[0];
