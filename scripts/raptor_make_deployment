@@ -275,8 +275,7 @@ echo "${file_count} scripts copied."
 #
 # in bin sub-directories
 echo "Copying machine configuration files..."
-# raptor/c/${HOSTTYPE}/${machine_name}.raptor.c.properties
-set file_list = "autobooter/java/${machine_name}.autobooter.properties "
+set file_list = "autobooter/java/${machine_name}.autobooter.properties raptor/c/${HOSTTYPE}/${machine_name}.raptor.c.properties"
 # raptor/java/${machine_name}.fits.properties raptor/java/${machine_name}.raptor.net.properties raptor/java/${machine_name}.raptor.properties ics_gui/java/${machine_name}.ics_gui.properties ics_gui/java/${machine_name}.ics_gui_config.properties ics_gui/java/${machine_name}.ics_gui.fits.properties"
 set file_count = 0
 cd ${dev_dir}
