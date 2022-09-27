@@ -28,7 +28,7 @@
 
 #include "raptor_config.h"
 #include "raptor_general.h"
-/* diddly #include "raptor_command.h"*/
+#include "raptor_command.h"
 #include "raptor_server.h"
 
 /* internal data */
@@ -222,7 +222,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						 "Raptor_Server_Connection_Callback",
 						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_Abort(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -249,7 +248,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						     LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strncmp(client_message,"config",6) == 0)
 	{
@@ -264,7 +262,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						 "Raptor_Server_Connection_Callback",
 						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_Config(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -291,7 +288,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						     LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strncmp(client_message,"fitsheader",10) == 0)
 	{
@@ -306,7 +302,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 					     "Raptor_Server_Connection_Callback",
 					     LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_Fits_Header(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -333,7 +328,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						     LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strcmp(client_message, "help") == 0)
 	{
@@ -465,7 +459,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						 "Raptor_Server_Connection_Callback",
 						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_Multrun(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -492,7 +485,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 							 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strncmp(client_message,"status",6) == 0)
 	{
@@ -506,7 +498,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			Raptor_General_Error("server","raptor_server.c","Raptor_Server_Connection_Callback",
 			                     LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_Status(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -533,7 +524,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 							 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strcmp(client_message, "shutdown") == 0)
 	{

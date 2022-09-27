@@ -49,9 +49,8 @@ CFLAGS 			= -g -I$(INCDIR) $(DEBUG_CFLAGS) $(LOG_UDP_CFLAGS) \
 DOCFLAGS 		= -static
 
 EXE_SRCS		= raptor_main.c
-OBJ_SRCS		= raptor_general.c raptor_config.c raptor_server.c raptor_fits_header.c
-#raptor_command.c \
-			  raptor_multrun.c
+OBJ_SRCS		= raptor_general.c raptor_config.c raptor_server.c raptor_fits_header.c raptor_command.c \
+#			  raptor_multrun.c
 
 
 
