@@ -13,7 +13,7 @@ extern int Raptor_Config_Get_Double(char *key, double *d);
 extern int Raptor_Config_Get_Float(char *key, float *f);
 extern int Raptor_Config_Get_Boolean(char *key, int *boolean);
 extern int Raptor_Config_Detector_Is_Enabled(void);
-extern int Raptor_Config_Nudgeomatic_Is_Enabled(void);
+extern int Raptor_Config_Nudgematic_Is_Enabled(void);
 extern int Raptor_Config_Filter_Wheel_Is_Enabled(void);
 
 #endif
