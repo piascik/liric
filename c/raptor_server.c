@@ -352,7 +352,7 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tabort\n"
 			   "\tconfig filter <filter_name>\n"
 			   "\tconfig coadd_exp_len <short|long>\n"
-			   "\tconfig nudgeomatic <small|large>\n"
+			   "\tconfig nudgematic <small|large>\n"
 			   "\tfitsheader add <keyword> <boolean|float|integer|string> <value>\n"
 			   "\tfitsheader delete <keyword>\n"
 			   "\tfitsheader clear\n"
@@ -363,7 +363,7 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tstatus [name|identification|fits_instrument_code]\n"
 			   "\tstatus temperature [get|pcb]\n"
 			   "\tstatus filterwheel [filter|position|status]\n"
-			   "\tstatus nudgeomatic [position|status]\n"
+			   "\tstatus nudgematic [position|status]\n"
 			   "\tstatus exposure [status|count|length|start_time]\n"
 			   "\tstatus exposure [index|multrun|run]\n"
 			   "\tshutdown\n");

@@ -1,7 +1,7 @@
 /* raptor_main.c */
 /**
  * Raptor C server main program. This controls the Raptor Ninox-640 Infra-red detector,
- * the filter_wheel and the nudgeomatic offseting mechanism.
+ * the filter_wheel and the nudgematic offseting mechanism.
  * @author $Author$
  */
 #include <signal.h> /* signal handling */
@@ -63,7 +63,7 @@ static void Help(void);
  * <li>We load the configuration file using Raptor_Config_Load, using the config file returned by 
  *     Raptor_General_Get_Config_Filename.
  * <li>We initialise the logging using Raptor_Initialise_Logging.
- * <li>We initialise the mechanisms (detector, nudgeomatic, filter wheel) using Raptor_Initialise_Mechanisms.
+ * <li>We initialise the mechanisms (detector, nudgematic, filter wheel) using Raptor_Initialise_Mechanisms.
  * <li>We intialise the server using Raptor_Server_Initialise.
  * <li>We start the server to handle incoming commands with Raptor_Server_Start. This routine finishes
  *     when the server/progam is told to terminate.

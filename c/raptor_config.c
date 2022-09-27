@@ -446,20 +446,20 @@ int Raptor_Config_Detector_Is_Enabled(void)
 }
 
 /**
- * Wrapper routine to make testing whether the nudgeomatic (internal offset mechanism) is enabled easier.
- * @return The routine returns TRUE if the detector is enabled (nudgeomatic.enable=true) 
+ * Wrapper routine to make testing whether the nudgematic (internal offset mechanism) is enabled easier.
+ * @return The routine returns TRUE if the detector is enabled (nudgematic.enable=true) 
  *         and FALSE if it is not enabled, or an error occurs.
  * @see #Raptor_Config_Get_Boolean
  * @see raptor_general.html#Raptor_General_Error
  */
-int Raptor_Config_Nudgeomatic_Is_Enabled(void)
+int Raptor_Config_Nudgematic_Is_Enabled(void)
 {
 	int enabled;
 	
-	if(!Raptor_Config_Get_Boolean("nudgeomatic.enable",&enabled))
+	if(!Raptor_Config_Get_Boolean("nudgematic.enable",&enabled))
 	{
 		/* log the failure */
-		Raptor_General_Error("config","raptor_config.c","Raptor_Config_Nudgeomatic_Is_Enabled",
+		Raptor_General_Error("config","raptor_config.c","Raptor_Config_Nudgematic_Is_Enabled",
 				     LOG_VERBOSITY_TERSE,"CONFIG");
 		return FALSE;
 	}
