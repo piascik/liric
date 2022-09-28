@@ -4,10 +4,6 @@ include ../../../Makefile.common
 include ../../Makefile.common
 include ../Makefile.common
 
-# estar_config
-#CONFIG_CFLAGS	= -I$(eSTAR_SRC_HOME)/config/include/
-#CONFIG_LDFLAGS	= -L$(eSTAR_LIB_HOME) -lestar_config
-
 INCDIR 		= $(USB_PIO_SRC_HOME)/include
 BINDIR		= $(USB_PIO_BIN_HOME)/c/$(HOSTTYPE)
 DOCSDIR 	= $(USB_PIO_DOC_HOME)/cdocs
@@ -20,7 +16,7 @@ LDFLAGS		= $(CONFIG_LDFLAGS)
 DOCFLAGS 	= -static
 
 SRCS 		= usb_pio_general.c usb_pio_connection.c usb_pio_command.c
-#usb_pio_config.c
+
 HEADERS		= $(SRCS:%.c=%.h)
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
