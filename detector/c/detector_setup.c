@@ -16,6 +16,7 @@
 
 #include "log_udp.h"
 #include "detector_buffer.h"
+#include "detector_serial.h"
 #include "detector_setup.h"
 #include "detector_general.h"
 #include "xcliball.h"
@@ -86,6 +87,7 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  *     store the returned image dimensions in the setup data (Size_X/Size_Y).
  * <li>We log some more information from the frame grabber by calling pxd_imageCdim / pxd_imageBdim.
  * <li>We initialise the detector library's buffers by calling Detector_Buffer_Allocate.
+ * <li>We initialise the internal serial link to the detector by calling Detector_Serial_Initialise.
  * </ul>
  * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
  * @return The routine returns TRUE on success and FALSE on failure. 
@@ -97,6 +99,7 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  * @see #Detector_Setup_Open
  * @see #Setup_Get_Dimensions
  * @see detector_buffer.html#Detector_Buffer_Allocate
+ * @see detector_serial.html#Detector_Serial_Initialise
  */
 int Detector_Setup_Startup(char *format_filename)
 {
@@ -150,6 +153,13 @@ int Detector_Setup_Startup(char *format_filename)
 		sprintf(Setup_Error_String,
 			"Detector_Setup_Startup:Detector_Buffer_Allocate(size_x = %d,size_y = %d) failed.",
 			Setup_Data.Size_X,Setup_Data.Size_Y);
+		return FALSE;
+	}
+	/* open connection to and initialise the internal serial link */
+	if(!Detector_Serial_Initialise())
+	{
+		Setup_Error_Number = 9;
+		sprintf(Setup_Error_String,"Detector_Setup_Startup:Detector_Serial_Initialise failed.");
 		return FALSE;
 	}
 #if LOGGING > 1
