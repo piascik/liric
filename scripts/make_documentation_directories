@@ -10,5 +10,7 @@ mkdir -p ${RAPTOR_DOC_HOME}/filter_wheel/cdocs/
 mkdir -p ${RAPTOR_DOC_HOME}/filter_wheel/test/
 mkdir -p ${RAPTOR_DOC_HOME}/usb_pio/cdocs/
 mkdir -p ${RAPTOR_DOC_HOME}/usb_pio/test/
+mkdir -p ${RAPTOR_DOC_HOME}/nudgematic/cdocs/
+mkdir -p ${RAPTOR_DOC_HOME}/nudgematic/test/
 mkdir -p ${RAPTOR_DOC_HOME}/cdocs/
 mkdir -p ${RAPTOR_DOC_HOME}/deployment/

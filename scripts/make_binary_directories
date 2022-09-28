@@ -17,6 +17,8 @@ mkdir -p ${RAPTOR_BIN_HOME}/filter_wheel/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/fmt
 mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/test/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/nudgematic/c/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/nudgematic/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/c/${HOSTTYPE}/
 #
 # Create fmt soft-links from raptor-nogit src directory
