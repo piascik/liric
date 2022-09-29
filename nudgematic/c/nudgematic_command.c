@@ -25,6 +25,8 @@
 #ifdef MUTEXED
 #include <pthread.h>
 #endif
+#include "log_udp.h"
+
 #include "usb_pio_general.h"
 #include "usb_pio_command.h"
 
@@ -84,6 +86,10 @@ static char Command_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = "";
  */
 int Nudgematic_Command_Position_Set(int position)
 {
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Nudgematic_Command_Position_Set: Started with position %d.",
+				      position);
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -104,6 +110,10 @@ int Nudgematic_Command_Position_Get(int *position)
 		return FALSE;
 	}
 	(*position) = -1;
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Nudgematic_Command_Position_Get: Current position %d.",
+				      (*position));
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -111,6 +121,7 @@ int Nudgematic_Command_Position_Get(int *position)
  * Routine to set the offset size of the positions of the Nudgematic.
  * @param size The size of the offset to use, either SMALL or LARGE.
  * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #Nudgematic_Command_Offset_Size_To_String
  * @see #Command_Error_Number
  * @see #Command_Error_String
  * @see #NUDGEMATIC_OFFSET_SIZE_T
@@ -124,6 +135,11 @@ int Nudgematic_Command_Offset_Size_Set(NUDGEMATIC_OFFSET_SIZE_T size)
 		return FALSE;
 	}
 	Command_Data.Offset_Size = size;
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Offset_Size_Set: Offset size set to to %d (%s).",
+				      size,Nudgematic_Command_Offset_Size_To_String(size));
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -132,6 +148,7 @@ int Nudgematic_Command_Offset_Size_Set(NUDGEMATIC_OFFSET_SIZE_T size)
  * @param size The address of a UDGEMATIC_OFFSET_SIZE_T, on a successful return should contain 
  *             the size of the offset to use, either SMALL or LARGE.
  * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #Nudgematic_Command_Offset_Size_To_String
  * @see #Command_Error_Number
  * @see #Command_Error_String
  * @see #NUDGEMATIC_OFFSET_SIZE_T
@@ -145,6 +162,11 @@ int Nudgematic_Command_Offset_Size_Get(NUDGEMATIC_OFFSET_SIZE_T *size)
 		return FALSE;
 	}
 	(*size) = Command_Data.Offset_Size;
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Offset_Size_Get: Current offset size %d '%s'.",(*size),
+				      Nudgematic_Command_Offset_Size_To_String((*size)));
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -171,6 +193,10 @@ int Nudgematic_Command_Offset_Size_Parse(char *offset_size_string, NUDGEMATIC_OF
 		sprintf(Command_Error_String,"Nudgematic_Command_Offset_Size_Parse:size was NULL.");
 		return FALSE;
 	}
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Offset_Size_Parse: Parsing offset size '%s'.",offset_size_string);
+#endif /* LOGGING */
 	if((strcmp(offset_size_string,"small") == 0)||(strcmp(offset_size_string,"SMALL") == 0))
 		(*size) = SMALL;
 	else if((strcmp(offset_size_string,"large") == 0)||(strcmp(offset_size_string,"LARGE") == 0))
@@ -183,7 +209,32 @@ int Nudgematic_Command_Offset_Size_Parse(char *offset_size_string, NUDGEMATIC_OF
 			offset_size_string);
 		return FALSE;
 	}
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Offset_Size_Parse: Parsed offset size '%s' to %d.",
+				      offset_size_string,(*size));
+#endif /* LOGGING */
 	return TRUE;
+}
+
+/**
+ * Routine to convert the specified offset size into a string.
+ * @param size The offset size, of type NUDGEMATIC_OFFSET_SIZE_T, to convert.
+ * @return The routine returns a string based on the offset size, one of: "SMALL", "LARGE", "UNKNOWN", "ERROR".
+ */
+char *Nudgematic_Command_Offset_Size_To_String(NUDGEMATIC_OFFSET_SIZE_T size)
+{
+	switch(size)
+	{
+		case UNKNOWN:
+			return "UNKNOWN";
+		case SMALL:
+			return "SMALL";
+		case LARGE:
+			return "LARGE";
+		default:
+			return "ERROR";
+	}
 }
 
 /**

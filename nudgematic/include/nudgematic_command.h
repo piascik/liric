@@ -30,6 +30,7 @@ extern int Nudgematic_Command_Position_Get(int *position);
 extern int Nudgematic_Command_Offset_Size_Set(NUDGEMATIC_OFFSET_SIZE_T size);
 extern int Nudgematic_Command_Offset_Size_Get(NUDGEMATIC_OFFSET_SIZE_T *size);
 extern int Nudgematic_Command_Offset_Size_Parse(char *offset_size_string, NUDGEMATIC_OFFSET_SIZE_T *size);
+extern char *Nudgematic_Command_Offset_Size_To_String(NUDGEMATIC_OFFSET_SIZE_T size);
 
 extern int Nudgematic_Command_Get_Error_Number(void);
 extern void Nudgematic_Command_Error(void);
