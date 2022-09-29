@@ -35,12 +35,14 @@
 /**
  * Data type holding local data to detector_setup. This consists of the following:
  * <dl>
+ * <li>Is_Open</dt> <dd>Boolean, determines whether a connection to the detector has been previously successfully been opened.
  * <dt>Size_X</dt> <dd>The size of the frame grabber image in the X direction, in pixels.</dd>
  * <dt>Size_Y</dt> <dd>The size of the frame grabber image in the Y direction, in pixels.</dd>
  * </dl>
  */
 struct Setup_Struct
 {
+	int Is_Open;
 	int Size_X;
 	int Size_Y;
 };
@@ -53,13 +55,14 @@ static char rcsid[] = "$Id$";
 /**
  * The instance of Setup_Struct that contains local data for this module. This is initialised as follows:
  * <dl>
+ * <li>Is_Open</dt> <dd>FALSE</dd>
  * <dt>Size_X</dt> <dd>0</dd>
  * <dt>Size_Y</dt> <dd>0</dd>
  * </dl>
  */
 static struct Setup_Struct Setup_Data = 
 {
-	0,0
+	FALSE,0,0
 };
 
 /**
@@ -81,12 +84,14 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
 /**
  * Routine to initialise the Raptor detector.
  * <ul>
+ * <li>If the connection to the library has been previously opened (Setup_Data.Is_Open), we close it by calling Detector_Setup_Shutdown.
  * <li>Detector_Setup_Open is called with the specified format_file.
  * <li>We log some information from the frame grabber by calling pxd_infoMemsize, pxd_imageZdim, pxd_infoUnits.
  * <li>We call Setup_Get_Dimensions to get the frame grabbers image dimensions from the frame grabber. We
  *     store the returned image dimensions in the setup data (Size_X/Size_Y).
  * <li>We log some more information from the frame grabber by calling pxd_imageCdim / pxd_imageBdim.
- * <li>We initialise the detector library's buffers by calling Detector_Buffer_Allocate.
+ * <li>We initialise the detector library's buffers by calling Detector_Buffer_Allocate. Detector_Buffer_Allocate is written such that
+ *     the buffers will only be freed/reallocated, if the size dimensions have changed (or Detector_Buffer_Allocate has not been called before).
  * <li>We initialise the internal serial link to the detector by calling Detector_Serial_Initialise.
  * </ul>
  * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
@@ -97,9 +102,12 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  * @see #Setup_Error_String
  * @see #Setup_Data
  * @see #Detector_Setup_Open
+ * @see #Detector_Setup_Shutdown
  * @see #Setup_Get_Dimensions
  * @see detector_buffer.html#Detector_Buffer_Allocate
  * @see detector_serial.html#Detector_Serial_Initialise
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
  */
 int Detector_Setup_Startup(char *format_filename)
 {
@@ -117,6 +125,16 @@ int Detector_Setup_Startup(char *format_filename)
 				    "Detector_Setup_Startup(format_file=%s):Started.",
 				    format_filename);
 #endif
+	/* if a connection to the library is already open, close it */
+	if(Setup_Data.Is_Open)
+	{
+		if(!Detector_Setup_Shutdown())
+		{
+			/* if the shutdown failed, log it and try and continue anyway. */
+			Detector_General_Error();
+		}
+	}
+	/* open connection to the library */
 	if(!Detector_Setup_Open("","",format_filename))
 	{
 		/* Setup_Error_Number / Setup_Error_String set in Detector_Setup_Open */
@@ -146,7 +164,8 @@ int Detector_Setup_Startup(char *format_filename)
 	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,"Detector_Setup_Startup:Bits per pixel = %d.",
 				    pxd_imageCdim()*pxd_imageBdim());
 #endif
-	/* allocate image buffers */
+	/* allocate image buffers. Note this now automatically frees and re-allocates buffers, only if the sizes have changed,
+	** if the sizes are the same and the buffers are non-null nothing is changed. */
 	if(!Detector_Buffer_Allocate(Setup_Data.Size_X,Setup_Data.Size_Y))
 	{
 		Setup_Error_Number = 8;
@@ -178,6 +197,8 @@ int Detector_Setup_Startup(char *format_filename)
  * @see #Setup_Error_Number
  * @see #Setup_Error_String
  * @see #Detector_Setup_Close
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
  */
 int Detector_Setup_Shutdown(void)
 {
@@ -204,6 +225,8 @@ int Detector_Setup_Shutdown(void)
  *         On failure, Setup_Error_Number/Setup_Error_String are set.
  * @see #Setup_Error_Number
  * @see #Setup_Error_String
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
  */
 int Detector_Setup_Open(char *driverparms,char *formatname, char *formatfile)
 {
@@ -235,6 +258,7 @@ int Detector_Setup_Open(char *driverparms,char *formatname, char *formatfile)
  *         On failure, Setup_Error_Number/Setup_Error_String are set.
  * @see #Setup_Error_Number
  * @see #Setup_Error_String
+ * @see detector_general.html#Detector_General_Log
  */
 int Detector_Setup_Close(void)
 {

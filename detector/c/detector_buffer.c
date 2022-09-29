@@ -73,9 +73,13 @@ static char Buffer_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Create the image buffers to the specified dimensions. We call Detector_Buffer_Free to ensure any previous
- * memory allocations are freed correctly, before allocating new buffers, using size_x and size_y to determine
- * the buffer size (in pixels).
+ * Create the image buffers to the specified dimensions. 
+ * <ul>
+ * <li>We check if the new size is the same as the old size, and all the buffers are already allocated (non NULL)
+ *     and if so make no changes and return success.
+ * <li>We call Detector_Buffer_Free to ensure any previous memory allocations are freed correctly.
+ * <li>We allocate new buffers, using size_x and size_y to determine the buffer size (in pixels).
+ * </ul>
  * @param size_x The X size of the image, in pixels (should be greater than 0).
  * @param size_y The Y size of the image, in pixels (should be greater than 0).
  * @return The routine returns TRUE on success and FALSE on failure. 
@@ -84,6 +88,8 @@ static char Buffer_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
  * @see #Buffer_Error_Number
  * @see #Buffer_Error_String
  * @see #Detector_Buffer_Free
+ * @see detector_general.html#Detector_General_Log
+ * @see detector_general.html#Detector_General_Log_Format
  */
 int Detector_Buffer_Allocate(int size_x,int size_y)
 {
@@ -105,6 +111,18 @@ int Detector_Buffer_Allocate(int size_x,int size_y)
 		Buffer_Error_Number = 2;
 		sprintf(Buffer_Error_String,"Detector_Buffer_Allocate:size_y too small (%d).",size_y);
 		return FALSE;
+	}
+	/* check - if the new size is the same as the old size, and all buffers are already allocated, 
+	** we don't need to do anything */
+	if((Buffer_Data.Size_X == size_x)&&(Buffer_Data.Size_Y == size_y)&&(Buffer_Data.Mono_Image != NULL)&&
+	   (Buffer_Data.Coadd_Image != NULL)&&(Buffer_Data.Mean_Image != NULL))
+	{
+#if LOGGING > 1
+		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+					    "Detector_Buffer_Allocate:New size is identical to the old size (%d,%d) "
+					    "and buffers are already allocated.",size_x,size_y);
+#endif
+		return TRUE;
 	}
 	/* free any previously allocated data */
 	if(!Detector_Buffer_Free())
@@ -158,6 +176,7 @@ int Detector_Buffer_Allocate(int size_x,int size_y)
  * @see #Buffer_Data
  * @see #Buffer_Error_Number
  * @see #Buffer_Error_String
+ * @see detector_general.html#Detector_General_Log
  */
 int Detector_Buffer_Free(void)
 {
@@ -190,6 +209,7 @@ int Detector_Buffer_Free(void)
  * @see #Buffer_Data
  * @see #Buffer_Error_Number
  * @see #Buffer_Error_String
+ * @see detector_general.html#Detector_General_Log
  */
 int Detector_Buffer_Initialise_Coadd_Image(void)
 {
@@ -223,6 +243,7 @@ int Detector_Buffer_Initialise_Coadd_Image(void)
  * @see #Buffer_Data
  * @see #Buffer_Error_Number
  * @see #Buffer_Error_String
+ * @see detector_general.html#Detector_General_Log
  */
 int Detector_Buffer_Add_Mono_To_Coadd_Image(void)
 {
@@ -263,6 +284,7 @@ int Detector_Buffer_Add_Mono_To_Coadd_Image(void)
  * @see #Buffer_Data
  * @see #Buffer_Error_Number
  * @see #Buffer_Error_String
+ * @see detector_general.html#Detector_General_Log
  */
 int Detector_Buffer_Create_Mean_Image(int coadds)
 {
