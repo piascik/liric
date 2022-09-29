@@ -167,7 +167,7 @@ echo "${java_class_dir_count} Java class directories copied with ${java_class_fi
 # C libraries
 #
 echo "Copying C libraries..."
-set clib_list = "libcfitsio.so libngatastro.so libngatutil.so libestar_config.so liblog_udp.so libcommandserver.so libraptor_detector.so libraptor_filter_wheel.so libraptor_usb_pio.so"
+set clib_list = "libcfitsio.so libngatastro.so libngatutil.so libestar_config.so liblog_udp.so libcommandserver.so libraptor_detector.so libraptor_filter_wheel.so libraptor_nudgematic.so libraptor_usb_pio.so"
 set clib_count = 0
 foreach clib ( ${clib_list} )
 	echo "C Library : ${clib}"
