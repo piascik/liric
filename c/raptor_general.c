@@ -37,6 +37,8 @@
 
 #include "filter_wheel_general.h"
 
+#include "nudgematic_general.h"
+
 #include "usb_pio_general.h"
 
 #include "raptor_config.h"
@@ -184,6 +186,8 @@ static void General_Log_Handler_Filename_To_Fp(char *log_filename,FILE **log_fp)
  * @see ../commandserver/cdocs/command_server.html#Command_Server_Error_To_String
  * @see ../detector/cdocs/detector_general.html#Detector_General_Is_Error
  * @see ../detector/cdocs/detector_general.html#Detector_General_Error_To_String
+ * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Is_Error
+ * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Error_To_String
  * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
  * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Error_To_String
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Is_Error
@@ -213,7 +217,6 @@ void Raptor_General_Error(char *sub_system,char *source_filename,char *function,
 		fflush(General_Data.Error_Fp);
 	}
 	strcpy(buff,"");
-	strcpy(buff,"");
 	if(Command_Server_Is_Error())
 	{
 		found = TRUE;
@@ -221,7 +224,6 @@ void Raptor_General_Error(char *sub_system,char *source_filename,char *function,
 		fprintf(General_Data.Error_Fp,"\t%s\n",buff);
 		fflush(General_Data.Error_Fp);
 	}
-	strcpy(buff,"");
 	strcpy(buff,"");
 	if(Detector_General_Is_Error())
 	{
@@ -231,6 +233,13 @@ void Raptor_General_Error(char *sub_system,char *source_filename,char *function,
 		fflush(General_Data.Error_Fp);
 	}
 	strcpy(buff,"");
+	if(Nudgematic_General_Is_Error())
+	{
+		found = TRUE;
+		Nudgematic_General_Error_To_String(buff);
+		fprintf(General_Data.Error_Fp,"\t%s\n",buff);
+		fflush(General_Data.Error_Fp);
+	}
 	strcpy(buff,"");
 	if(USB_PIO_General_Is_Error())
 	{
@@ -239,7 +248,6 @@ void Raptor_General_Error(char *sub_system,char *source_filename,char *function,
 		fprintf(General_Data.Error_Fp,"\t%s\n",buff);
 		fflush(General_Data.Error_Fp);
 	}
-	strcpy(buff,"");
 	strcpy(buff,"");
 	if(Filter_Wheel_General_Is_Error())
 	{
@@ -470,6 +478,21 @@ void Raptor_General_Call_Log_Handlers_Detector(int level,char *message)
 void Raptor_General_Call_Log_Handlers_Filter_Wheel(int level,char *message)
 {
 	Raptor_General_Call_Log_Handlers("FILTER_WHEEL","","",level,"FILTER_WHEEL",message);
+}
+
+/**
+ * Routine that goes through the General_Data.Log_Handler_List and invokes each non-null handler for logging
+ * of the filter wheel subsystem. We call Raptor_General_Call_Log_Handlers with parameters as follows: 
+ * "sub_system" and "category" are set to "Nudgematic". 
+ * "source_filename" and "function" are set to an empty string. "level" and "message" are passed through.
+ * @param level At what level is the log message (TERSE/high level or VERBOSE/low level), 
+ *         a valid member of LOG_VERBOSITY.
+ * @param message The message to log.
+ * @see #Raptor_General_Call_Log_Handlers
+ */
+void Raptor_General_Call_Log_Handlers_Nudgematic(int level,char *message)
+{
+	Raptor_General_Call_Log_Handlers("Nudgematic","","",level,"Nudgematic",message);
 }
 
 /**

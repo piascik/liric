@@ -92,6 +92,7 @@ extern void Raptor_General_Call_Log_Handlers(char *sub_system,char *source_filen
 					  char *category,char *message);
 extern void Raptor_General_Call_Log_Handlers_Detector(int level,char *message);
 extern void Raptor_General_Call_Log_Handlers_Filter_Wheel(int level,char *message);
+extern void Raptor_General_Call_Log_Handlers_Nudgematic(int level,char *message);
 extern void Raptor_General_Call_Log_Handlers_USB_PIO(int level,char *message);
 extern int Raptor_General_Add_Log_Handler_Function(void (*log_fn)(char *sub_system,char *source_filename,
 							char *function,int level,char *category,char *message));

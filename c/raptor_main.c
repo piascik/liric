@@ -24,7 +24,10 @@
 #include "filter_wheel_command.h"
 #include "filter_wheel_general.h"
 
-#include "usb_pio_connection.h"
+#include "nudgematic_connection.h"
+#include "nudgematic_general.h"
+
+#include "usb_pio_general.h"
 
 #include "raptor_config.h"
 #include "raptor_general.h"
@@ -211,9 +214,10 @@ static int Raptor_Initialise_Signal(void)
  * @see raptor_general.html#Raptor_General_Log_Handler_Log_Hourly_File
  * @see raptor_general.html#Raptor_General_Log_Handler_Log_UDP
  * @see raptor_general.html#Raptor_General_Call_Log_Handlers
- * @see raptor_general.html#Raptor_General_Call_Log_Handlers_CCD
+ * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Detector
  * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Filter_Wheel
- * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Rotator
+ * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Nudgematic
+ * @see raptor_general.html#Raptor_General_Call_Log_Handlers_USB_PIO
  * @see raptor_general.html#Raptor_General_Set_Log_Filter_Function
  * @see raptor_general.html#Raptor_General_Log_Filter_Level_Absolute
  * @see raptor_config.html#Raptor_Config_Get_Boolean
@@ -225,6 +229,12 @@ static int Raptor_Initialise_Signal(void)
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Set_Log_Handler_Function
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Set_Log_Filter_Function
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Log_Filter_Level_Absolute
+ * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Handler_Function
+ * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Filter_Function
+ * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Log_Filter_Level_Absolute
+ * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Handler_Function
+ * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Function
+ * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Log_Filter_Level_Absolute
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Set_Log_Handler_Function
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Set_Log_Filter_Function
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Log_Filter_Level_Absolute
@@ -325,6 +335,12 @@ static int Raptor_Initialise_Logging(void)
 	/* filter wheel */
 	Filter_Wheel_General_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers_Filter_Wheel);
 	Filter_Wheel_General_Set_Log_Filter_Function(Filter_Wheel_General_Log_Filter_Level_Absolute);
+	/* nudgematic */
+	Nudgematic_General_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers_Nudgematic);
+	Nudgematic_General_Set_Log_Filter_Function(Nudgematic_General_Log_Filter_Level_Absolute);
+	/* usb_pio */
+	USB_PIO_General_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers_USB_PIO);
+	USB_PIO_General_Set_Log_Filter_Function(USB_PIO_General_Log_Filter_Level_Absolute);
 	/* setup command server logging */
 	Command_Server_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers);
 	Command_Server_Set_Log_Filter_Function(Command_Server_Log_Filter_Level_Absolute);
@@ -639,7 +655,7 @@ static int Raptor_Shutdown_Detector(void)
  * <li>If it is _not_ enabled, log and return success.
  * <li>Use Raptor_Config_Get_String to get the device name to use for the 
  *     USB-PIO connection ("nudgematic.device_name").
- * <li>Call USB_PIO_Connection_Open to connect to the USB-PIO board.
+ * <li>Call Nudgematic_Connection_Open to connect to the Nudgematic mechanism via the USB-PIO board.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see raptor_config.html#Raptor_Config_Get_Boolean
@@ -648,7 +664,7 @@ static int Raptor_Shutdown_Detector(void)
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Log
  * @see raptor_general.html#Raptor_General_Log_Format
- * @see ../usb_pio/cdocs/usb_pio_connection.html#USB_PIO_Connection_Open
+ * @see ../nudgematic/cdocs/nudgematic_connection.html#Nudgematic_Connection_Open
  */
 static int Raptor_Startup_Nudgematic(void)
 {
@@ -689,11 +705,11 @@ static int Raptor_Startup_Nudgematic(void)
 	Raptor_General_Log_Format("main","raptor_main.c","Raptor_Startup_Nudgematic",LOG_VERBOSITY_TERSE,"STARTUP",
 			   "Open a connection to the nudgematic using device '%s'.",device_name);
 #endif
-	if(!USB_PIO_Connection_Open(device_name))
+	if(!Nudgematic_Connection_Open(device_name))
 	{
 		Raptor_General_Error_Number = 14;
 		sprintf(Raptor_General_Error_String,"Raptor_Startup_Nudgematic:"
-			"USB_PIO_Connection_Open(%s) failed.",device_name);
+			"Nudgematic_Connection_Open(%s) failed.",device_name);
 		/* free allocated data */
 		if(device_name != NULL)
 			free(device_name);
@@ -702,8 +718,6 @@ static int Raptor_Startup_Nudgematic(void)
 	/* free allocated data */
 	if(device_name != NULL)
 		free(device_name);
-	/* call the setup rotator routine */
-	/* diddly */
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log("main","mraptor_main.c","Raptor_Startup_Nudgematic",LOG_VERBOSITY_TERSE,"STARTUP",
 			   "Finished.");
@@ -716,14 +730,14 @@ static int Raptor_Startup_Nudgematic(void)
  * <ul>
  * <li>Use Raptor_Config_Get_Boolean to get "nudgematic.enable" to see whether the nudgematic is enabled.
  * <li>If it is _not_ enabled, log and return success.
- * <li>Use USB_PIO_Connection_Close to close the connection to the nudgematic.
+ * <li>Use Nudgematic_Connection_Close to close the connection to the nudgematic.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see raptor_config.html#Raptor_Config_Get_Boolean
  * @see raptor_general.html#Raptor_General_Error_Number
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Log
- * @see ../usb_pio/cdocs/usb_pio_connection.html#USB_PIO_Connection_Close
+ * @see ../nudgematic/cdocs/nudgematic_connection.html#Nudgematic_Connection_Close
  */
 static int Raptor_Shutdown_Nudgematic(void)
 {
@@ -752,12 +766,12 @@ static int Raptor_Shutdown_Nudgematic(void)
 	/* shutdown the connection */
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log_Format("main","raptor_main.c","Raptor_Shutdown_Nudgematic",LOG_VERBOSITY_TERSE,"STARTUP",
-				  "Calling USB_PIO_Connection_Close.");
+				  "Calling Nudgematic_Connection_Close.");
 #endif
-	if(!USB_PIO_Connection_Close())
+	if(!Nudgematic_Connection_Close())
 	{
 		Raptor_General_Error_Number = 18;
-		sprintf(Raptor_General_Error_String,"Raptor_Shutdown_Nudgematic:USB_PIO_Connection_Close failed.");
+		sprintf(Raptor_General_Error_String,"Raptor_Shutdown_Nudgematic:Nudgematic_Connection_Close failed.");
 		return FALSE;
 	}
 #if RAPTOR_DEBUG > 1
@@ -925,6 +939,8 @@ static void Help(void)
 	fprintf(stdout,"\t[-raptor_log_level|-ll <level>\n");
 	fprintf(stdout,"\t[-detector_log_level|-ddetll <level>\n");
 	fprintf(stdout,"\t[-filter_wheel_log_level|-fwll <level>\n");
+	fprintf(stdout,"\t[-nudgematic_log_level|-nll <level>\n");
+	fprintf(stdout,"\t[-usb_pio_log_level|-upll <level>\n");
 	fprintf(stdout,"\t[-command_server_log_level|-csll <level>\n");
 	fprintf(stdout,"\t<level> is an integer from 1..5.\n");
 }
@@ -939,6 +955,8 @@ static void Help(void)
  * @see raptor_general.html#Raptor_General_Set_Log_Filter_Level
  * @see ../detector/cdocs/detector_general.html#Detector_General_Set_Log_Filter_Level
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Set_Log_Filter_Level
+ * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Filter_Level
+ * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Level
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Set_Log_Filter_Level
  */
 static int Parse_Arguments(int argc, char *argv[])
@@ -1046,7 +1064,6 @@ static int Parse_Arguments(int argc, char *argv[])
 			Help();
 			exit(0);
 		}
-		/* diddly
 		else if((strcmp(argv[i],"-nudgematic_log_level")==0)||(strcmp(argv[i],"-nll")==0))
 		{
 			if((i+1)<argc)
@@ -1066,7 +1083,25 @@ static int Parse_Arguments(int argc, char *argv[])
 				return FALSE;
 			}
 		}
-		*/
+		else if((strcmp(argv[i],"-usb_pio_log_level")==0)||(strcmp(argv[i],"-upll")==0))
+		{
+			if((i+1)<argc)
+			{
+				retval = sscanf(argv[i+1],"%d",&log_level);
+				if(retval != 1)
+				{
+					fprintf(stderr,"Parse_Arguments:Parsing log level %s failed.\n",argv[i+1]);
+					return FALSE;
+				}
+				USB_PIO_General_Set_Log_Filter_Level(log_level);
+				i++;
+			}
+			else
+			{
+				fprintf(stderr,"Parse_Arguments:Log Level requires a level.\n");
+				return FALSE;
+			}
+		}
 		else
 		{
 			fprintf(stderr,"Parse_Arguments:argument '%s' not recognized.\n",argv[i]);

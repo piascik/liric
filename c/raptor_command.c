@@ -41,6 +41,8 @@
 #include "filter_wheel_config.h"
 #include "filter_wheel_general.h"
 
+#include "nudgematic_command.h"
+
 #include "raptor_config.h"
 #include "raptor_fits_header.h"
 /* diddly #include "raptor_multrun.h"*/
@@ -143,12 +145,17 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
  * @see raptor_multrun.html#Raptor_Multrun_Coadd_Exposure_Length_Set
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Name_To_Position
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Move
+ * @see ../nudgematic/cdocs/nudgematic_command.html#NUDGEMATIC_OFFSET_SIZE_T
+ * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Offset_Size_Set
+ * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Offset_Size_To_String
  */
 int Raptor_Command_Config(char *command_string,char **reply_string)
 {
+	NUDGEMATIC_OFFSET_SIZE_T offset_size;
 	int retval,bin,parameter_index,filter_position;
 	double camera_exposure_length;
 	char filter_string[32];
+	char coadd_exposure_length_keyword_string[32];
 	char coadd_exposure_length_string[32];
 	char nudgematic_offset_size_string[32];
 	char sub_config_command_string[16];
@@ -321,15 +328,13 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 					  LOG_VERBOSITY_VERBOSE,"COMMAND","Setting nudgematic offset size to: %s.",
 					  nudgematic_offset_size_string);
 #endif
-		/* cache the nudgematic offset size setting in the multrun data for FITS header generation */
-		/*Raptor_Multrun_Nudgematic_Offset_Size_Set(nudgematic_offset_size_string);*/
 		if(strcmp(nudgematic_offset_size_string,"small") == 0)
 		{
-			/* diddly */
+			offset_size = SMALL;
 		}
 		else if(strcmp(nudgematic_offset_size_string,"large") == 0)
 		{
-			/* diddly */
+			offset_size = LARGE;
 		}
 		else
 		{
@@ -350,11 +355,31 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 				return FALSE;
 			return TRUE;
 		}
-		/* configure nudgematic if enabled */
+		/* actually configure offset size, if nudgematic is enabled */
 		if(Raptor_Config_Nudgematic_Is_Enabled())
 		{
-			/* diddly */
-		} /* end if Raptor_Config_Nudgematic_Is_Enabled */
+			if(!Nudgematic_Command_Offset_Size_Set(offset_size))
+			{
+				Raptor_General_Error_Number = 508;
+				sprintf(Raptor_General_Error_String,"Raptor_Command_Config:Failed to configure offset size %s.",
+					Nudgematic_Command_Offset_Size_To_String(offset_size));
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Config",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+				Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Config",
+							  LOG_VERBOSITY_TERSE,"COMMAND",
+							  "finished Failed to configure offset size %s.",
+							  Nudgematic_Command_Offset_Size_To_String(offset_size));
+#endif
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to parse config nudgematic command:"))
+					return FALSE;
+				if(!Raptor_General_Add_String(reply_string,command_string))
+					return FALSE;
+				return TRUE;
+			}
+			/* cache the nudgematic offset size setting in the multrun data for FITS header generation */
+			/* diddly Raptor_Multrun_Nudgematic_Offset_Size_Set(nudgematic_offset_size_string);*/
+		}/* end if nudgematic is enabled */
 		if(!Raptor_General_Add_String(reply_string,"0 Config nudgematic completed."))
 			return FALSE;
 	}
