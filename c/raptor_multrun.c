@@ -26,7 +26,6 @@
 #include "log_udp.h"
 
 #include "detector_buffer.h"
-#include "detector_command.h"
 #include "detector_exposure.h"
 #include "detector_fits_filename.h"
 #include "detector_fits_header.h"
@@ -55,8 +54,6 @@
  * <dl>
  * <dt>CCD_Temperature</dt> <dd>A copy of the current CCD temperature, taken at the start of a multrun. 
  *                              Used to populate FITS headers.</dd>
- * <dt>Requested_Exposure_Length</dt> <dd>A copy of the per-frame requested exposure length (in seconds) 
- *                                        used to configure the CCD camera. Used to populate FITS headers.</dd>
  * <dt>Image_Index</dt> <dd>Which frame in the multrun we are currently working on.</dd>
  * <dt>Image_Count</dt> <dd>The number of FITS images we are expecting to generate in the current multrun.</dd>
  * <dt>Multrun_Start_Time</dt> <dd>A timestamp taken the first time an exposure was started in the multrun 
@@ -70,7 +67,6 @@
 struct Multrun_Struct
 {
 	double CCD_Temperature;
-	double Requested_Exposure_Length;
 	int Image_Index;
 	int Image_Count;
 	struct timespec Multrun_Start_Time;
@@ -86,7 +82,6 @@ static char rcsid[] = "$Id$";
  * Multrun Data holding local data to raptor multruns.
  * <dl>
  * <dt>CCD_Temperature</dt>               <dd>0.0</dd>
- * <dt>Requested_Exposure_Length</dt>     <dd>0.0</dd>
  * <dt>Image_Index</dt>                   <dd>0</dd>
  * <dt>Image_Count</dt>                   <dd>0</dd>
  * <dt>Multrun_Start_Time</dt>            <dd>{0,0}</dd>
@@ -111,11 +106,6 @@ static int Moptop_Abort = FALSE;
 /* ----------------------------------------------------------------------------
 ** 		external functions 
 ** ---------------------------------------------------------------------------- */
-int Raptor_Multrun_Coadd_Exposure_Length_Set(int coadd_exposure_length_ms)
-{
-	return TRUE;
-}
-
 int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 			  char ***filename_list,int *filename_count)
 {
@@ -144,13 +134,14 @@ int Raptor_Multrun_Count_Get(void)
 
 int Raptor_Multrun_Exposure_Length_Get(void)
 {
+	return -1;
 }
 
 int Raptor_Multrun_Exposure_Start_Time_Get(struct timespec *exposure_start_time)
 {
 	if(exposure_start_time == NULL)
 	{
-		Raptor_General_Error_Number = ;
+		Raptor_General_Error_Number = 600;
 		sprintf(Raptor_General_Error_String,
 			"Raptor_Multrun_Exposure_Start_Time_Get:exposure_start_time was NULL.");
 		return FALSE;
@@ -186,4 +177,5 @@ int Raptor_Multrun_Multrun_Get(void)
  */
 int Raptor_Multrun_Run_Get(void)
 {
+	return -1;
 }

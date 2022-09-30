@@ -491,6 +491,7 @@ static void Raptor_Shutdown_Mechanisms(void)
  * @see raptor_general.html#Raptor_General_Log_Format
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Initialise
  * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Startup
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Set_Coadd_Frame_Exposure_Length
  */
 static int Raptor_Startup_Detector(void)
 {
@@ -522,6 +523,7 @@ static int Raptor_Startup_Detector(void)
 #endif
 		return TRUE;
 	}
+	/* diddly we can now replace this next bit with a call to Raptor_Command_Initialise_Detector */	 
 	/* get the coadd exposure length. */
 	if(!Raptor_Config_Get_Integer("detector.coadd_exposure_length.long",&coadd_exposure_length))
 	{

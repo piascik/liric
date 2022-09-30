@@ -8,5 +8,6 @@ extern int Raptor_Command_Multrun(char *command_string,char **reply_string);
 extern int Raptor_Command_Status(char *command_string,char **reply_string);
 extern int Raptor_Command_Temperature(char *command_string,char **reply_string);
 
+extern int Raptor_Command_Initialise_Detector(char *coadd_exposure_length_string);
 
 #endif

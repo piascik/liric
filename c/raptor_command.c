@@ -43,9 +43,10 @@
 
 #include "nudgematic_command.h"
 
+#include "raptor_command.h"
 #include "raptor_config.h"
 #include "raptor_fits_header.h"
-/* diddly #include "raptor_multrun.h"*/
+#include "raptor_multrun.h"
 #include "raptor_general.h"
 #include "raptor_server.h"
 
@@ -99,9 +100,8 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
 	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Abort",LOG_VERBOSITY_INTERMEDIATE,
 			   "COMMAND","Aborting multrun.");
 #endif
-	/* diddly multrun_abort_retval = Raptor_Multrun_Abort();*/
+	multrun_abort_retval = Raptor_Multrun_Abort();
 	/* check to see if there were problems with the aborts */
-	/* diddly
 	if((multrun_abort_retval == FALSE))
 	{
 		Raptor_General_Error("command","raptor_command.c","Raptor_Command_Abort",
@@ -115,7 +115,6 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
 			return FALSE;
 		return TRUE;
 	}
-	*/
 	if(!Raptor_General_Add_String(reply_string,"0 Multrun/Bias/Dark aborted."))
 		return FALSE;
 #if RAPTOR_DEBUG > 1
@@ -135,6 +134,7 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
  * @param command_string The command. This is not changed during this routine.
  * @param reply_string The address of a pointer to allocate and set the reply string.
  * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #Raptor_Command_Initialise_Detector
  * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
  * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
  * @see raptor_general.html#Raptor_General_Log
@@ -142,7 +142,6 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Add_String
  * @see raptor_general.html#Raptor_General_Add_Integer_To_String
- * @see raptor_multrun.html#Raptor_Multrun_Coadd_Exposure_Length_Set
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Name_To_Position
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Move
  * @see ../nudgematic/cdocs/nudgematic_command.html#NUDGEMATIC_OFFSET_SIZE_T
@@ -204,29 +203,24 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 				return FALSE;
 			return TRUE;
 		}
-		/* do something with parsed coadd_exposure_length_string */
-		if(strcmp(coadd_exposure_length_string,"short") == 0)
-		{
-			/* diddly */
-		}
-		else if(strcmp(coadd_exposure_length_string,"long") == 0)
-		{
-			/* diddly */
-		}
-		else
+		/* re-initialise the connection to the detector, using the
+		** new coadd_exposure length */
+		if(!Raptor_Command_Initialise_Detector(coadd_exposure_length_string))
 		{
 			Raptor_General_Error_Number = 506;
 			sprintf(Raptor_General_Error_String,"Raptor_Command_Config:"
-				"Illegal coadd exposure length: '%s'.",coadd_exposure_length_string);
+				"Failed to initialise detector with coadd exposure length: '%s'.",
+				coadd_exposure_length_string);
 			Raptor_General_Error("command","raptor_command.c","Raptor_Command_Config",
 					     LOG_VERBOSITY_TERSE,"COMMAND");
 #if RAPTOR_DEBUG > 1
 			Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Config",
 						  LOG_VERBOSITY_TERSE,"COMMAND",
-						  "finished (Illegal coadd exposure length: '%s').",
+						  "Failed to initialise detector with coadd exposure length: '%s'.",
 						  coadd_exposure_length_string);
 #endif
-			if(!Raptor_General_Add_String(reply_string,"1 Illegal coadd exposure length:"))
+			if(!Raptor_General_Add_String(reply_string,
+						      "1 Failed to initialise detector with coadd exposure length:"))
 				return FALSE;
 			if(!Raptor_General_Add_String(reply_string,coadd_exposure_length_string))
 				return FALSE;
@@ -378,7 +372,6 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 				return TRUE;
 			}
 			/* cache the nudgematic offset size setting in the multrun data for FITS header generation */
-			/* diddly Raptor_Multrun_Nudgematic_Offset_Size_Set(nudgematic_offset_size_string);*/
 		}/* end if nudgematic is enabled */
 		if(!Raptor_General_Add_String(reply_string,"0 Config nudgematic completed."))
 			return FALSE;
@@ -744,7 +737,6 @@ int Raptor_Command_Multrun(char *command_string,char **reply_string)
 		return TRUE;
 	}
 	/* do multrun */
-	/* diddly
 	retval = Raptor_Multrun(exposure_length,exposure_count,do_standard,&filename_list,&filename_count);
 	if(retval == FALSE)
 	{
@@ -758,7 +750,6 @@ int Raptor_Command_Multrun(char *command_string,char **reply_string)
 			return FALSE;
 		return TRUE;
 	}
-	*/
 	/* success */
 	if(!Raptor_General_Add_String(reply_string,"0 "))
 	{
@@ -1206,6 +1197,120 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 		return FALSE;
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Status",LOG_VERBOSITY_TERSE,
+			   "COMMAND","finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * On a change in coadd exposure length, the whole connection to xclib / the detecot needs to be closed and
+ * re-opened again: the library needs to read a different format '.fmt' file.
+ * <ul>
+ * <li>We retrieve the "detector.enable" flag from config. If it is FALSE (detector not enabled) we just return from
+ *     this routine successfully with a suitable log message.
+ * <li>We construct a suitable config keyword ""detector.coadd_exposure_length." with the coadd_exposure_length_string
+ *     argument appended.
+ * <li>We retrieve a suitable config exposure length (in milliseconds) from the constructed keyword.
+ * <li>We retrieve the detector format file directory from the "detector.format_dir" config item.
+ * <li>We construct a suitable format_filename from the above information.
+ * <li>We call Detector_Setup_Startup with the specified format_filename.
+ * <li>We call Detector_Exposure_Set_Coadd_Frame_Exposure_Length so the detector exposure code knows what
+ *     the new coadd exposure length is.
+ * </ul>
+ * @param coadd_exposure_length_string A string representing the length of coadd exposure, should normally be
+ *        one of "short" or "long".
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see raptor_config.html#Raptor_Config_Get_Integer
+ * @see raptor_config.html#Raptor_Config_Get_Boolean
+ * @see raptor_config.html#Raptor_Config_Get_String
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Log_Format
+ * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Startup
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Set_Coadd_Frame_Exposure_Length
+ */
+int Raptor_Command_Initialise_Detector(char *coadd_exposure_length_string)
+{
+	int enabled,coadd_exposure_length;
+	char format_filename[256];
+	char keyword_string[64];
+	char* format_dir_string = NULL;
+	
+	if(coadd_exposure_length_string == NULL)
+	{
+		Raptor_General_Error_Number = 527;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_Initialise_Detector:"
+			"coadd_exposure_length_string was NULL.");
+		return FALSE;
+	}
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Initialise_Detector",LOG_VERBOSITY_TERSE,
+				  "COMMAND","Started with exposure length '%s'.",coadd_exposure_length_string);
+#endif
+	/* do we want to initialise the detector.
+	** The C layer always has a detector attached, but if it is unplugged/broken, setting "detector.enable" to FALSE
+	** allows the C layer to initialise to enable control of other mechanisms from the C layer. */
+	if(!Raptor_Config_Get_Boolean("detector.enable",&enabled))
+	{
+		Raptor_General_Error_Number = 535;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_Initialise_Detector:"
+			"Failed to get whether the detector is enabled for initialisation.");
+		return FALSE;
+	}
+	/* if we don't want to initialise the detector, just return here. */
+	if(enabled == FALSE)
+	{
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log("command","raptor_command.c","Raptor_Command_Initialise_Detector",
+				   LOG_VERBOSITY_TERSE,"COMMAND","Finished (Detector NOT enabled).");
+#endif
+		return TRUE;
+	}
+	/* get the coadd exposure length from the passed in string, via the config. */
+	sprintf(keyword_string,"detector.coadd_exposure_length.%s",coadd_exposure_length_string);
+	if(!Raptor_Config_Get_Integer(keyword_string,&coadd_exposure_length))
+	{
+		Raptor_General_Error_Number = 536;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Command_Initialise_Detector:Failed to get coadd exposure length for keyword '%s'.",
+			keyword_string);
+		return FALSE;
+	}
+	/* get the '.fmt' format directory from config */
+	if(!Raptor_Config_Get_String("detector.format_dir",&format_dir_string))
+	{
+		Raptor_General_Error_Number = 537;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Command_Initialise_Detector:Failed to get detector format directory.");
+		return FALSE;
+	}
+	sprintf(format_filename,"%s/rap_%dms.fmt",format_dir_string,coadd_exposure_length);	
+	if(format_dir_string != NULL)
+		free(format_dir_string);
+	/* actually do initialisation of the detector library */
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Initialise_Detector",LOG_VERBOSITY_TERSE,
+				  "COMMAND","Calling Detector_Setup_Startup with format filename '%s'.",
+				  format_filename);
+#endif
+	if(!Detector_Setup_Startup(format_filename))
+	{
+		Raptor_General_Error_Number = 538;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Command_Initialise_Detector:Detector_Setup_Startup failed.");
+		return FALSE;
+	}
+	/* setup coadd exposure length */
+	if(!Detector_Exposure_Set_Coadd_Frame_Exposure_Length(coadd_exposure_length))
+	{
+		Raptor_General_Error_Number = 540;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Command_Initialise_Detector:Detector_Exposure_Set_Coadd_Frame_Exposure_Length failed.");
+		return FALSE;
+	}
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Initialise_Detector",LOG_VERBOSITY_TERSE,
 			   "COMMAND","finished.");
 #endif
 	return TRUE;
