@@ -351,6 +351,46 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 #endif
 	return TRUE;
 }
+
+/**
+ * Routine to get the currently configured per-coadd frame exposure length.
+ * @return An integer, the currently configured per-coadd frame exposure length, in milliseconds.
+ * @see #Exposure_Data
+ */
+int Detector_Exposure_Coadd_Frame_Exposure_Length_Get(void)
+{
+	return Exposure_Data.Coadd_Frame_Exposure_Length_Ms;
+}
+
+/**
+ * Routine to get the current/last exposure length.
+ * @return An integer, the current/last exposure length, in milliseconds.
+ * @see #Exposure_Data
+ */
+int Detector_Exposure_Exposure_Length_Get(void)
+{
+	return Exposure_Data.Exposure_Length_Ms;
+}
+
+/**
+ * Routine to get the current number of coadds that will make up the current exposure.
+ * @return An integer, the number of coadds.
+ * @see #Exposure_Data
+ */
+int Detector_Exposure_Coadd_Count_Get(void)
+{
+	return Exposure_Data.Coadd_Count;
+}
+
+/**
+ * Routine to get the start time of the current exposure.
+ * @return An instance of struct timespec containing a timestamp of the start time of the current exposure.
+ * @see #Exposure_Data
+ */
+struct timespec Detector_Exposure_Start_Time_Get(void)
+{
+	return Exposure_Data.Exposure_Start_Timestamp;
+}
 	
 /**
  * Get the current value of the error number.
