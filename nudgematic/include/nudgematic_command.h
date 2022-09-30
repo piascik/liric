@@ -3,6 +3,14 @@
 #ifndef NUDGEMATIC_COMMAND_H
 #define NUDGEMATIC_COMMAND_H
 
+/* hash defines */
+
+/**
+ * How many different positions can the nudgematic move it (at each offset size).
+ */
+#define NUDGEMATIC_POSITION_COUNT  (9)
+
+/* enums */
 /**
  * Enumeration type defining the magnitudes of offsets induced by the nudgematic, this can be one of:
  * <ul>
@@ -18,6 +26,7 @@ enum NUDGEMATIC_OFFSET_SIZE_ENUM
 	LARGE = 2
 };
 
+/* typedefs */
 /**
  * Typedef of an Enumeration type defining the magnitudes of offsets induced by the nudgematic.
  * @see #NUDGEMATIC_OFFSET_SIZE_ENUM
