@@ -204,7 +204,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	}
 #if LOGGING > 1
 	Detector_General_Log_Format(LOG_VERBOSITY_TERSE,
-				    "Detector_Exposure_Expose(exposure_length=%d ms,fits_filename = '%s':Started.",
+				    "Detector_Exposure_Expose(exposure_length=%d ms,fits_filename = '%s'):Started.",
 				    exposure_length_ms,fits_filename);
 #endif
 	/* range check exposure length / compute coadds */
@@ -346,7 +346,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	}
 #if LOGGING > 1
 	Detector_General_Log_Format(LOG_VERBOSITY_TERSE,
-				    "Detector_Exposure_Expose(exposure_length=%d ms,fits_filename = '%s':Finished.",
+				    "Detector_Exposure_Expose(exposure_length=%d ms,fits_filename = '%s'):Finished.",
 				    exposure_length_ms,fits_filename);
 #endif
 	return TRUE;
