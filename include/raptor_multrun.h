@@ -10,11 +10,6 @@ extern int Raptor_Multrun_Abort(void);
 /* status routines */
 extern int Raptor_Multrun_In_Progress(void);
 extern int Raptor_Multrun_Count_Get(void);
-extern int Raptor_Multrun_Exposure_Length_Get(void);
-extern int Raptor_Multrun_Exposure_Start_Time_Get(struct timespec *exposure_start_time);
 extern int Raptor_Multrun_Exposure_Index_Get(void);
-extern int Raptor_Multrun_Multrun_Get(void);
-extern int Raptor_Multrun_Run_Get(void);
-
 
 #endif

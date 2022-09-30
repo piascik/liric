@@ -839,11 +839,9 @@ int Raptor_Command_Multrun(char *command_string,char **reply_string)
  * @see raptor_general.html#Raptor_General_Get_Current_Time_String
  * @see raptor_multrun.html#Raptor_Multrun_In_Progress
  * @see raptor_multrun.html#Raptor_Multrun_Count_Get
- * @see raptor_multrun.html#Raptor_Multrun_Exposure_Length_Get
- * @see raptor_multrun.html#Raptor_Multrun_Exposure_Start_Time_Get
  * @see raptor_multrun.html#Raptor_Multrun_Exposure_Index_Get
- * @see raptor_multrun.html#Raptor_Multrun_Multrun_Get
- * @see raptor_multrun.html#Raptor_Multrun_Run_Get
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Exposure_Length_Get
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Start_Time_Get
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Run_Get
  * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_Get
@@ -887,7 +885,6 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 	/* parse subsystem */
 	if(strncmp(subsystem_string,"exposure",8) == 0)
 	{
-		/* diddly
 		if(strncmp(command_string+command_string_index,"status",6)==0)
 		{
 			if(Raptor_Multrun_In_Progress())
@@ -902,12 +899,12 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 		}
 		else if(strncmp(command_string+command_string_index,"length",6)==0)
 		{
-			ivalue = Raptor_Multrun_Exposure_Length_Get();
+			ivalue = Detector_Exposure_Exposure_Length_Get();
 			sprintf(return_string+strlen(return_string),"%d",ivalue);
 		}
 		else if(strncmp(command_string+command_string_index,"start_time",10)==0)
 		{
-			Raptor_Multrun_Exposure_Start_Time_Get(&status_time);
+			status_time = Detector_Exposure_Start_Time_Get();
 			Raptor_General_Get_Time_String(status_time,time_string,31);
 			sprintf(return_string+strlen(return_string),"%s",time_string);
 		}
@@ -918,12 +915,12 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 		}
 		else if(strncmp(command_string+command_string_index,"multrun",7)==0)
 		{
-			ivalue = Raptor_Multrun_Multrun_Get();
+			ivalue = Detector_Fits_Filename_Multrun_Get();
 			sprintf(return_string+strlen(return_string),"%d",ivalue);
 		}
 		else if(strncmp(command_string+command_string_index,"run",3)==0)
 		{
-			ivalue = Raptor_Multrun_Run_Get();
+			ivalue = Detector_Fits_Filename_Run_Get();
 			sprintf(return_string+strlen(return_string),"%d",ivalue);
 		}
 		else
@@ -931,7 +928,7 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 			Raptor_General_Error_Number = 512;
 			sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
 				"Failed to parse exposure status command %s.",command_string+command_string_index);
-			RaptorGeneral_Error("command","raptor_command.c","Raptor_Command_Status",
+			Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
 					     LOG_VERBOSITY_TERSE,"COMMAND");
 #if RAPTOR_DEBUG > 1
 			Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Status",
@@ -943,11 +940,6 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 				return FALSE;
 			return TRUE;
 		}
-		*/
-		/* diddly */
-		if(!Raptor_General_Add_String(reply_string,"1 exposure status not implemented yet."))
-			return FALSE;
-		return TRUE;
 	}
 	else if(strncmp(subsystem_string,"filterwheel",11) == 0)
 	{

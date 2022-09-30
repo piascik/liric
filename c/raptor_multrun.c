@@ -59,9 +59,6 @@
  * <dt>Multrun_Start_Time</dt> <dd>A timestamp taken the first time an exposure was started in the multrun 
  *                              (actually, just before we start waiting for the next image to arrive, 
  *                              the timestamp is only approximate). Used for calculating TELAPSE.</dd>
- * <dt>Exposure_Start_Time</dt> <dd>A timestamp taken the last time an exposure was started in the multrun 
- *                              (actually, just before we start waiting for the next image to arrive, 
- *                              the timestamp is only approximate).</dd>
  * </dl>
  */
 struct Multrun_Struct
@@ -70,7 +67,6 @@ struct Multrun_Struct
 	int Image_Index;
 	int Image_Count;
 	struct timespec Multrun_Start_Time;
-	struct timespec Exposure_Start_Time;
 };
 
 /* internal data */
@@ -85,13 +81,12 @@ static char rcsid[] = "$Id$";
  * <dt>Image_Index</dt>                   <dd>0</dd>
  * <dt>Image_Count</dt>                   <dd>0</dd>
  * <dt>Multrun_Start_Time</dt>            <dd>{0,0}</dd>
- * <dt>Exposure_Start_Time</dt>           <dd>{0,0}</dd>
  * </dl>
  * @see #Multrun_Struct
  */
 static struct Multrun_Struct Multrun_Data =
 {
-	0.0,0,0,{0,0},{0,0}
+	0.0,0,0,{0,0}
 };
 
 /**
@@ -132,24 +127,6 @@ int Raptor_Multrun_Count_Get(void)
 	return Multrun_Data.Image_Count;
 }
 
-int Raptor_Multrun_Exposure_Length_Get(void)
-{
-	return -1;
-}
-
-int Raptor_Multrun_Exposure_Start_Time_Get(struct timespec *exposure_start_time)
-{
-	if(exposure_start_time == NULL)
-	{
-		Raptor_General_Error_Number = 600;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Multrun_Exposure_Start_Time_Get:exposure_start_time was NULL.");
-		return FALSE;
-	}
-	(*exposure_start_time) = Multrun_Data.Multrun_Start_Time;
-	return TRUE;
-}
-
 /**
  * Return which exposure in the multrun we are on.
  * @return The exposure index in the multrun.
@@ -158,24 +135,4 @@ int Raptor_Multrun_Exposure_Start_Time_Get(struct timespec *exposure_start_time)
 int Raptor_Multrun_Exposure_Index_Get(void)
 {
 	return Multrun_Data.Image_Index;
-}
-
-/**
- * Return the multrun number (in the generated FITS filenames) of this multrun.
- * @return The current multrun number.
- * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
- */
-int Raptor_Multrun_Multrun_Get(void)
-{
-	return Detector_Fits_Filename_Multrun_Get();
-}
-
-/**
- * Return the run number (in the generated FITS filenames) of this multrun.
- * @return The current run number.
- * @see #Multrun_Data
- */
-int Raptor_Multrun_Run_Get(void)
-{
-	return -1;
 }
