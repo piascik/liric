@@ -93,6 +93,7 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  * <li>We initialise the detector library's buffers by calling Detector_Buffer_Allocate. Detector_Buffer_Allocate is written such that
  *     the buffers will only be freed/reallocated, if the size dimensions have changed (or Detector_Buffer_Allocate has not been called before).
  * <li>We initialise the internal serial link to the detector by calling Detector_Serial_Initialise.
+ * <li>Setup_Data.Is_Open is set to TRUE as the connection to the detector is now open.
  * </ul>
  * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
  * @return The routine returns TRUE on success and FALSE on failure. 
@@ -181,6 +182,8 @@ int Detector_Setup_Startup(char *format_filename)
 		sprintf(Setup_Error_String,"Detector_Setup_Startup:Detector_Serial_Initialise failed.");
 		return FALSE;
 	}
+	/* we have now finished initialing the detector */
+	Setup_Data.Is_Open = TRUE;
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Startup:Finished.");
 #endif
@@ -191,9 +194,11 @@ int Detector_Setup_Startup(char *format_filename)
  * Routine to close the connection to the Raptor detector.
  * <ul>
  * <li>Detector_Setup_Close is called.
+ * <li>Setup_Data.Is_Open is set to FALSE as the connection to the detector is closed.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Setup_Error_Number/Setup_Error_String are set.
+ * @see #Setup_Data
  * @see #Setup_Error_Number
  * @see #Setup_Error_String
  * @see #Detector_Setup_Close
@@ -210,6 +215,8 @@ int Detector_Setup_Shutdown(void)
 		/* Setup_Error_Number / Setup_Error_String set in Detector_Setup_Close */
 		return FALSE;
 	}
+	/* we have now finished closing the connection to the detector */
+	Setup_Data.Is_Open = FALSE;
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Shutdown:Finished.");
 #endif
