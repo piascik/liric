@@ -39,6 +39,8 @@
  * <dt>Coadd_Count</dt> <dd>The number of coadds needed (each of length Coadd_Frame_Exposure_Length_Ms), 
  *                      to do the requested exposure length of length Exposure_Length_Ms.</dd>
  * <dt>Exposure_Start_Timestamp</dt> <dd>A timestamp taken at the start of an exposure.</dd>
+ * <dt>Abort</dt> <dd>An integer, used as a boolean. Set to FALSE at the start of an exposure, if another
+ *                thread calls  Detector_Exposure_Abort to set this to TRUE, the exposure will abort.
  * </dl>
  */
 struct Exposure_Struct
@@ -47,6 +49,7 @@ struct Exposure_Struct
 	int Exposure_Length_Ms;
 	int Coadd_Count;
 	struct timespec Exposure_Start_Timestamp;
+	int Abort;
 };
 
 /* internal variables */
@@ -61,11 +64,12 @@ static char rcsid[] = "$Id$";
  * <dt>Exposure_Length_Ms</dt> <dd>0</dd>
  * <dt>Coadd_Count</dt> <dd>0</dd>
  * <dt>Exposure_Start_Timestamp</dt> <dd>{0,0}</dd>
+ * <dt>Abort</dt> <dd>FALSE</dd>
  * </dl>
  */
 static struct Exposure_Struct Exposure_Data = 
 {
-	0,0,0,{0,0}
+	0,0,0,{0,0},FALSE
 };
 
 /**
@@ -239,6 +243,8 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		sprintf(Exposure_Error_String,"Detector_Exposure_Expose:Failed to initialise coadd image.");
 		return FALSE;	
 	}
+	/* reset abort flag */
+	Exposure_Data.Abort = FALSE;
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
 	/* initialise last_buffer */
@@ -283,6 +289,14 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 				pxd_goAbortLive(1);
 				return FALSE;
 			}
+			/* check for abort */
+			if(Exposure_Data.Abort)
+			{
+				Exposure_Error_Number = 29;
+				sprintf(Exposure_Error_String,"Detector_Exposure_Expose:Aborted.");
+				pxd_goAbortLive(1);
+				return FALSE;
+			}
 		}/* end while the frame grabber captured buffer is the last_buffer */
 		/* update last_buffer */
 		last_buffer = pxd_capturedBuffer(1);
@@ -319,6 +333,14 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 				"Detector_Exposure_Expose:Failed to copy mono image buffer to coadd image.");
 			return FALSE;	
 		}
+		/* check for abort */
+		if(Exposure_Data.Abort)
+		{
+			pxd_goAbortLive(1);
+			Exposure_Error_Number = 30;
+			sprintf(Exposure_Error_String,"Detector_Exposure_Expose:Aborted.");
+			return FALSE;
+		}
 	}/* end for (i) on Coadd_Count */
 	/* stop the frame grabber acquiring data */
 	retval = pxd_goAbortLive(1);
@@ -349,6 +371,20 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 				    "Detector_Exposure_Expose(exposure_length=%d ms,fits_filename = '%s'):Finished.",
 				    exposure_length_ms,fits_filename);
 #endif
+	return TRUE;
+}
+
+/**
+ * Routine to abort a running exposure (Detector_Exposure_Expose) in another thread. This just sets Exposure_Data.Abort
+ * to TRUE, which is regularly checked by Detector_Exposure_Expose.
+ * @return The routine nominally returns TRUE on success and FALSE on failure. 
+ *         However, it currently always succeeds (returns TRUE).
+ * @see #Exposure_Data
+ * @see #Detector_Exposure_Expose
+ */
+int Detector_Exposure_Abort(void)
+{
+	Exposure_Data.Abort = TRUE;
 	return TRUE;
 }
 
