@@ -691,7 +691,7 @@ static int Exposure_Save(char *fits_filename)
 	}
 	/* update COADDSEC keyword:- this is the exposure length of one coadd in decimal seconds */
 	exposure_length = ((double)Exposure_Data.Coadd_Frame_Exposure_Length_Ms)/((double)DETECTOR_GENERAL_ONE_SECOND_MS);
-	retval = fits_update_key_fixdbl(fits_fp,"COADDSEC",exposure_length,6,NULL,&status);
+	retval = fits_update_key_fixdbl(fits_fp,"COADDSEC",exposure_length,6,"Exposure length of one coadd",&status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
