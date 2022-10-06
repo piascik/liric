@@ -651,7 +651,8 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 						       Fits_Header.Card_List[i].Value.String);
 #endif
 				retval = fits_update_key(fits_fp,TSTRING,Fits_Header.Card_List[i].Keyword,
-							 Fits_Header.Card_List[i].Value.String,NULL,&status);
+							 Fits_Header.Card_List[i].Value.String,
+							 Fits_Header.Card_List[i].Comment,&status);
 				break;
 			case FITS_HEADER_TYPE_INTEGER:
 #if LOGGING > 9
@@ -661,7 +662,8 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 						       Fits_Header.Card_List[i].Value.Int);
 #endif
 				retval = fits_update_key(fits_fp,TINT,Fits_Header.Card_List[i].Keyword,
-							 &(Fits_Header.Card_List[i].Value.Int),NULL,&status);
+							 &(Fits_Header.Card_List[i].Value.Int),
+							 Fits_Header.Card_List[i].Comment,&status);
 				break;
 			case FITS_HEADER_TYPE_LONG_LONG_INTEGER:
 #if LOGGING > 9
@@ -672,7 +674,8 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 #endif
 				/* we could use TLONGLONG, or even TULONG */
 				retval = fits_update_key(fits_fp,TLONG,Fits_Header.Card_List[i].Keyword,
-							 &(Fits_Header.Card_List[i].Value.Long_Long_Int),NULL,&status);
+							 &(Fits_Header.Card_List[i].Value.Long_Long_Int),
+							 Fits_Header.Card_List[i].Comment,&status);
 				break;
 			case FITS_HEADER_TYPE_FLOAT:
 #if LOGGING > 9
@@ -682,7 +685,8 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 						       Fits_Header.Card_List[i].Value.Float);
 #endif
 				retval = fits_update_key_fixdbl(fits_fp,Fits_Header.Card_List[i].Keyword,
-								Fits_Header.Card_List[i].Value.Float,6,NULL,&status);
+								Fits_Header.Card_List[i].Value.Float,6,
+								Fits_Header.Card_List[i].Comment,&status);
 				break;
 			case FITS_HEADER_TYPE_LOGICAL:
 #if LOGGING > 9
@@ -692,7 +696,8 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 						       Fits_Header.Card_List[i].Value.Boolean);
 #endif
 				retval = fits_update_key(fits_fp,TLOGICAL,Fits_Header.Card_List[i].Keyword,
-							 &(Fits_Header.Card_List[i].Value.Boolean),NULL,&status);
+							 &(Fits_Header.Card_List[i].Value.Boolean),
+							 Fits_Header.Card_List[i].Comment,&status);
 				break;
 			default:
 				Fits_Header_Error_Number = 17;
@@ -710,7 +715,6 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 				"Failed to update %d %s (%s).",i,Fits_Header.Card_List[i].Keyword,buff);
 			return FALSE;
 		}
-		/* diddly comment */
 	}
 #if LOGGING > 1
 	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Fits_Header_Write_To_Fits:Finished.");
