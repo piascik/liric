@@ -111,7 +111,8 @@ static int Moptop_Abort = FALSE;
  * <li>We enter a for loop, looping Multrun_Data.Image_Index over Multrun_Data.Image_Count.
  *     <ul>
  *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
- *     <li>We move the nudgematic by calling Nudgematic_Command_Position_Set.
+ *     <li>If the nudgematic is enabled (Raptor_Config_Nudgematic_Is_Enabled), 
+ *         we move the nudgematic by calling Nudgematic_Command_Position_Set.
  *     <li>We call Detector_Fits_Filename_Next_Run to increment the run number in the FITS filename generation code.
  *     <li>We call Detector_Fits_Filename_Get_Filename to generate a suitable FITS image filename.
  *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
@@ -137,7 +138,8 @@ static int Moptop_Abort = FALSE;
  * @see #Moptop_Abort
  * @see #Multrun_In_Progress
  * @see #Multrun_Data
- * @see raptor_general.htmlAPTOR_GENERAL_IS_BOOLEAN
+ * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
+ * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
  * @see raptor_general.html#Raptor_General_Error_Number
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Log
@@ -234,15 +236,17 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 			return FALSE;
 		}
 		/* move to next nudgematic position */
-		/* diddly we have bypassed nudgematic.enable here - fix! */
-		if(!Nudgematic_Command_Position_Set(nudgematic_position_index))
+		if(Raptor_Config_Nudgematic_Is_Enabled())
 		{
-			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 607;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Multrun:Failed to move Nudgematic to position %d.",
-				nudgematic_position_index);
-			return FALSE;
+			if(!Nudgematic_Command_Position_Set(nudgematic_position_index))
+			{
+				Multrun_In_Progress = FALSE;
+				Raptor_General_Error_Number = 607;
+				sprintf(Raptor_General_Error_String,
+					"Raptor_Multrun:Failed to move Nudgematic to position %d.",
+					nudgematic_position_index);
+				return FALSE;
+			}
 		}
 		/* generate new FITS image filename */
 		if(!Detector_Fits_Filename_Next_Run())
