@@ -136,6 +136,7 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  * <li>We check the fits_filename is not NULL.
  * <li>We compute the number of coadds, and check it is within range.
  * <li>We initialise the coadd image buffer to 0 by calling Detector_Buffer_Initialise_Coadd_Image.
+ * <li>We reset the Abort flag in Exposure_Data.
  * <li>We take a timestamp for the start of this 'exposure' and store it in Exposure_Data.Exposure_Start_Timestamp.
  * <li>We initialise last_buffer to 0.
  * <li>We call pxd_goLivePair to start camera 1 saving frames to frame grabber buffers 1 and 2.
@@ -148,6 +149,8 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  *         <li>We take a current timestamp.
  *         <li>We check whether the current coadd has taken too long, and time out/abort if this is the case. 
  *             The current timeout is 10 times per coadd frame time (Exposure_Data.Coadd_Frame_Exposure_Length_Ms).
+ *         <li>We check whether the Abort flag has been set in Exposure_Data (by another thread calling 
+ *             Detector_Exposure_Abort) and abort this exposure if this is the case.
  *         </ul>
  *     <li>We update last_buffer to the last captured buffer pxd_capturedBuffer(1).
  *     <li>We call pxd_readushort to read out last_buffer from the frame grabber and put the image contents 
@@ -156,6 +159,8 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  *         (Detector_Setup_Get_Sensor_Size_X,Detector_Setup_Get_Sensor_Size_Y).
  *     <li>We check pxd_readushort read out the whole image.
  *     <li>We add the mono image buffer to the coadd image buffer by calling Detector_Buffer_Add_Mono_To_Coadd_Image.
+ *     <li>We check whether the Abort flag has been set in Exposure_Data (by another thread calling 
+ *         Detector_Exposure_Abort) and abort this exposure if this is the case.
  *     </ul>
  * <li>We stop the frame grabber acquiring data, by calling pxd_goAbortLive.
  * <li>We create a mean image from the acquired coadds, by calling Detector_Buffer_Create_Mean_Image.
@@ -180,6 +185,7 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  * @see #Exposure_Error_String
  * @see #Exposure_Save
  * @see #Detector_Exposure_Set_Coadd_Frame_Exposure_Length
+ * @see #Detector_Exposure_Abort
  * @see detector_buffer.html#Detector_Buffer_Initialise_Coadd_Image
  * @see detector_buffer.html#Detector_Buffer_Get_Mono_Image
  * @see detector_buffer.html#Detector_Buffer_Get_Pixel_Count

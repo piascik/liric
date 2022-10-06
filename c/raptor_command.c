@@ -76,8 +76,8 @@ static int Command_Parse_Date(char *time_string,int *time_secs);
  * Handle a command of the form: "abort".
  * <ul>
  * <li>We abort any running multrun's by calling Raptor_Multrun_Abort.
- * <li>We check the returned values from the aborts to see if they failed, ang log/return an error is this is the case.
- * <li>Otherwise we set the reply_string to a successful message.
+ * <li>We abort any running exposures by calling Detector_Exposure_Abort.
+ * <li>We set the reply_string to a successful message.
  * </ul>
  * @param command_string The command. This is not changed during this routine.
  * @param reply_string The address of a pointer to allocate and set the reply string.
@@ -87,10 +87,10 @@ static int Command_Parse_Date(char *time_string,int *time_secs);
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Add_String
  * @see raptor_multrun.html#Raptor_Multrun_Abort
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Abort
  */
 int Raptor_Command_Abort(char *command_string,char **reply_string)
 {
-	int multrun_abort_retval, bias_dark_abort_retval;
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Abort",LOG_VERBOSITY_TERSE,
 			   "COMMAND","started.");
@@ -100,21 +100,14 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
 	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Abort",LOG_VERBOSITY_INTERMEDIATE,
 			   "COMMAND","Aborting multrun.");
 #endif
-	multrun_abort_retval = Raptor_Multrun_Abort();
-	/* check to see if there were problems with the aborts */
-	if((multrun_abort_retval == FALSE))
-	{
-		Raptor_General_Error("command","raptor_command.c","Raptor_Command_Abort",
-				     LOG_VERBOSITY_TERSE,"COMMAND");
-#if RAPTOR_DEBUG > 1
-		Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Abort",
-					  LOG_VERBOSITY_TERSE,"COMMAND","Failed to abort multrun (%d) or bias/dark (%d) command.",
-					  multrun_abort_retval,bias_dark_abort_retval);
+	Raptor_Multrun_Abort();
+	/* abort exposure */
+#if RAPTOR_DEBUG > 5
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Abort",LOG_VERBOSITY_INTERMEDIATE,
+			   "COMMAND","Aborting multrun.");
 #endif
-		if(!Raptor_General_Add_String(reply_string,"1 Failed to abort multrun/bias/dark command."))
-			return FALSE;
-		return TRUE;
-	}
+	Detector_Exposure_Abort();
+	/* return success */
 	if(!Raptor_General_Add_String(reply_string,"0 Multrun/Bias/Dark aborted."))
 		return FALSE;
 #if RAPTOR_DEBUG > 1

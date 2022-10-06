@@ -56,9 +56,7 @@
  *                              Used to populate FITS headers.</dd>
  * <dt>Image_Index</dt> <dd>Which frame in the multrun we are currently working on.</dd>
  * <dt>Image_Count</dt> <dd>The number of FITS images we are expecting to generate in the current multrun.</dd>
- * <dt>Multrun_Start_Time</dt> <dd>A timestamp taken the first time an exposure was started in the multrun 
- *                              (actually, just before we start waiting for the next image to arrive, 
- *                              the timestamp is only approximate). Used for calculating TELAPSE.</dd>
+ * <dt>Multrun_Start_Time</dt> <dd>A timestamp taken the first time an exposure was started in the multrun.</dd>
  * </dl>
  */
 struct Multrun_Struct
@@ -104,17 +102,25 @@ static int Moptop_Abort = FALSE;
 /**
  * Routine to perform a multrun.
  * <ul>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
- * <li>
+ * <li>We check the input arguments are valid.
+ * <li>We initialise the internal variables.
+ * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multrun.
+ * <li>We figure out the DETECTOR_FITS_FILENAME_EXPOSURE_TYPE to use, based on the do_standard flag.
+ * <li>TODO make any per-multrun FITS header changes here.
+ * <li>We take a multrun start timestamp.
+ * <li>We enter a for loop, looping Multrun_Data.Image_Index over Multrun_Data.Image_Count.
+ *     <ul>
+ *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
+ *     <li>We move the nudgematic by calling Nudgematic_Command_Position_Set.
+ *     <li>We call Detector_Fits_Filename_Next_Run to increment the run number in the FITS filename generation code.
+ *     <li>We call Detector_Fits_Filename_Get_Filename to generate a suitable FITS image filename.
+ *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
+ *     <li>TODO Make any per-exposure FITS header changes here.
+ *     <li>We call Detector_Exposure_Expose to take the image (a series of coadds) and save it to the FITS image filename.
+ *     <li>We call Detector_Fits_Filename_List_Add to add the new FITS image filename to the return list of filenames.
+ *     <li>We increment, and potentially reset the nudgematic position to use for the next exposure in the multrun.
+ *     </ul>
+ * <li>We set Multrun_In_Progress to FALSE, to indicate we have finished the Multrun.
  * </ul>
  * @param exposure_length_ms The exposure length of an individual frame in the multrun (itself consisting of a number
  *        of coadds) in milliseconds.
@@ -124,7 +130,7 @@ static int Moptop_Abort = FALSE;
  * @param filename_list The address of a list of strings, on a successful return from this routine an allocated list 
  *        of strings will be returned (of length exposure_count), each string containing a FITS image filename
  *        of one frame/exposure in the multrun. This list will need freeing.
- * @param filename_countThe address of an integer, on a successful return from this routine contains the
+ * @param filename_count The address of an integer, on a successful return from this routine contains the
  *        number of filenames in filename_list.
  * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
  *         Raptor_General_Error_String should be set.
@@ -147,7 +153,7 @@ static int Moptop_Abort = FALSE;
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_List_Add
  */
 int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
-			  char ***filename_list,int *filename_count)
+		   char ***filename_list,int *filename_count)
 {
 	char fits_filename[256];
 	enum DETECTOR_FITS_FILENAME_EXPOSURE_TYPE fits_filename_exposure_type;
@@ -214,7 +220,7 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	/* do any per-multrun FITS header changes here */
 	/* diddly */
 	/* take a multrun start timestamp */
-	/* diddly */
+	clock_gettime(CLOCK_REALTIME,&(Multrun_Data.Multrun_Start_Time));
 	/* start multrun for loop */
 	for(Multrun_Data.Image_Index = 0; Multrun_Data.Image_Index < Multrun_Data.Image_Count;
 	    Multrun_Data.Image_Index++)
@@ -300,6 +306,8 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 
 /**
  * Routine to abort an in-progress multrun.
+ * @return The routine nominally returns TRUE on success and FALSE on failure. 
+ *         However, it currently always succeeds (returns TRUE).
  * @see #Moptop_Abort
  */
 int Raptor_Multrun_Abort(void)
