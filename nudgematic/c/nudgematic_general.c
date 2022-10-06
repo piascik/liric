@@ -172,7 +172,7 @@ void USB_PIO_General_Error(void)
  * @see #Nudgematic_General_Get_Current_Time_String
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Error_To_String
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Get_Error_Number
+ * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
  * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Error_To_String
  */
 void Nudgematic_General_Error_To_String(char *error_string)
@@ -184,7 +184,7 @@ void Nudgematic_General_Error_To_String(char *error_string)
 	{
 		Nudgematic_Command_Error_To_String(error_string);
 	}
-	if(USB_PIO_General_Get_Error_Number() != 0)
+	if(USB_PIO_General_Is_Error())
 	{
 		USB_PIO_General_Error_To_String(error_string);
 	}
@@ -196,6 +196,7 @@ void Nudgematic_General_Error_To_String(char *error_string)
 	}
 	if(strlen(error_string) == 0)
 	{
+		Nudgematic_General_Get_Current_Time_String(time_string,32);
 		sprintf(error_string,"%s Error:Nudgematic_General:Error not found\n",time_string);
 	}
 }
