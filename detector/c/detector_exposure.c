@@ -35,6 +35,10 @@
  *     is determined to be a number of coadds, where each coadd has an exposure length of 
  *     Coadd_Frame_Exposure_Length_Ms, so 
  *     the number of coadds =  the 'exposure length' / Coadd_Frame_Exposure_Length_Ms.</dd>
+ * <dt>Flip_X</dt> <dd>An integer as a boolean, whether to flip the read-out image in the x/horizontal direction,
+ *                     before saving in the FITS image.</dd>
+ * <dt>Flip_Y</dt> <dd>An integer as a boolean, whether to flip the read-out image in the y/vertical direction,
+ *                     before saving in the FITS image.</dd>
  * <dt>Exposure_Length_Ms</dt> <dd>The overall exposure length for the current exposure, in milliseconds.</dd>
  * <dt>Coadd_Count</dt> <dd>The number of coadds needed (each of length Coadd_Frame_Exposure_Length_Ms), 
  *                      to do the requested exposure length of length Exposure_Length_Ms.</dd>
@@ -46,6 +50,8 @@
 struct Exposure_Struct
 {
 	int Coadd_Frame_Exposure_Length_Ms;
+	int Flip_X;
+	int Flip_Y;
 	int Exposure_Length_Ms;
 	int Coadd_Count;
 	struct timespec Exposure_Start_Timestamp;
@@ -61,6 +67,8 @@ static char rcsid[] = "$Id$";
  * The instance of Exposure_Struct that contains local data for this module. This is initialised as follows:
  * <dl>
  * <dt>Coadd_Frame_Exposure_Length_Ms</dt> <dd>0</dd>
+ * <dt>Flip_X</dt> <dd>FALSE</dd>
+ * <dt>Flip_Y</dt> <dd>FALSE</dd>
  * <dt>Exposure_Length_Ms</dt> <dd>0</dd>
  * <dt>Coadd_Count</dt> <dd>0</dd>
  * <dt>Exposure_Start_Timestamp</dt> <dd>{0,0}</dd>
@@ -69,7 +77,7 @@ static char rcsid[] = "$Id$";
  */
 static struct Exposure_Struct Exposure_Data = 
 {
-	0,0,0,{0,0},FALSE
+	0,FALSE,FALSE,0,0,{0,0},FALSE
 };
 
 /**
@@ -125,6 +133,45 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
 }
 
 /**
+ * Routine to set whether to flip the output image data in x and y, before saving the image to disk.
+ * @param flip_x An integer as a boolean, TRUE if the image is to be flipped in the x/horizontal direction, 
+ *        FALSE if it is not.
+ * @param flip_y An integer as a boolean, TRUE if the image is to be flipped in the y/vertical direction, 
+ *        FALSE if it is not.
+ * @return The routine returns TRUE on success and FALSE on failure. 
+ *         On failure, Exposure_Error_Number/Exposure_Error_String are set.
+ * @see #Exposure_Data
+ * @see #Exposure_Error_Number
+ * @see #Exposure_Error_String
+ * @see detector_general.html#DETECTOR_IS_BOOLEAN
+ */
+int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
+{
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_TERSE,"Detector_Exposure_Flip_Set:Started(flip_x = %d, flip_y = %d.",
+				    flip_x,flip_y);
+#endif
+	if(!DETECTOR_IS_BOOLEAN(flip_x))
+	{
+		Exposure_Error_Number = 31;
+		sprintf(Exposure_Error_String,"Detector_Exposure_Flip_Set:flip_x not a boolean:%d.",flip_x);
+		return FALSE;
+	}
+	if(!DETECTOR_IS_BOOLEAN(flip_y))
+	{
+		Exposure_Error_Number = 32;
+		sprintf(Exposure_Error_String,"Detector_Exposure_Flip_Set:flip_y not a boolean:%d.",flip_y);
+		return FALSE;
+	}
+	Exposure_Data.Flip_X = flip_x;
+	Exposure_Data.Flip_Y = flip_y;
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_TERSE,"Detector_Exposure_Flip_Set: Finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Routine to take an individual 'exposure' with the detector. Here 'exposure' means a series of coadd frames, 
  * each of the previously configured Coadd_Frame_Exposure_Length_Ms 
  * (see Detector_Exposure_Set_Coadd_Frame_Exposure_Length). 
@@ -163,6 +210,8 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  *         Detector_Exposure_Abort) and abort this exposure if this is the case.
  *     </ul>
  * <li>We stop the frame grabber acquiring data, by calling pxd_goAbortLive.
+ * <li>If Exposure_Data.Flip_X is TRUE, we flip the Coadd image in X by calling Detector_Buffer_Coadd_Flip_X.
+ * <li>If Exposure_Data.Flip_Y is TRUE, we flip the Coadd image in Y by calling Detector_Buffer_Coadd_Flip_Y.
  * <li>We create a mean image from the acquired coadds, by calling Detector_Buffer_Create_Mean_Image.
  * <li>We write the image to a FITS image by calling Exposure_Save.
  * </ul>
@@ -190,6 +239,8 @@ int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_l
  * @see detector_buffer.html#Detector_Buffer_Get_Mono_Image
  * @see detector_buffer.html#Detector_Buffer_Get_Pixel_Count
  * @see detector_buffer.html#Detector_Buffer_Add_Mono_To_Coadd_Image
+ * @see detector_buffer.html#Detector_Buffer_Coadd_Flip_X
+ * @see detector_buffer.html#Detector_Buffer_Coadd_Flip_Y
  * @see detector_buffer.html#Detector_Buffer_Create_Mean_Image
  * @see detector_fits_header.html#Detector_Fits_Header_Initialise
  * @see detector_general.html#DETECTOR_GENERAL_ONE_MICROSECOND_NS
@@ -357,6 +408,11 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 			pxd_mesgErrorCode(retval),retval);
 		return FALSE;	
 	}
+	/* flip coadd image if required, before creating mean image */
+	if(Exposure_Data.Flip_X)
+		Detector_Buffer_Coadd_Flip_X();
+	if(Exposure_Data.Flip_Y)
+		Detector_Buffer_Coadd_Flip_Y();
 	/* create mean image from coadds */
 	if(!Detector_Buffer_Create_Mean_Image(Exposure_Data.Coadd_Count))
 	{

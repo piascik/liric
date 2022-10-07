@@ -5,6 +5,7 @@
 #include <time.h>
 
 extern int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_length_ms);
+extern int Detector_Exposure_Flip_Set(int flip_x,int flip_y);
 extern int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename);
 
 extern int Detector_Exposure_Abort(void);

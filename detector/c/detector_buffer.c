@@ -276,6 +276,96 @@ int Detector_Buffer_Add_Mono_To_Coadd_Image(void)
 }
 
 /**
+ * Flip the coadd image data in the X direction.
+ * @see #Buffer_Data
+ * @see #Buffer_Error_Number
+ * @see #Buffer_Error_String
+ * @see detector_general.html#Detector_General_Log
+ */
+void Detector_Buffer_Coadd_Flip_X(void)
+{
+	int x,y;
+        int tempval;
+
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,
+			     "Detector_Buffer_Coadd_Flip_X:Started flipping coadd image in X.");
+#endif
+	if(Buffer_Data.Coadd_Image == NULL)
+	{
+		Buffer_Error_Number = 12;
+		sprintf(Buffer_Error_String,"Detector_Buffer_Coadd_Flip_X:Coadd Image was NULL.");
+		Detector_General_Error();
+		return;
+	}
+	/* for each row */
+	for(y=0;y<Buffer_Data.Size_Y;y++)
+	{
+		/* for the first half of the columns.
+		** Note the middle column will be missed, this is OK as it
+		** does not need to be flipped if it is in the middle */
+		for(x=0;x<(Buffer_Data.Size_X/2);x++)
+		{
+			/* Copy Buffer_Data.Coadd_Image[x,y] to tempval */
+			tempval = *(Buffer_Data.Coadd_Image+(y*Buffer_Data.Size_X)+x);
+			/* Copy Buffer_Data.Coadd_Image[Buffer_Data.Size_X-(x+1),y] to Buffer_Data.Coadd_Image[x,y] */
+			*(Buffer_Data.Coadd_Image+(y*Buffer_Data.Size_X)+x) = *(Buffer_Data.Coadd_Image+
+			       (y*Buffer_Data.Size_X)+(Buffer_Data.Size_X-(x+1)));
+			/* Copy tempval to Buffer_Data.Coadd_Image[Buffer_Data.Size_X-(x+1),y] */
+			*(Buffer_Data.Coadd_Image+(y*Buffer_Data.Size_X)+(Buffer_Data.Size_X-(x+1))) = tempval;
+		}
+	}
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Buffer_Coadd_Flip_X:Finished.");
+#endif
+}
+
+/**
+ * Flip the coadd image data in the Y direction.
+ * @see #Buffer_Data
+ * @see #Buffer_Error_Number
+ * @see #Buffer_Error_String
+ * @see detector_general.html#Detector_General_Log
+ */
+void Detector_Buffer_Coadd_Flip_Y(void)
+{
+	int x,y;
+        int tempval;
+
+#if LOGGING > 5
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				    "Detector_Buffer_Coadd_Flip_Y:Started flipping coadd image in Y.");
+#endif
+	if(Buffer_Data.Coadd_Image == NULL)
+	{
+		Buffer_Error_Number = 13;
+		sprintf(Buffer_Error_String,"Detector_Buffer_Coadd_Flip_Y:Coadd Image was NULL.");
+		Detector_General_Error();
+		return;
+	}
+	/* for the first half of the rows.
+	** Note the middle row will be missed, this is OK as it
+	** does not need to be flipped if it is in the middle */
+	for(y=0;y<(Buffer_Data.Size_Y/2);y++)
+	{
+		/* for each column */
+		for(x=0;x<Buffer_Data.Size_X;x++)
+		{
+			/* Copy Buffer_Data.Coadd_Image[x,y] to tempval */
+			tempval = *(Buffer_Data.Coadd_Image+(y*Buffer_Data.Size_X)+x);
+			/* Copy Buffer_Data.Coadd_Image[x,Buffer_Data.Size_Y-(y+1)] to Buffer_Data.Coadd_Image[x,y] */
+			*(Buffer_Data.Coadd_Image+(y*Buffer_Data.Size_X)+x) = *(Buffer_Data.Coadd_Image+
+				     (((Buffer_Data.Size_Y-(y+1))*Buffer_Data.Size_X)+x));
+			/* Copy tempval to Buffer_Data.Coadd_Image[x,Buffer_Data.Size_Y-(y+1)] */
+			*(Buffer_Data.Coadd_Image+(((Buffer_Data.Size_Y-(y+1))*Buffer_Data.Size_X)+x)) = tempval;
+		}
+	}
+#if LOGGING > 5
+	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Buffer_Coadd_Flip_Y:Finished.");
+#endif
+}
+
+/**
  * This routine creates a mean image of the coadd image, by taking each coadd pixel value and dividing
  * it by the number of coadds used to create the Coadd_Image.
  * @param coadds The number of coadds in the Coadd_Image.

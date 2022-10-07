@@ -104,6 +104,8 @@ static int Moptop_Abort = FALSE;
  * <ul>
  * <li>We check the input arguments are valid.
  * <li>We initialise the internal variables.
+ * <li>We retrieve the multrun flipping configuration fron config ("raptor.multrun.image.flip.[x|y]" and configure
+ *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multrun.
  * <li>We figure out the DETECTOR_FITS_FILENAME_EXPOSURE_TYPE to use, based on the do_standard flag.
  * <li>TODO make any per-multrun FITS header changes here.
@@ -138,6 +140,7 @@ static int Moptop_Abort = FALSE;
  * @see #Moptop_Abort
  * @see #Multrun_In_Progress
  * @see #Multrun_Data
+ * @see raptor_config.html#Raptor_Config_Get_Boolean
  * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
  * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
  * @see raptor_general.html#Raptor_General_Error_Number
@@ -146,6 +149,7 @@ static int Moptop_Abort = FALSE;
  * @see raptor_general.html#Raptor_General_Log_Format
  * @see ../nudgematic/cdocs/nudgematic_command.html#NUDGEMATIC_POSITION_COUNT
  * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Position_Set
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Flip_Set
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Expose
  * @see ../detector/cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_PIPELINE_FLAG
  * @see ../detector/cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_EXPOSURE_TYPE
@@ -160,6 +164,7 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	char fits_filename[256];
 	enum DETECTOR_FITS_FILENAME_EXPOSURE_TYPE fits_filename_exposure_type;
 	int nudgematic_position_index = 0;
+	int flip_x,flip_y;
 	
 	/* check arguments */
 	if(exposure_length_ms < 1)
@@ -207,6 +212,12 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	nudgematic_position_index = 0;
 	(*filename_list) = NULL;
 	(*filename_count) = 0;
+	/* configure flipping of output image */
+	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.x",&flip_x))
+		return FALSE;		
+	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.y",&flip_y))
+		return FALSE;		
+	Detector_Exposure_Flip_Set(flip_x,flip_y);
 	/* intialise FITS filenames for new multrun*/
 	if(!Detector_Fits_Filename_Next_Multrun())
 	{
