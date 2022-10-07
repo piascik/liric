@@ -96,6 +96,9 @@ static int Multrun_In_Progress = FALSE;
  */
 static int Moptop_Abort = FALSE;
 
+/* internal function declarations */
+static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard);
+
 /* ----------------------------------------------------------------------------
 ** 		external functions 
 ** ---------------------------------------------------------------------------- */
@@ -108,7 +111,7 @@ static int Moptop_Abort = FALSE;
  *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multrun.
  * <li>We figure out the DETECTOR_FITS_FILENAME_EXPOSURE_TYPE to use, based on the do_standard flag.
- * <li>TODO make any per-multrun FITS header changes here.
+ * <li>We call Multrun_Fits_Headers_Get to make any per-multrun FITS header changes here.
  * <li>We take a multrun start timestamp.
  * <li>We enter a for loop, looping Multrun_Data.Image_Index over Multrun_Data.Image_Count.
  *     <ul>
@@ -128,7 +131,7 @@ static int Moptop_Abort = FALSE;
  * @param exposure_length_ms The exposure length of an individual frame in the multrun (itself consisting of a number
  *        of coadds) in milliseconds.
  * @param exposure_count The number of exposure to perform in the multrun.
- * @param do_standard A boolea, TRUE if the multrun is a standard, and FALSE if it is not. This effacts the resultant
+ * @param do_standard A boolean, TRUE if the multrun is a standard, and FALSE if it is not. This effacts the resultant
  *        FITS image filenames.
  * @param filename_list The address of a list of strings, on a successful return from this routine an allocated list 
  *        of strings will be returned (of length exposure_count), each string containing a FITS image filename
@@ -140,6 +143,7 @@ static int Moptop_Abort = FALSE;
  * @see #Moptop_Abort
  * @see #Multrun_In_Progress
  * @see #Multrun_Data
+ * @see #Multrun_Fits_Headers_Get
  * @see raptor_config.html#Raptor_Config_Get_Boolean
  * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
  * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
@@ -231,7 +235,11 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	else
 		fits_filename_exposure_type = DETECTOR_FITS_FILENAME_EXPOSURE_TYPE_EXPOSURE;
 	/* do any per-multrun FITS header changes here */
-	/* diddly */
+	if(!Multrun_Fits_Headers_Get(exposure_count,do_standard))
+	{
+		Multrun_In_Progress = FALSE;
+		return FALSE;
+	}
 	/* take a multrun start timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Multrun_Data.Multrun_Start_Time));
 	/* start multrun for loop */
@@ -359,4 +367,96 @@ int Raptor_Multrun_Count_Get(void)
 int Raptor_Multrun_Exposure_Index_Get(void)
 {
 	return Multrun_Data.Image_Index;
+}
+
+/* ----------------------------------------------------------------------------
+** 		internal functions 
+** ---------------------------------------------------------------------------- */
+
+/**
+ * Routine to collect and insert FITS headers pertaining to the whole multrun.
+ * @param exposure_count The number of exposure to perform in the multrun.
+ * @param do_standard A boolean, TRUE if the multrun is a standard, and FALSE if it is not. 
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
+ *         Raptor_General_Error_String should be set.
+ * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
+ * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
+ * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Log_Format
+ * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Get_Position
+ * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Name
+ * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Id
+ */
+static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
+{
+	char filter_name_string[32];
+	int filter_wheel_position,retval;
+		
+	if(exposure_count < 1)
+	{
+		Raptor_General_Error_Number = 613;
+		sprintf(Raptor_General_Error_String,
+			"Multrun_Fits_Headers_Get:exposure count was too small (%d).",exposure_count);
+		return FALSE;
+	}
+	if(!RAPTOR_GENERAL_IS_BOOLEAN(do_standard))
+	{
+		Raptor_General_Error_Number = 614;
+		sprintf(Raptor_General_Error_String,
+			"Multrun_Fits_Headers_Get:do_standard was not a valid boolean (%d).",do_standard);
+		return FALSE;
+	}
+	/* OBSTYPE */
+	if(do_standard)
+		retval = Raptor_Fits_Header_String_Add("OBSTYPE","STANDARD",NULL);
+	else
+		retval = Raptor_Fits_Header_String_Add("OBSTYPE","EXPOSE",NULL);
+	if(retval == FALSE)
+		return FALSE;
+	/* filter wheel position keywords */
+	if(Raptor_Config_Filter_Wheel_Is_Enabled())
+	{
+		if(!Filter_Wheel_Command_Get_Position(&filter_wheel_position))
+		{
+			Raptor_General_Error_Number = 615;
+			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:"
+					"Failed to get filter wheel position.");
+			return FALSE;
+			
+		}
+		/* FILTER1 */
+		if(!Filter_Wheel_Config_Position_To_Name(filter_wheel_position,filter_name_string))
+		{
+			Raptor_General_Error_Number = 616;
+			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:"
+				"Failed to get filter wheel name from position %d.",filter_wheel_position);
+			return FALSE;
+		}
+		if(!Raptor_Fits_Header_String_Add("FILTER1",filter_name_string,NULL))
+			return FALSE;
+		/* FILTERI1 */
+		if(!Filter_Wheel_Config_Position_To_Id(filter_wheel_position,filter_name_string))
+		{
+			Raptor_General_Error_Number = 617;
+			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:"
+				"Failed to get filter wheel Id from position %d.",filter_wheel_position);
+			return FALSE;
+		}
+		if(!Raptor_Fits_Header_String_Add("FILTERI1",filter_name_string,NULL))
+			return FALSE;
+	}
+	else
+	{
+		/* FILTER1 */
+		if(!Raptor_Fits_Header_String_Add("FILTER1","UNKNOWN",NULL))
+			return FALSE;
+		/* FILTERI1 */
+		if(!Raptor_Fits_Header_String_Add("FILTERI1","UNKNOWN",NULL))
+			return FALSE;
+	}
+	/* diddly more here */
+	return TRUE;
 }
