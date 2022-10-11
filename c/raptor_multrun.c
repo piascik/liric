@@ -47,13 +47,17 @@
  * Length of FITS filename string.
  */
 #define MULTRUN_FITS_FILENAME_LENGTH  (256)
+/**
+ * Conversion from degrees centigrade to Kelvin.
+ */
+#define CENTIGRADE_TO_KELVIN          (273.15)
 
 /* data types */
 /**
  * Data type holding local data to raptor multruns.
  * <dl>
  * <dt>CCD_Temperature</dt> <dd>A copy of the current CCD temperature, taken at the start of a multrun. 
- *                              Used to populate FITS headers.</dd>
+ *                              Used to populate FITS headers. In degrees centigrade.</dd>
  * <dt>Image_Index</dt> <dd>Which frame in the multrun we are currently working on.</dd>
  * <dt>Image_Count</dt> <dd>The number of FITS images we are expecting to generate in the current multrun.</dd>
  * <dt>Multrun_Start_Time</dt> <dd>A timestamp taken the first time an exposure was started in the multrun.</dd>
@@ -379,13 +383,20 @@ int Raptor_Multrun_Exposure_Index_Get(void)
  * @param do_standard A boolean, TRUE if the multrun is a standard, and FALSE if it is not. 
  * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
  *         Raptor_General_Error_String should be set.
+ * @see #CENTIGRADE_TO_KELVIN
+ * @see #Multrun_Data
  * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
+ * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
+ * @see raptor_fits_header.html#Raptor_Fits_Header_Logical_Add
  * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
- * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
+ * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
  * @see raptor_general.html#Raptor_General_Error_Number
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Log
  * @see raptor_general.html#Raptor_General_Log_Format
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
+ * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_X
+ * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_Y
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Get_Position
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Name
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Id
@@ -393,6 +404,7 @@ int Raptor_Multrun_Exposure_Index_Get(void)
 static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 {
 	char filter_name_string[32];
+	double temperature;
 	int filter_wheel_position,retval;
 		
 	if(exposure_count < 1)
@@ -457,6 +469,66 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 		if(!Raptor_Fits_Header_String_Add("FILTERI1","UNKNOWN",NULL))
 			return FALSE;
 	}
+	/* RUNNUM */
+	if(!Raptor_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
+		return FALSE;
+	/* EXPNUM (updated in per frame FITS headers) */
+	/* EXPTOTAL */
+	if(!Raptor_Fits_Header_Integer_Add("EXPTOTAL",Multrun_Data.Image_Count,
+					   "Total number of exposures within Multrun"))
+		return FALSE;
+	/* CONFIGID */
+	/* diddly TODO */
+	/* CONFNAME */
+	/* diddly TODO */
+	/* CCDSTEMP */
+	if(!Detector_Temperature_Get_TEC_Setpoint(&temperature))
+	{
+		Raptor_General_Error_Number = 618;
+		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:Failed to get TEC set-point.");
+		return FALSE;
+	}
+	if(!Raptor_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"Required temperature."))
+		return FALSE;	
+	/* CCDATEMP */
+	if(!Detector_Temperature_Get(&(Multrun_Data.CCD_Temperature)))
+	{
+		Raptor_General_Error_Number = 619;
+		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:Failed to get detector temperature.");
+		return FALSE;
+	}
+	if(!Raptor_Fits_Header_Float_Add("CCDATEMP",Multrun_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
+					 "Actual temperature."))
+		return FALSE;	
+	/* DETECTOR */
+
+	/* CCDXBIN */
+	if(!Raptor_Fits_Header_Integer_Add("CCDXBIN",1,"X binning factor"))
+		return FALSE;
+	/* CCDYBIN */
+	if(!Raptor_Fits_Header_Integer_Add("CCDYBIN",1,"Y binning factor"))
+		return FALSE;
+	/* CCDWMODE */
+	if(!Raptor_Fits_Header_Logical_Add("CCDWMODE",FALSE,"Using a Window (always false for Raptor)"))
+		return FALSE;
+	/* CCDXIMSI */
+	if(!Raptor_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"X image size"))
+		return FALSE;
+	/* CCDYIMSI */
+	if(!Raptor_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"Y image size"))
+		return FALSE;
+	/* CCDWXOFF */
+	if(!Raptor_Fits_Header_Integer_Add("CCDWXOFF",0,"X window offset"))
+		return FALSE;
+	/* CCDWYOFF */
+	if(!Raptor_Fits_Header_Integer_Add("CCDWYOFF",0,"Y window offset"))
+		return FALSE;
+	/* CCDWXSIZ */
+	if(!Raptor_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"X window size"))
+		return FALSE;
+	/* CCDWYSIZ */
+	if(!Raptor_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"Y window size"))
+		return FALSE;
 	/* diddly more here */
 	return TRUE;
 }
