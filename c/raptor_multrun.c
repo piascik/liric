@@ -101,7 +101,8 @@ static int Multrun_In_Progress = FALSE;
 static int Moptop_Abort = FALSE;
 
 /* internal function declarations */
-static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard);
+static int Multrun_Fits_Headers_Set(int exposure_count,int do_standard);
+static int Multrun_Exposure_Fits_Headers_Set(void);
 
 /* ----------------------------------------------------------------------------
 ** 		external functions 
@@ -115,7 +116,7 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard);
  *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multrun.
  * <li>We figure out the DETECTOR_FITS_FILENAME_EXPOSURE_TYPE to use, based on the do_standard flag.
- * <li>We call Multrun_Fits_Headers_Get to make any per-multrun FITS header changes here.
+ * <li>We call Multrun_Fits_Headers_Set to make any per-multrun FITS header changes here.
  * <li>We take a multrun start timestamp.
  * <li>We enter a for loop, looping Multrun_Data.Image_Index over Multrun_Data.Image_Count.
  *     <ul>
@@ -125,7 +126,7 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard);
  *     <li>We call Detector_Fits_Filename_Next_Run to increment the run number in the FITS filename generation code.
  *     <li>We call Detector_Fits_Filename_Get_Filename to generate a suitable FITS image filename.
  *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
- *     <li>TODO Make any per-exposure FITS header changes here.
+ *     <li>We call Multrun_Exposure_Fits_Headers_Set to make any per-exposure FITS header changes here.
  *     <li>We call Detector_Exposure_Expose to take the image (a series of coadds) and save it to the FITS image filename.
  *     <li>We call Detector_Fits_Filename_List_Add to add the new FITS image filename to the return list of filenames.
  *     <li>We increment, and potentially reset the nudgematic position to use for the next exposure in the multrun.
@@ -147,7 +148,8 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard);
  * @see #Moptop_Abort
  * @see #Multrun_In_Progress
  * @see #Multrun_Data
- * @see #Multrun_Fits_Headers_Get
+ * @see #Multrun_Fits_Headers_Set
+ * @see #Multrun_Exposure_Fits_Headers_Set
  * @see raptor_config.html#Raptor_Config_Get_Boolean
  * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
  * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
@@ -239,7 +241,7 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	else
 		fits_filename_exposure_type = DETECTOR_FITS_FILENAME_EXPOSURE_TYPE_EXPOSURE;
 	/* do any per-multrun FITS header changes here */
-	if(!Multrun_Fits_Headers_Get(exposure_count,do_standard))
+	if(!Multrun_Fits_Headers_Set(exposure_count,do_standard))
 	{
 		Multrun_In_Progress = FALSE;
 		return FALSE;
@@ -297,7 +299,11 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 			return FALSE;
 		}
 		/* do any per-multrun frame FITS header changes here */
-		/* diddly */
+		if(!Multrun_Exposure_Fits_Headers_Set())
+		{
+			Multrun_In_Progress = FALSE;
+			return FALSE;
+		}
 		/* take an exposure */
 		if(!Detector_Exposure_Expose(exposure_length_ms,fits_filename))
 		{
@@ -401,7 +407,7 @@ int Raptor_Multrun_Exposure_Index_Get(void)
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Name
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Id
  */
-static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
+static int Multrun_Fits_Headers_Set(int exposure_count,int do_standard)
 {
 	char filter_name_string[32];
 	double temperature;
@@ -411,14 +417,14 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 	{
 		Raptor_General_Error_Number = 613;
 		sprintf(Raptor_General_Error_String,
-			"Multrun_Fits_Headers_Get:exposure count was too small (%d).",exposure_count);
+			"Multrun_Fits_Headers_Set:exposure count was too small (%d).",exposure_count);
 		return FALSE;
 	}
 	if(!RAPTOR_GENERAL_IS_BOOLEAN(do_standard))
 	{
 		Raptor_General_Error_Number = 614;
 		sprintf(Raptor_General_Error_String,
-			"Multrun_Fits_Headers_Get:do_standard was not a valid boolean (%d).",do_standard);
+			"Multrun_Fits_Headers_Set:do_standard was not a valid boolean (%d).",do_standard);
 		return FALSE;
 	}
 	/* OBSTYPE */
@@ -434,7 +440,7 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 		if(!Filter_Wheel_Command_Get_Position(&filter_wheel_position))
 		{
 			Raptor_General_Error_Number = 615;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:"
+			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
 					"Failed to get filter wheel position.");
 			return FALSE;
 			
@@ -443,7 +449,7 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 		if(!Filter_Wheel_Config_Position_To_Name(filter_wheel_position,filter_name_string))
 		{
 			Raptor_General_Error_Number = 616;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:"
+			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
 				"Failed to get filter wheel name from position %d.",filter_wheel_position);
 			return FALSE;
 		}
@@ -453,7 +459,7 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 		if(!Filter_Wheel_Config_Position_To_Id(filter_wheel_position,filter_name_string))
 		{
 			Raptor_General_Error_Number = 617;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:"
+			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
 				"Failed to get filter wheel Id from position %d.",filter_wheel_position);
 			return FALSE;
 		}
@@ -472,36 +478,32 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 	/* RUNNUM */
 	if(!Raptor_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
 		return FALSE;
-	/* EXPNUM (updated in per frame FITS headers) */
 	/* EXPTOTAL */
 	if(!Raptor_Fits_Header_Integer_Add("EXPTOTAL",Multrun_Data.Image_Count,
 					   "Total number of exposures within Multrun"))
 		return FALSE;
-	/* CONFIGID */
-	/* diddly TODO */
-	/* CONFNAME */
-	/* diddly TODO */
+	/* CONFIGID diddly TODO in Java layer */
+	/* CONFNAME diddly TODO in Java layer */
 	/* CCDSTEMP */
 	if(!Detector_Temperature_Get_TEC_Setpoint(&temperature))
 	{
 		Raptor_General_Error_Number = 618;
-		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:Failed to get TEC set-point.");
+		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get TEC set-point.");
 		return FALSE;
 	}
-	if(!Raptor_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"Required temperature."))
+	if(!Raptor_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"[Kelvin] Required temperature."))
 		return FALSE;	
 	/* CCDATEMP */
 	if(!Detector_Temperature_Get(&(Multrun_Data.CCD_Temperature)))
 	{
 		Raptor_General_Error_Number = 619;
-		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Get:Failed to get detector temperature.");
+		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get detector temperature.");
 		return FALSE;
 	}
 	if(!Raptor_Fits_Header_Float_Add("CCDATEMP",Multrun_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
-					 "Actual temperature."))
+					 "[Kelvin] Actual temperature."))
 		return FALSE;	
-	/* DETECTOR */
-
+	/* DETECTOR diddly TODO in Java layer */
 	/* CCDXBIN */
 	if(!Raptor_Fits_Header_Integer_Add("CCDXBIN",1,"X binning factor"))
 		return FALSE;
@@ -512,23 +514,43 @@ static int Multrun_Fits_Headers_Get(int exposure_count,int do_standard)
 	if(!Raptor_Fits_Header_Logical_Add("CCDWMODE",FALSE,"Using a Window (always false for Raptor)"))
 		return FALSE;
 	/* CCDXIMSI */
-	if(!Raptor_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"X image size"))
+	if(!Raptor_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X image size"))
 		return FALSE;
 	/* CCDYIMSI */
-	if(!Raptor_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"Y image size"))
+	if(!Raptor_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y image size"))
 		return FALSE;
 	/* CCDWXOFF */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWXOFF",0,"X window offset"))
+	if(!Raptor_Fits_Header_Integer_Add("CCDWXOFF",0,"[pixels] X window offset"))
 		return FALSE;
 	/* CCDWYOFF */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWYOFF",0,"Y window offset"))
+	if(!Raptor_Fits_Header_Integer_Add("CCDWYOFF",0,"[pixels] Y window offset"))
 		return FALSE;
 	/* CCDWXSIZ */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"X window size"))
+	if(!Raptor_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X window size"))
 		return FALSE;
 	/* CCDWYSIZ */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"Y window size"))
+	if(!Raptor_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y window size"))
 		return FALSE;
-	/* diddly more here */
+	return TRUE;
+}
+
+/**
+ * Routine to collect and insert FITS headers pertaining to the current exposure in the multrun.
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
+ *         Raptor_General_Error_String should be set.
+ * @see #CENTIGRADE_TO_KELVIN
+ * @see #Multrun_Data
+ * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Log_Format
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Run_Get
+ */
+static int Multrun_Exposure_Fits_Headers_Set(void)
+{
+	/* EXPNUM */
+	if(!Raptor_Fits_Header_Integer_Add("EXPNUM",Detector_Fits_Filename_Run_Get(),"Number of exposure within Multrun"))
+		return FALSE;
 	return TRUE;
 }
