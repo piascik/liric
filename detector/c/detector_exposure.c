@@ -671,7 +671,8 @@ static int Exposure_Save(char *fits_filename)
 	}
 	/* update DATE keyword */
 	Exposure_TimeSpec_To_Date_String(Exposure_Data.Exposure_Start_Timestamp,exposure_start_time_string);
-	retval = fits_update_key(fits_fp,TSTRING,"DATE",exposure_start_time_string,NULL,&status);
+	retval = fits_update_key(fits_fp,TSTRING,"DATE",exposure_start_time_string,"[UTC] The start date of the observation",
+				 &status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
@@ -684,7 +685,8 @@ static int Exposure_Save(char *fits_filename)
 	}
 	/* update DATE-OBS keyword */
 	Exposure_TimeSpec_To_Date_Obs_String(Exposure_Data.Exposure_Start_Timestamp,exposure_start_time_string);
-	retval = fits_update_key(fits_fp,TSTRING,"DATE-OBS",exposure_start_time_string,NULL,&status);
+	retval = fits_update_key(fits_fp,TSTRING,"DATE-OBS",exposure_start_time_string,"[UTC] The start date of the observation",
+				 &status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
@@ -698,7 +700,8 @@ static int Exposure_Save(char *fits_filename)
 	}
 	/* update UTSTART keyword */
 	Exposure_TimeSpec_To_UtStart_String(Exposure_Data.Exposure_Start_Timestamp,exposure_start_time_string);
-	retval = fits_update_key(fits_fp,TSTRING,"UTSTART",exposure_start_time_string,NULL,&status);
+	retval = fits_update_key(fits_fp,TSTRING,"UTSTART",exposure_start_time_string,"[UTC] The start date of the observation",
+				 &status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
@@ -717,7 +720,7 @@ static int Exposure_Save(char *fits_filename)
 		Detector_Fits_Filename_UnLock(fits_filename);
 		return FALSE;
 	}
-	retval = fits_update_key_fixdbl(fits_fp,"MJD",mjd,6,NULL,&status);
+	retval = fits_update_key_fixdbl(fits_fp,"MJD",mjd,6,"[days] Modified Julian Days.",&status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
@@ -733,7 +736,7 @@ static int Exposure_Save(char *fits_filename)
 	/* compute exposure length in decimal seconds */
 	exposure_length = ((double)(Exposure_Data.Coadd_Count*Exposure_Data.Coadd_Frame_Exposure_Length_Ms))/
 		((double)DETECTOR_GENERAL_ONE_SECOND_MS);
-	retval = fits_update_key_fixdbl(fits_fp,"EXPTIME",exposure_length,6,NULL,&status);
+	retval = fits_update_key_fixdbl(fits_fp,"EXPTIME",exposure_length,6,"[s] Exposure length",&status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
@@ -747,7 +750,7 @@ static int Exposure_Save(char *fits_filename)
 	}
 	/* update COADDSEC keyword:- this is the exposure length of one coadd in decimal seconds */
 	exposure_length = ((double)Exposure_Data.Coadd_Frame_Exposure_Length_Ms)/((double)DETECTOR_GENERAL_ONE_SECOND_MS);
-	retval = fits_update_key_fixdbl(fits_fp,"COADDSEC",exposure_length,6,"Exposure length of one coadd",&status);
+	retval = fits_update_key_fixdbl(fits_fp,"COADDSEC",exposure_length,6,"[s] Exposure length of one coadd",&status);
 	if(retval)
 	{
 		fits_get_errstatus(status,buff);
