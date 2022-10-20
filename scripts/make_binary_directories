@@ -20,6 +20,7 @@ mkdir -p ${RAPTOR_BIN_HOME}/usb_pio/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/nudgematic/c/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/nudgematic/test/${HOSTTYPE}/
 mkdir -p ${RAPTOR_BIN_HOME}/c/${HOSTTYPE}/
+mkdir -p ${RAPTOR_BIN_HOME}/java
 #
 # Create fmt soft-links from raptor-nogit src directory
 #
