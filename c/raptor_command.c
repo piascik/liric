@@ -484,6 +484,23 @@ int Raptor_Command_Fits_Header(char *command_string,char **reply_string)
 				return TRUE;
 			}
 		}
+		else if(strncmp(type_string,"comment",7)==0)
+		{
+			/* do operation */
+			if(!Raptor_Fits_Header_Add_Comment(keyword_string,value_string))
+			{
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Fits_Header",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+				Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Fits_Header",
+							  LOG_VERBOSITY_TERSE,"COMMAND",
+							  "Failed to add comment to FITS header.");
+#endif
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to add comment to fits header."))
+					return FALSE;
+				return TRUE;
+			}
+		}
 		else if(strncmp(type_string,"float",5)==0)
 		{
 			/* parse value */
@@ -569,6 +586,23 @@ int Raptor_Command_Fits_Header(char *command_string,char **reply_string)
 							  "Failed to add string to FITS header.");
 #endif
 				if(!Raptor_General_Add_String(reply_string,"1 Failed to add string fits header."))
+					return FALSE;
+				return TRUE;
+			}
+		}
+		else if(strncmp(type_string,"units",5)==0)
+		{
+			/* do operation */
+			if(!Raptor_Fits_Header_Add_Units(keyword_string,value_string))
+			{
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Fits_Header",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+				Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Fits_Header",
+							  LOG_VERBOSITY_TERSE,"COMMAND",
+							  "Failed to add units to FITS header.");
+#endif
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to add units to fits header."))
 					return FALSE;
 				return TRUE;
 			}
