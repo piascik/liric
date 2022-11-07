@@ -9,6 +9,8 @@ extern int Raptor_Fits_Header_Integer_Add(char *keyword,int value, char *comment
 extern int Raptor_Fits_Header_Long_Long_Integer_Add(char *keyword,long long int value, char *comment);
 extern int Raptor_Fits_Header_Float_Add(char *keyword,double value, char *comment);
 extern int Raptor_Fits_Header_Logical_Add(char *keyword,int value, char *comment);
+extern int Raptor_Fits_Header_Add_Comment(char *keyword,char *comment);
+extern int Raptor_Fits_Header_Add_Units(char *keyword,char *units);
 extern int Raptor_Fits_Header_Delete(char *keyword);
 extern int Raptor_Fits_Header_Clear(void);
 extern void Raptor_Fits_Header_TimeSpec_To_Date_String(struct timespec time,char *time_string);

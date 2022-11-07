@@ -157,6 +157,48 @@ int Raptor_Fits_Header_Logical_Add(char *keyword,int value, char *comment)
 }
 
 /**
+ * Routine to add a comment to an already existing keyword in the fits header data structure.
+ * @param keyword The keyword string.
+ * @param comment A string to use as a comment.
+ * @return The routine returns TRUE on success, and FALSE on failure.
+ * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Comment
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ */
+int Raptor_Fits_Header_Add_Comment(char *keyword,char *comment)
+{
+	if(!Detector_Fits_Header_Add_Comment(keyword,comment))
+	{
+		Raptor_General_Error_Number = 409;
+		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Add_Comment:"
+			"Failed to add comment to FITS headers.");
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/**
+ * Routine to add some units to an already existing keyword/value pair in the fits header data structure.
+ * @param keyword The keyword string.
+ * @param units A string to use for units.
+ * @return The routine returns TRUE on success, and FALSE on failure.
+ * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Units
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ */
+int Raptor_Fits_Header_Add_Units(char *keyword,char *units)
+{
+	if(!Detector_Fits_Header_Add_Units(keyword,units))
+	{
+		Raptor_General_Error_Number = 410;
+		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Add_Units:"
+			"Failed to add units to FITS headers.");
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/**
  * Routine to delete the FITS header with the specified keyword from the fits header data structure.
  * @param keyword The keyword string.
  * @return The routine returns TRUE on success, and FALSE on failure.
