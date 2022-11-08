@@ -94,6 +94,28 @@ public class FitsHeaderAddCommand extends Command implements Runnable
 	}
 
 	/**
+	 * Setup the fitsheader add command, to add a comment to an already existing keyword.
+	 * @param keyword The FITS header keyword - only the first 11 or so letters are used.
+	 * @param comment A string comment to assocate with the specified FITS keyword.
+	 * @see #commandString
+	 */
+	public void setCommentCommand(String keyword,String comment)
+	{
+		commandString = new String("fitsheader add "+keyword+" comment "+comment);
+	}
+
+	/**
+	 * Setup the fitsheader add command, to add units to an already existing keyword.
+	 * @param keyword The FITS header keyword - only the first 11 or so letters are used.
+	 * @param units A units string to assocate with the specified FITS keyword.
+	 * @see #commandString
+	 */
+	public void setUnitsCommand(String keyword,String units)
+	{
+		commandString = new String("fitsheader add "+keyword+" units "+units);
+	}
+
+	/**
 	 * Main test program.
 	 * @param args The argument list.
 	 */
