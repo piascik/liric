@@ -39,6 +39,10 @@
  */
 #define FITS_HEADER_VALUE_STRING_LENGTH   (71)
 /**
+ * Maximum length of FITS header units (can go from column 10 to column 80 inclusive), plus a '\0' terminator.
+ */
+#define FITS_HEADER_UNITS_STRING_LENGTH   (72) 
+/**
  * Maximum length of FITS header comment (can go from column 10 to column 80 inclusive), plus a '\0' terminator.
  */
 #define FITS_HEADER_COMMENT_STRING_LENGTH (72) 
@@ -77,10 +81,12 @@ enum Fits_Header_Type_Enum
  *                    <li>Boolean (an integer, should be 0 (FALSE) or 1 (TRUE)).
  *                    </ul>
  *                </dd>
+ * <dt>Units</dt> <dd>String of length FITS_HEADER_UNITS_STRING_LENGTH.</dd>
  * <dt>Comment</dt> <dd>String of length FITS_HEADER_COMMENT_STRING_LENGTH.</dd>
  * </dl>
  * @see #FITS_HEADER_VALUE_STRING_LENGTH
  * @see #FITS_HEADER_KEYWORD_STRING_LENGTH
+ * @see #FITS_HEADER_UNITS_STRING_LENGTH
  * @see #FITS_HEADER_COMMENT_STRING_LENGTH
  */
 struct Fits_Header_Card_Struct
@@ -95,7 +101,8 @@ struct Fits_Header_Card_Struct
 		double Float;
 		int Boolean;
 	} Value;
-	char Comment[FITS_HEADER_COMMENT_STRING_LENGTH]; /* columns 10-80 */
+	char Units[FITS_HEADER_UNITS_STRING_LENGTH]; /* columns 10-80 */
+	char Comment[FITS_HEADER_COMMENT_STRING_LENGTH]; /* columns 10-80  not already units columns */
 };
 
 /**
@@ -138,6 +145,7 @@ static char Fits_Header_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 struct Fits_Header_Struct Fits_Header;
 
 /* internal functions */
+static int Fits_Header_Find_Card(char *keyword,int *found_index);
 static int Fits_Header_Add_Card(struct Fits_Header_Card_Struct card);
 static void Fits_Header_Uppercase(char *string);
 
@@ -592,6 +600,78 @@ int Detector_Fits_Header_Add_Logical(char *keyword,int value,char *comment)
 }
 
 /**
+ * Routine to add a comment section to the header, of a FITS header whoose keyword/value pair already
+ * exists in the list of FITS headers.
+ * @param keyword The keyword string, must be at least 1 character less in length than 
+ *        FITS_HEADER_KEYWORD_STRING_LENGTH. The keyword should already be present in the list of headers.
+ * @param comment A string to put in the comment section of the FITS header.
+ * @return The routine returns TRUE on success, and FALSE on failure. On failure, Fits_Header_Error_Number
+ *         and Fits_Header_Error_String should be filled in with suitable values.
+ * @see #Fits_Header_Struct
+ * @see #Fits_Header_Find_Card
+ * @see #Fits_Header
+ * @see #FITS_HEADER_COMMENT_STRING_LENGTH
+ */
+int Detector_Fits_Header_Add_Comment(char *keyword,char *comment)
+{
+	int found_index;
+
+	if(keyword == NULL)
+	{
+		Fits_Header_Error_Number = 22;
+		sprintf(Fits_Header_Error_String,"Detector_Fits_Header_Add_Comment:Keyword is NULL.");
+		return FALSE;
+	}
+	if(!Fits_Header_Find_Card(keyword,&found_index))
+	{
+		Fits_Header_Error_Number = 23;
+		sprintf(Fits_Header_Error_String,
+			"Detector_Fits_Header_Add_Comment:Failed to find keyword '%s' in header.",keyword);
+		return FALSE;
+	}
+	/* the units will be truncated to FITS_HEADER_COMMENT_STRING_LENGTH-1 */
+	strncpy(Fits_Header.Card_List[found_index].Comment,comment,FITS_HEADER_COMMENT_STRING_LENGTH-1);
+	Fits_Header.Card_List[found_index].Comment[FITS_HEADER_COMMENT_STRING_LENGTH-1] = '\0';
+	return TRUE;
+}
+
+/**
+ * Routine to add a units section to the header comment, of a FITS header whoose keyword/value pair already
+ * exists in the list of FITS headers.
+ * @param keyword The keyword string, must be at least 1 character less in length than 
+ *        FITS_HEADER_KEYWORD_STRING_LENGTH. The keyword should already be present in the list of headers.
+ * @param units A string to put in the units section of the FITS header.
+ * @return The routine returns TRUE on success, and FALSE on failure. On failure, Fits_Header_Error_Number
+ *         and Fits_Header_Error_String should be filled in with suitable values.
+ * @see #Fits_Header_Struct
+ * @see #Fits_Header_Find_Card
+ * @see #Fits_Header
+ * @see #FITS_HEADER_UNITS_STRING_LENGTH
+ */
+int Detector_Fits_Header_Add_Units(char *keyword,char *units)
+{
+	int found_index;
+
+	if(keyword == NULL)
+	{
+		Fits_Header_Error_Number = 16;
+		sprintf(Fits_Header_Error_String,"Detector_Fits_Header_Add_Units:Keyword is NULL.");
+		return FALSE;
+	}
+	if(!Fits_Header_Find_Card(keyword,&found_index))
+	{
+		Fits_Header_Error_Number = 19;
+		sprintf(Fits_Header_Error_String,"Detector_Fits_Header_Add_Units:Failed to find keyword '%s' in header.",
+			keyword);
+		return FALSE;
+	}
+	/* the units will be truncated to FITS_HEADER_UNITS_STRING_LENGTH-1 */
+	strncpy(Fits_Header.Card_List[found_index].Units,units,FITS_HEADER_UNITS_STRING_LENGTH-1);
+	Fits_Header.Card_List[found_index].Units[FITS_HEADER_UNITS_STRING_LENGTH-1] = '\0';
+	return TRUE;
+}
+
+/**
  * Routine to free an allocated FITS header list.
  * @param header The address of a Fits_Header_Struct structure to modify.
  * @return The routine returns TRUE on success, and FALSE on failure. On failure, Fits_Header_Error_Number
@@ -634,6 +714,7 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 {
 	int i,status,retval;
 	char buff[32]; /* fits_get_errstatus returns 30 chars max */
+	char *comment = NULL;
 
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Fits_Header_Write_To_Fits: Started.");
@@ -641,6 +722,11 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 	status = 0;
 	for(i=0;i<Fits_Header.Card_Count;i++)
 	{
+		/* convert empty comment to NULL comment for CFITSIO */
+		if(strlen(Fits_Header.Card_List[i].Comment) > 0)
+			comment = Fits_Header.Card_List[i].Comment;
+		else
+			comment = NULL;
 		switch(Fits_Header.Card_List[i].Type)
 		{
 			case FITS_HEADER_TYPE_STRING:
@@ -652,7 +738,7 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 #endif
 				retval = fits_update_key(fits_fp,TSTRING,Fits_Header.Card_List[i].Keyword,
 							 Fits_Header.Card_List[i].Value.String,
-							 Fits_Header.Card_List[i].Comment,&status);
+							 comment,&status);
 				break;
 			case FITS_HEADER_TYPE_INTEGER:
 #if LOGGING > 9
@@ -663,7 +749,7 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 #endif
 				retval = fits_update_key(fits_fp,TINT,Fits_Header.Card_List[i].Keyword,
 							 &(Fits_Header.Card_List[i].Value.Int),
-							 Fits_Header.Card_List[i].Comment,&status);
+							 comment,&status);
 				break;
 			case FITS_HEADER_TYPE_LONG_LONG_INTEGER:
 #if LOGGING > 9
@@ -675,7 +761,7 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 				/* we could use TLONGLONG, or even TULONG */
 				retval = fits_update_key(fits_fp,TLONG,Fits_Header.Card_List[i].Keyword,
 							 &(Fits_Header.Card_List[i].Value.Long_Long_Int),
-							 Fits_Header.Card_List[i].Comment,&status);
+							 comment,&status);
 				break;
 			case FITS_HEADER_TYPE_FLOAT:
 #if LOGGING > 9
@@ -686,7 +772,7 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 #endif
 				retval = fits_update_key_fixdbl(fits_fp,Fits_Header.Card_List[i].Keyword,
 								Fits_Header.Card_List[i].Value.Float,6,
-								Fits_Header.Card_List[i].Comment,&status);
+								comment,&status);
 				break;
 			case FITS_HEADER_TYPE_LOGICAL:
 #if LOGGING > 9
@@ -697,7 +783,7 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 #endif
 				retval = fits_update_key(fits_fp,TLOGICAL,Fits_Header.Card_List[i].Keyword,
 							 &(Fits_Header.Card_List[i].Value.Boolean),
-							 Fits_Header.Card_List[i].Comment,&status);
+							 comment,&status);
 				break;
 			default:
 				Fits_Header_Error_Number = 17;
@@ -715,7 +801,22 @@ int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp)
 				"Failed to update %d %s (%s).",i,Fits_Header.Card_List[i].Keyword,buff);
 			return FALSE;
 		}
-	}
+		/* units */
+		if(strlen(Fits_Header.Card_List[i].Units) > 0)
+		{
+			retval = fits_write_key_unit(fits_fp,Fits_Header.Card_List[i].Keyword,
+						     Fits_Header.Card_List[i].Units,&status);
+			if(retval)
+			{
+				fits_get_errstatus(status,buff);
+				Fits_Header_Error_Number = 21;
+				sprintf(Fits_Header_Error_String,"Detector_Fits_Header_Write_To_Fits:"
+				     "Failed to update FITS header Units for index='%d' keyword='%s' units='%s' (%s).",
+					i,Fits_Header.Card_List[i].Keyword,Fits_Header.Card_List[i].Units,buff);
+				return FALSE;
+			}
+		}
+	}/* end for */
 #if LOGGING > 1
 	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Fits_Header_Write_To_Fits:Finished.");
 #endif
@@ -779,6 +880,52 @@ void Detector_Fits_Header_Error_String(char *error_string)
 /* ----------------------------------------------------------------------------
 ** 		internal functions 
 ** ---------------------------------------------------------------------------- */
+/**
+ * Find the FITS header card with a specified keyword. We uppercase the checked keyword, as all keywords in the list
+ * are stored uppercase. This stops the case of having two cards differing by keyword case, which will be written
+ * as the same keyword by CFITSIO.
+ * @param keyword A string representing the keyword to search for.
+ * @param found_index The address of an integer. If the routine returns true, found_index will contain
+ *        the index in the header for FITS keyword keyword.
+ * @return The routine returns TRUE if the keyword is found in the header, and FALSE if it is not.
+ * @see #FITS_HEADER_KEYWORD_STRING_LENGTH
+ * @see #Fits_Header.
+ */
+static int Fits_Header_Find_Card(char *keyword,int *found_index)
+{
+	char uppercase_keyword[FITS_HEADER_KEYWORD_STRING_LENGTH];
+	int done;
+
+	if(keyword == NULL)
+	{
+		return FALSE;
+	}
+	if(strlen(keyword) > (FITS_HEADER_KEYWORD_STRING_LENGTH-1))
+	{
+		return FALSE;
+	}
+	if(found_index == NULL)
+	{
+		return FALSE;
+	}
+	/* uppercase keyword */
+	strcpy(uppercase_keyword,keyword);
+	Fits_Header_Uppercase(uppercase_keyword);
+	/* find keyword in header */
+	(*found_index) = 0;
+	done  = FALSE;
+	while(((*found_index) < Fits_Header.Card_Count) && (done == FALSE))
+	{
+		if(strcmp(Fits_Header.Card_List[(*found_index)].Keyword,uppercase_keyword) == 0)
+		{
+			done = TRUE;
+		}
+		else
+			(*found_index)++;
+	}
+	return done;
+}
+
 /**
  * Routine to add a card to the list. If the keyword already exists, that card will be updated with the new value,
  * otherwise a new card will be allocated (if necessary) and added to the list. The keyword is converted to all

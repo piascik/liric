@@ -13,6 +13,9 @@ extern int Detector_Fits_Header_Add_Int(char *keyword,int value,char *comment);
 extern int Detector_Fits_Header_Add_Long_Long_Int(char *keyword,long long int value,char *comment);
 extern int Detector_Fits_Header_Add_Float(char *keyword,double value,char *comment);
 extern int Detector_Fits_Header_Add_Logical(char *keyword,int value,char *comment);
+extern int Detector_Fits_Header_Add_Comment(char *keyword,char *comment);
+extern int Detector_Fits_Header_Add_Units(char *keyword,char *units);
+
 extern int Detector_Fits_Header_Free(void);
 
 extern int Detector_Fits_Header_Write_To_Fits(fitsfile *fits_fp);
