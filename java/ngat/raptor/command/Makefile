@@ -6,7 +6,8 @@ include	../../../../Makefile.common
 PACKAGEDIR	= ngat/raptor/command
 BINDIR 		= $(RAPTOR_BIN_HOME)/java/$(PACKAGEDIR)
 SRCS 		= Command.java BooleanReplyCommand.java DoubleReplyCommand.java IntegerReplyCommand.java \
-		AbortCommand.java ConfigFilterCommand.java \
+		AbortCommand.java \
+		ConfigFilterCommand.java ConfigNudgematicOffsetSizeCommand.java ConfigCoaddExposureLengthCommand.java \
 		FitsHeaderAddCommand.java FitsHeaderClearCommand.java FitsHeaderDeleteCommand.java \
 		MultrunCommand.java \
 		ShutdownCommand.java \

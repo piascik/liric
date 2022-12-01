@@ -8,8 +8,7 @@ import java.net.*;
 import java.util.*;
 
 /**
- * The "config" command is an extension of the Command, and configures the instrument for exposures.
- * This command configures the filter to be used.
+ * The "config filter" command is an extension of the Command, and configures the filter to use for exposures.
  * @author Chris Mottram
  * @version $Revision$
  */
