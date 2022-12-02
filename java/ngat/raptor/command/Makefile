@@ -16,6 +16,7 @@ SRCS 		= Command.java BooleanReplyCommand.java DoubleReplyCommand.java IntegerRe
 		StatusExposureMultrunCommand.java StatusExposureRunCommand.java StatusExposureStatusCommand.java \
 		StatusFilterWheelFilterCommand.java StatusFilterWheelPositionCommand.java \
 		StatusFilterWheelStatusCommand.java \
+		StatusNudgematicPositionCommand.java StatusNudgematicStatusCommand.java \
 		StatusTemperatureGetCommand.java 
 #		MultbiasCommand.java MultdarkCommand.java
 
