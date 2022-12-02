@@ -858,6 +858,7 @@ int Raptor_Command_Multrun(char *command_string,char **reply_string)
  * @param reply_string The address of a pointer to allocate and set the reply string.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
+ * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
  * @see raptor_general.html#Raptor_General_Log
  * @see raptor_general.html#Raptor_General_Error_Number
  * @see raptor_general.html#Raptor_General_Error_String
@@ -874,6 +875,7 @@ int Raptor_Command_Multrun(char *command_string,char **reply_string)
  * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_Get
  * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_PCB_Get
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Get_Position
+ * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Position_Get
  */
 int Raptor_Command_Status(char *command_string,char **reply_string)
 {
@@ -886,7 +888,7 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 	char temperature_status_string[32];
 	char filter_name_string[32];
 	char *camera_name_string = NULL;
-	int retval,command_string_index,ivalue,filter_wheel_position;
+	int retval,command_string_index,ivalue,filter_wheel_position,nudgematic_position;
 	double temperature;
 
 	/* parse command */
@@ -986,8 +988,8 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 				if(!Raptor_General_Add_String(reply_string,"1 Failed to get filter wheel position."))
 					return FALSE;
 				return TRUE;
-			}/* end if filter wheel is enabled */
-		}
+			}
+		}/* end if filter wheel is enabled */
 		else
 		{
 #if RAPTOR_DEBUG > 5
@@ -1061,37 +1063,81 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 	}
 	else if(strncmp(subsystem_string,"nudgematic",7) == 0)
 	{
-		/* diddly
-		if(strncmp(command_string+command_string_index,"position",8)==0)
+		if(Raptor_Config_Nudgematic_Is_Enabled())
 		{
-			diddly;
-			sprintf(return_string+strlen(return_string),"%.2f",rotator_position);			
-		}
-		else if(strncmp(command_string+command_string_index,"status",6)==0)
-		{
-			diddly;
-		}
-		else
-		{
-			Raptor_General_Error_Number = 543;
-			sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
-				"Failed to parse nudgematic command %s.",command_string+command_string_index);
-			Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
-					     LOG_VERBOSITY_TERSE,"COMMAND");
+			if(!Nudgematic_Command_Position_Get(&nudgematic_position))
+			{
+				Raptor_General_Error_Number = 541;
+				sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
+					"Failed to get nudgematic position.");
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
 #if RAPTOR_DEBUG > 1
-			Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Status",
-						  LOG_VERBOSITY_TERSE,"COMMAND",
-						  "Failed to parse status nudgematic command %s.",
-						  command_string+command_string_index);
+				Raptor_General_Log("command","raptor_command.c","Raptor_Command_Status",
+						   LOG_VERBOSITY_TERSE,"COMMAND","Failed to get nudgematic position.");
 #endif
-			if(!Raptor_General_Add_String(reply_string,"1 Failed to parse status nudgematic command."))
-				return FALSE;
-			return TRUE;
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to get nudgematic position."))
+					return FALSE;
+				return TRUE;
+			}
+			if(strncmp(command_string+command_string_index,"position",8)==0)
+			{
+				sprintf(return_string+strlen(return_string),"%d",nudgematic_position);			
+			}
+			else if(strncmp(command_string+command_string_index,"status",6)==0)
+			{
+				if(nudgematic_position == -1)
+					strcat(return_string,"moving");
+				else
+					strcat(return_string,"stopped");
+			}
+			else
+			{
+				Raptor_General_Error_Number = 543;
+				sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
+					"Failed to parse nudgematic command %s.",command_string+command_string_index);
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+				Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Status",
+							  LOG_VERBOSITY_TERSE,"COMMAND",
+							  "Failed to parse status nudgematic command %s.",
+							  command_string+command_string_index);
+#endif
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to parse status nudgematic command."))
+					return FALSE;
+				return TRUE;
+			}
 		}
-		*/
-		if(!Raptor_General_Add_String(reply_string,"1 status nudgematic not implemented yet."))
-			return FALSE;
-		return TRUE;
+		else /* nudgematic is _not_ enabled */
+		{
+			if(strncmp(command_string+command_string_index,"position",8)==0)
+			{
+				nudgematic_position = -1; /* moving */
+				sprintf(return_string+strlen(return_string),"%d",nudgematic_position);			
+			}
+			else if(strncmp(command_string+command_string_index,"status",6)==0)
+			{
+				strcat(return_string,"stopped"); 
+			}
+			else
+			{
+				Raptor_General_Error_Number = 542;
+				sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
+					"Failed to parse nudgematic command %s.",command_string+command_string_index);
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+				Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Status",
+							  LOG_VERBOSITY_TERSE,"COMMAND",
+							  "Failed to parse status nudgematic command %s.",
+							  command_string+command_string_index);
+#endif
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to parse status nudgematic command."))
+					return FALSE;
+				return TRUE;
+			}			
+		}
 	}
 	else if(strncmp(subsystem_string,"temperature",11) == 0)
 	{
