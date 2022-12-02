@@ -62,9 +62,19 @@ public class ABORTImplementation extends CommandImplementation implements JMSCom
 	/**
 	 * This method implements the ABORT command. 
 	 * <ul>
+	 * <li>We call sendAbortCommand to send an "abort" command to the C layer.
+	 * <li>We get the currently running thread from the status object.
+	 * <li>If the currently running thread is non-null, we call setAbortProcessCommand to tell the
+	 *     Java thread to abort itself at a suitable point.
+	 * <li>We set up a successful ABORT_DONE to return.
 	 * </ul>
 	 * @param command The abort command.
 	 * @return An object of class ABORT_DONE is returned.
+	 * @see #sendAbortCommand
+	 * @see #status
+	 * @see RaptorStatus#getCurrentThread
+	 * @see RaptorTCPServerConnectionThread
+	 * @see RaptorTCPServerConnectionThread#setAbortProcessCommand
 	 */
 	public COMMAND_DONE processCommand(COMMAND command)
 	{

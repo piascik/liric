@@ -188,6 +188,8 @@ public class MULTRUNImplementation extends HardwareImplementation implements JMS
 	 * data from the reply.
 	 * @param exposureLength The total exposure length of each frame in the multrun, in milliseconds
 	 *        (itself consisting of the average of a series of frames of the coadd exposure length).
+	 * @param exposureCount The number of exposures to do in the multrun.
+	 * @param standard A boolean, true if the observation is of a standard, false if it is not.
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #parseSuccessfulReply
 	 * @see ngat.raptor.command.MultrunCommand
