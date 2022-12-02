@@ -67,8 +67,8 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 	 *        Should be one of NUDGEMATIC_OFFSET_SIZE_SMALL / NUDGEMATIC_OFFSET_SIZE_LARGE.
 	 * @excetption IllegalArgumentException Thrown if nudgematicOffetSize is not valid.
 	 * @see #commandString
-	 * @see ngat.phase.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
-	 * @see ngat.phase.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
+	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
+	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
 	 */
 	public void setCommand(int nudgematicOffsetSize) throws IllegalArgumentException
 	{
