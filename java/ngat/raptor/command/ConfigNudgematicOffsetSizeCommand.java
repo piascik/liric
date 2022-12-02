@@ -65,7 +65,7 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 	 * Setup the command to send to the server.
 	 * @param nudgematicOffsetSize An integer representing the nudgematic offset size selected.
 	 *        Should be one of NUDGEMATIC_OFFSET_SIZE_SMALL / NUDGEMATIC_OFFSET_SIZE_LARGE.
-	 * @excetption IllegalArgumentException Thrown if nudgematicOffetSize is not valid.
+	 * @exception IllegalArgumentException Thrown if nudgematicOffetSize is not valid.
 	 * @see #commandString
 	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
 	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE

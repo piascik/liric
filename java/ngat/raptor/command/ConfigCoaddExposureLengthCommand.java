@@ -65,7 +65,7 @@ public class ConfigCoaddExposureLengthCommand extends Command implements Runnabl
 	 * Setup the command to send to the server.
 	 * @param coaddExposureLength An integer representing the coadd exposure length selected.
 	 *        Should be either '100' or '1000'.
-	 * @excetption IllegalArgumentException Thrown if coadd exposure length is not valid.
+	 * @exception IllegalArgumentException Thrown if coadd exposure length is not valid.
 	 * @see #commandString
 	 */
 	public void setCommand(int coaddExposureLength) throws IllegalArgumentException
