@@ -20,7 +20,7 @@ CALIBRATE_IMPL_SRCS 	= #MultbiasCommandThread.java MultdarkCommandThread.java \
 			  BIASImplementation.java DARKImplementation.java \
 			  MULTBIASImplementation.java MULTDARKImplementation.java 
 EXPOSE_IMPL_SRCS	= MULTRUNImplementation.java 
-INTERRUPT_IMPL_SRCS 	= #ABORTImplementation.java GET_STATUSImplementation.java REBOOTImplementation.java
+INTERRUPT_IMPL_SRCS 	= ABORTImplementation.java #GET_STATUSImplementation.java REBOOTImplementation.java
 
 SETUP_IMPL_SRCS		= CONFIGImplementation.java
 OBJS 		= $(SRCS:%.java=$(BINDIR)/%.class)
