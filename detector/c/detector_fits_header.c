@@ -341,6 +341,7 @@ int Detector_Fits_Header_Add_String(char *keyword,char *value,char *comment)
 	{
 		strcpy(card.Comment,"");
 	}
+	strcpy(card.Units,"");
 	if(!Fits_Header_Add_Card(card))
 		return FALSE;
 #if LOGGING > 1
@@ -401,6 +402,7 @@ int Detector_Fits_Header_Add_Int(char *keyword,int value,char *comment)
 	{
 		strcpy(card.Comment,"");
 	}
+	strcpy(card.Units,"");
 	if(!Fits_Header_Add_Card(card))
 		return FALSE;
 #if LOGGING > 1
@@ -461,6 +463,7 @@ int Detector_Fits_Header_Add_Long_Long_Int(char *keyword,long long int value,cha
 	{
 		strcpy(card.Comment,"");
 	}
+	strcpy(card.Units,"");
 	if(!Fits_Header_Add_Card(card))
 		return FALSE;
 #if LOGGING > 1
@@ -521,6 +524,7 @@ int Detector_Fits_Header_Add_Float(char *keyword,double value,char *comment)
 	{
 		strcpy(card.Comment,"");
 	}
+	strcpy(card.Units,"");
 	if(!Fits_Header_Add_Card(card))
 		return FALSE;
 #if LOGGING > 1
@@ -591,6 +595,7 @@ int Detector_Fits_Header_Add_Logical(char *keyword,int value,char *comment)
 	{
 		strcpy(card.Comment,"");
 	}
+	strcpy(card.Units,"");
 	if(!Fits_Header_Add_Card(card))
 		return FALSE;
 #if LOGGING > 1
