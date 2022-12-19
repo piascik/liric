@@ -346,7 +346,7 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tabort\n"
 			   "\tconfig filter <filter_name>\n"
 			   "\tconfig coadd_exp_len <short|long>\n"
-			   "\tconfig nudgematic <small|large>\n"
+			   "\tconfig nudgematic <none|small|large>\n"
 			   "\tfitsheader add <keyword> <boolean|float|integer|string|comment|units> <value>\n"
 			   "\tfitsheader delete <keyword>\n"
 			   "\tfitsheader clear\n"
