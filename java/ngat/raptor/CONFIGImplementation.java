@@ -262,7 +262,7 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	/**
 	 * Send the extracted nudgematic offset size config data onto the C layer.
 	 * @param nudgematicOffsetSize The nudgematic offset size as an integer, one of:
-	 *        NUDGEMATIC_OFFSET_SIZE_SMALL / NUDGEMATIC_OFFSET_SIZE_LARGE.
+	 *        NUDGEMATIC_OFFSET_SIZE_NONE / NUDGEMATIC_OFFSET_SIZE_SMALL / NUDGEMATIC_OFFSET_SIZE_LARGE.
 	 * @exception Exception Thrown if an error occurs.
 	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand
 	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#setAddress
@@ -272,6 +272,7 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#getParsedReplyOK
 	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#getReturnCode
 	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#getParsedReply
+	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_NONE
 	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
 	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
 	 */

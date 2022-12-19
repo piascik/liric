@@ -53,7 +53,7 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 	/**
 	 * Setup the command to send to the server.
 	 * @param nudgematicOffetSizeString A string representing the nudgematic offset size selected.
-	 *        Should be one of "small" or "large".
+	 *        Should be one of "none", "small" or "large".
 	 * @see #commandString
 	 */
 	public void setCommand(String nudgematicOffetSizeString)
@@ -64,9 +64,11 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 	/**
 	 * Setup the command to send to the server.
 	 * @param nudgematicOffsetSize An integer representing the nudgematic offset size selected.
-	 *        Should be one of NUDGEMATIC_OFFSET_SIZE_SMALL / NUDGEMATIC_OFFSET_SIZE_LARGE.
+	 *        Should be one of NUDGEMATIC_OFFSET_SIZE_NONE / NUDGEMATIC_OFFSET_SIZE_SMALL / 
+	 *        NUDGEMATIC_OFFSET_SIZE_LARGE.
 	 * @exception IllegalArgumentException Thrown if nudgematicOffetSize is not valid.
 	 * @see #commandString
+	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_NONE
 	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
 	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
 	 */
@@ -74,7 +76,9 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 	{
 		String nudgematicOffsetSizeString = null;
 		
-		if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_SMALL)
+		if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_NONE)
+			nudgematicOffsetSizeString  = "none";
+		else if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_SMALL)
 			nudgematicOffsetSizeString  = "small";
 		else if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_LARGE)
 			nudgematicOffsetSizeString  = "large";
@@ -97,7 +101,7 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 
 		if(args.length != 3)
 		{
-			System.out.println("java ngat.raptor.command.ConfigNudgematicOffsetSizeCommand <hostname> <port number> <small|large>");
+			System.out.println("java ngat.raptor.command.ConfigNudgematicOffsetSizeCommand <hostname> <port number> <none|small|large>");
 			System.exit(1);
 		}
 		try
