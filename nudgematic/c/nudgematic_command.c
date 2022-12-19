@@ -55,13 +55,13 @@ static char rcsid[] = "$Id$";
  * The instance of Command_Struct that contains local data for this module.
  * This is statically initialised to the following:
  * <dl>
- * <dt>Offset_Size</dt> <dd>UNKNOWN</dd>
+ * <dt>Offset_Size</dt> <dd>NONE</dd>
  * </dl>
  * @see #Command_Struct
  */
 static struct Command_Struct Command_Data = 
 {
-	UNKNOWN
+	NONE
 };
 
 /**
@@ -128,7 +128,7 @@ int Nudgematic_Command_Position_Get(int *position)
  */
 int Nudgematic_Command_Offset_Size_Set(NUDGEMATIC_OFFSET_SIZE_T size)
 {
-	if((size != SMALL)&&(size != LARGE))
+	if((size != NONE)&&(size != SMALL)&&(size != LARGE))
 	{
 		Command_Error_Number = 2;
 		sprintf(Command_Error_String,"Nudgematic_Command_Offset_Size_Set:Illegal size '%d'.",size);
@@ -173,7 +173,7 @@ int Nudgematic_Command_Offset_Size_Get(NUDGEMATIC_OFFSET_SIZE_T *size)
 /**
  * Routine to parse the specified string into a valid instance of NUDGEMATIC_OFFSET_SIZE_T.
  * @param size The address of a NUDGEMATIC_OFFSET_SIZE_T, on a successful return should contain 
- *             an offset size, either UNKNOWN, SMALL or LARGE.
+ *             an offset size, either NONE, SMALL or LARGE.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see #Command_Error_Number
  * @see #Command_Error_String
@@ -197,12 +197,13 @@ int Nudgematic_Command_Offset_Size_Parse(char *offset_size_string, NUDGEMATIC_OF
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
 				      "Nudgematic_Command_Offset_Size_Parse: Parsing offset size '%s'.",offset_size_string);
 #endif /* LOGGING */
-	if((strcmp(offset_size_string,"small") == 0)||(strcmp(offset_size_string,"SMALL") == 0))
+	if((strcmp(offset_size_string,"none") == 0)||(strcmp(offset_size_string,"NONE") == 0))
+		(*size) = NONE;
+	else if((strcmp(offset_size_string,"small") == 0)||(strcmp(offset_size_string,"SMALL") == 0))
 		(*size) = SMALL;
 	else if((strcmp(offset_size_string,"large") == 0)||(strcmp(offset_size_string,"LARGE") == 0))
 		(*size) = LARGE;
-	else if((strcmp(offset_size_string,"unknown") == 0)||(strcmp(offset_size_string,"UNKNOWN") == 0))
-		(*size) = UNKNOWN;
+	else
 	{
 		Command_Error_Number = 6;
 		sprintf(Command_Error_String,"Nudgematic_Command_Offset_Size_Parse:failed to parse size '%s'.",
@@ -220,14 +221,14 @@ int Nudgematic_Command_Offset_Size_Parse(char *offset_size_string, NUDGEMATIC_OF
 /**
  * Routine to convert the specified offset size into a string.
  * @param size The offset size, of type NUDGEMATIC_OFFSET_SIZE_T, to convert.
- * @return The routine returns a string based on the offset size, one of: "SMALL", "LARGE", "UNKNOWN", "ERROR".
+ * @return The routine returns a string based on the offset size, one of: "SMALL", "LARGE", "NONE", "ERROR".
  */
 char *Nudgematic_Command_Offset_Size_To_String(NUDGEMATIC_OFFSET_SIZE_T size)
 {
 	switch(size)
 	{
-		case UNKNOWN:
-			return "UNKNOWN";
+		case NONE:
+			return "NONE";
 		case SMALL:
 			return "SMALL";
 		case LARGE:

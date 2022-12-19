@@ -14,14 +14,14 @@
 /**
  * Enumeration type defining the magnitudes of offsets induced by the nudgematic, this can be one of:
  * <ul>
- * <li>UNKNOWN
+ * <li>NONE
  * <li>SMALL
  * <li>LARGE
  * </ul>
  */
 enum NUDGEMATIC_OFFSET_SIZE_ENUM 
 {
-	UNKNOWN = 0,
+	NONE = 0,
 	SMALL = 1,
 	LARGE = 2
 };
