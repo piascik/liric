@@ -211,7 +211,7 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 		return FALSE;
 	}
 #if RAPTOR_DEBUG > 1
-	Raptor_General_Log_Format("multrun","raptor_multrun.c","Raptor_Startup_Detector",LOG_VERBOSITY_TERSE,
+	Raptor_General_Log_Format("multrun","raptor_multrun.c","Raptor_Multrun",LOG_VERBOSITY_TERSE,
 				  "MULTRUN","Started with exposure_length %d ms, exposure count %d.",
 				  exposure_length_ms,exposure_count);
 #endif
@@ -331,7 +331,7 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	/* we have finished the multrun */
 	Multrun_In_Progress = FALSE;
 #if RAPTOR_DEBUG > 1
-	Raptor_General_Log("multrun","raptor_multrun.c","Raptor_Startup_Detector",LOG_VERBOSITY_TERSE,"MULTRUN",
+	Raptor_General_Log("multrun","raptor_multrun.c","Raptor_Multrun",LOG_VERBOSITY_TERSE,"MULTRUN",
 			   "Finished.");
 #endif		
 	return TRUE;
