@@ -122,7 +122,7 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
  * <ul>
  * <li>"config coadd_exp_len <short|long>"
  * <li>"config filter <filtername>"
- * <li>"config nudgematic <small|large>"
+ * <li>"config nudgematic <none|small|large>"
  * </ul>
  * @param command_string The command. This is not changed during this routine.
  * @param reply_string The address of a pointer to allocate and set the reply string.
@@ -315,7 +315,11 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 					  LOG_VERBOSITY_VERBOSE,"COMMAND","Setting nudgematic offset size to: %s.",
 					  nudgematic_offset_size_string);
 #endif
-		if(strcmp(nudgematic_offset_size_string,"small") == 0)
+		if(strcmp(nudgematic_offset_size_string,"none") == 0)
+		{
+			offset_size = NONE;
+		}
+		else if(strcmp(nudgematic_offset_size_string,"small") == 0)
 		{
 			offset_size = SMALL;
 		}
