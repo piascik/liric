@@ -109,16 +109,227 @@ static int Bias_Dark_Exposure_Fits_Headers_Set(void);
 ** 		external functions 
 ** ---------------------------------------------------------------------------- */
 /**
+ * Routine to perform a multbias.
+ * <ul>
+ * <li>We check the input arguments are valid.
+ * <li>We initialise the internal variables.
+ * <li>We retrieve the multrun flipping configuration fron config ("raptor.multrun.image.flip.[x|y]" and configure
+ *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
+ * <li>We move the filter wheel (if configured) to the mirror position.
+ * <li>We re-configure the detector to use coadds of a minimum per-coadd exposure length.
+ * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multbias.
+ * <li>We call Bias_Dark_Fits_Headers_Set to make any per-multbias FITS header changes here.
+ * <li>We take a multbias start timestamp.
+ * <li>We enter a for loop, looping Bias_Dark_Data.Image_Index over Bias_Dark_Data.Image_Count.
+ *     <ul>
+ *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
+ *     <li>We call Detector_Fits_Filename_Next_Run to increment the run number in the FITS filename generation code.
+ *     <li>We call Detector_Fits_Filename_Get_Filename to generate a suitable FITS image filename.
+ *     <li>We check Moptop_Abort to see if the multdark has been aborted by another command thread.
+ *     <li>We call Bias_Dark_Exposure_Fits_Headers_Set to make any per-exposure FITS header changes here.
+ *     <li>We call Detector_Exposure_Expose to take the image (a series of coadds) and save it to the FITS image filename.
+ *     <li>We call Detector_Fits_Filename_List_Add to add the new FITS image filename to the return list of filenames.
+ *     </ul>
+ * <li>We set Bias_Dark_In_Progress to FALSE, to indicate we have finished the Multbias.
+ * </ul>
+ * @param exposure_count The number of dark exposure to perform in the multbias.
+ * @param filename_list The address of a list of strings, on a successful return from this routine an allocated list 
+ *        of strings will be returned (of length exposure_count), each string containing a FITS image filename
+ *        of one frame/exposure in the multbias. This list will need freeing.
+ * @param filename_count The address of an integer, on a successful return from this routine contains the
+ *        number of filenames in filename_list.
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
+ *         Raptor_General_Error_String should be set.
+ * @see #Moptop_Abort
+ * @see #Bias_Dark_In_Progress
+ * @see #Bias_Dark_Data
+ * @see #Bias_Dark_Fits_Headers_Set
+ * @see #Bias_Dark_Exposure_Fits_Headers_Set
+ * @see raptor_config.html#Raptor_Config_Get_Boolean
+ * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
+ * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Log_Format
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Flip_Set
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Expose
+ * @see ../detector/cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_PIPELINE_FLAG
+ * @see ../detector/cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_EXPOSURE_TYPE
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Next_Multrun
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Next_Run
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Get_Filename
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_List_Add
+ * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Name_To_Position
+ * @see ../filter_wheel/cdocs/filter_wheel_command.html#ilter_Wheel_Command_Move
+ */
+int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *filename_count)
+{
+	char fits_filename[256];
+	int flip_x,flip_y,mirror_filter_wheel_position;
+	
+	/* check arguments */
+	if(exposure_count < 1)
+	{
+		Raptor_General_Error_Number = ;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Bias_Dark_MultBias:exposure count was too small (%d).",exposure_count);
+		return FALSE;
+	}
+	if(filename_list == NULL)	
+	{
+		Raptor_General_Error_Number = ;
+		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:filename_list was NULL.");
+		return FALSE;
+	}
+	if(filename_count == NULL)	
+	{
+		Raptor_General_Error_Number = ;
+		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:filename_count was NULL.");
+		return FALSE;
+	}
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log_Format("multbias","raptor_bias_dark.c","Raptor_Bias_Dark_MultBias",LOG_VERBOSITY_TERSE,
+				  "MULTBIAS","Started with exposure count %d.",exposure_count);
+#endif
+	/* initialise internal variables */
+	Bias_Dark_In_Progress = TRUE;
+	Moptop_Abort = FALSE;
+	Bias_Dark_Data.Image_Count = exposure_count;
+	(*filename_list) = NULL;
+	(*filename_count) = 0;
+	/* configure flipping of output image */
+	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.x",&flip_x))
+		return FALSE;		
+	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.y",&flip_y))
+		return FALSE;		
+	Detector_Exposure_Flip_Set(flip_x,flip_y);
+	/* move filter wheel to mirror position */
+	if(Raptor_Config_Filter_Wheel_Is_Enabled())
+	{
+		/* which filter position contains the Mirror filter */
+		if(!Filter_Wheel_Config_Name_To_Position("Mirror",&mirror_filter_wheel_position))
+		{
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultBias:Failed to find Mirror filter wheel position.");
+			return FALSE;
+		}
+		/* move filter wheel */
+		if(!Filter_Wheel_Command_Move(mirror_filter_wheel_position))
+		{
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultBias:Failed to move filter wheel to  Mirror position %d.",
+				mirror_filter_wheel_position);
+			return FALSE;
+		}
+	}
+	/* setup detector to do minimum coadd exposure lengths for a bias */
+	diddly;
+	/* intialise FITS filenames for new multrun*/
+	if(!Detector_Fits_Filename_Next_Multrun())
+	{
+		Bias_Dark_In_Progress = FALSE;
+		Raptor_General_Error_Number = ;
+		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:Failed to initialise FITS filename multrun.");
+		return FALSE;
+	}
+	/* do any per-multbias FITS header changes here */
+	if(!Bias_Dark_Fits_Headers_Set(exposure_count))
+	{
+		Multrun_In_Progress = FALSE;
+		return FALSE;
+	}
+	/* take a multrun start timestamp */
+	clock_gettime(CLOCK_REALTIME,&(Bias_Dark_Data.Bias_Dark_Start_Time));
+	/* start multbias for loop */
+	for(Bias_Dark_Data.Image_Index = 0; Bias_Dark_Data.Image_Index < Bias_Dark_Data.Image_Count;
+	    Bias_Dark_Data.Image_Index++)
+	{
+		/* check for aborts */
+		if(Moptop_Abort)
+		{
+			Bias_Dark_In_Progress = FALSE;
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:Aborted.");
+			return FALSE;
+		}
+		/* generate new FITS image filename */
+		if(!Detector_Fits_Filename_Next_Run())
+		{
+			Bias_Dark_In_Progress = FALSE;
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultBias:Failed to generate next FITS filename run number.");
+			return FALSE;
+		}
+		if(!Detector_Fits_Filename_Get_Filename(DETECTOR_FITS_FILENAME_EXPOSURE_TYPE_BIAS,
+							DETECTOR_FITS_FILENAME_PIPELINE_FLAG_UNREDUCED,
+							fits_filename,256))
+		{
+			Bias_Dark_In_Progress = FALSE;
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultBias:Failed to generate next FITS filename.");
+			return FALSE;
+		}
+		/* check for aborts */
+		if(Moptop_Abort)
+		{
+			Bias_Dark_In_Progress = FALSE;
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:Aborted.");
+			return FALSE;
+		}
+		/* do any per-multbias frame FITS header changes here */
+		if(!Bias_Dark_Exposure_Fits_Headers_Set())
+		{
+			Bias_Dark_In_Progress = FALSE;
+			return FALSE;
+		}
+		/* take an exposure */
+		diddly;
+		if(!Detector_Exposure_Expose(exposure_length_ms,fits_filename))
+		{
+			Bias_Dark_In_Progress = FALSE;
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultBias:Failed to take bais exposure %d with filename '%s'.",
+				Bias_Dark_Data.Image_Index,fits_filename);
+			return FALSE;
+		}
+		/* add fits image to list */
+		if(!Detector_Fits_Filename_List_Add(fits_filename,filename_list,filename_count))
+		{
+			Bias_Dark_In_Progress = FALSE;
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultBias:Failed to add filename '%s' to list of length %d.",
+				fits_filename,(*filename_count));
+			return FALSE;
+		}
+	}/* end for on Bias_Dark_Data.Image_Index */
+	/* we have finished the multbias */
+	Bias_Dark_In_Progress = FALSE;
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log("multbias","raptor_bias_dark.c","Raptor_Bias_Dark_MultBias",LOG_VERBOSITY_TERSE,"MULTBIAS",
+			   "Finished.");
+#endif		
+	return TRUE;
+}
+
+/**
  * Routine to perform a multdark.
  * <ul>
  * <li>We initialise the internal variables.
  * <li>We retrieve the multrun flipping configuration fron config ("raptor.multrun.image.flip.[x|y]" and configure
  *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We move the filter wheel (if configured) to the mirror position.
- * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multbias/MultDark.
+ * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new MultDark.
  * <li>We call Bias_Dark_Fits_Headers_Set to make any per-multdark FITS header changes here.
  * <li>We take a multdark start timestamp.
- * <li>We enter a for loop, looping Bias_Dark_Data.Image_Index over Bias_Dark__Data.Image_Count.
+ * <li>We enter a for loop, looping Bias_Dark_Data.Image_Index over Bias_Dark_Data.Image_Count.
  *     <ul>
  *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
  *     <li>We call Detector_Fits_Filename_Next_Run to increment the run number in the FITS filename generation code.
@@ -160,11 +371,13 @@ static int Bias_Dark_Exposure_Fits_Headers_Set(void);
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Next_Run
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Get_Filename
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_List_Add
+ * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Name_To_Position
+ * @see ../filter_wheel/cdocs/filter_wheel_command.html#ilter_Wheel_Command_Move
  */
 int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***filename_list,int *filename_count)
 {
 	char fits_filename[256];
-	int flip_x,flip_y;
+	int flip_x,flip_y,mirror_filter_wheel_position;
 	
 	/* check arguments */
 	if(exposure_length_ms < 1)
@@ -194,7 +407,7 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 		return FALSE;
 	}
 #if RAPTOR_DEBUG > 1
-	Raptor_General_Log_Format("multrun","raptor_bias_dark.c","Raptor_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,
+	Raptor_General_Log_Format("multdark","raptor_bias_dark.c","Raptor_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,
 				  "MULTDARK","Started with exposure_length %d ms, exposure count %d.",
 				  exposure_length_ms,exposure_count);
 #endif
@@ -213,7 +426,23 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 	/* move filter wheel to mirror position */
 	if(Raptor_Config_Filter_Wheel_Is_Enabled())
 	{
-		diddly;
+		/* which filter position contains the Mirror filter */
+		if(!Filter_Wheel_Config_Name_To_Position("Mirror",&mirror_filter_wheel_position))
+		{
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultDark:Failed to find Mirror filter wheel position.");
+			return FALSE;
+		}
+		/* move filter wheel */
+		if(!Filter_Wheel_Command_Move(mirror_filter_wheel_position))
+		{
+			Raptor_General_Error_Number = ;
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultDark:Failed to move filter wheel to  Mirror position %d.",
+				mirror_filter_wheel_position);
+			return FALSE;
+		}
 	}
 	/* intialise FITS filenames for new multrun*/
 	if(!Detector_Fits_Filename_Next_Multrun())
@@ -248,7 +477,8 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 		{
 			Bias_Dark_In_Progress = FALSE;
 			Raptor_General_Error_Number = 706;
-			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:Failed to generate next FITS filename run number.");
+			sprintf(Raptor_General_Error_String,
+				"Raptor_Bias_Dark_MultDark:Failed to generate next FITS filename run number.");
 			return FALSE;
 		}
 		if(!Detector_Fits_Filename_Get_Filename(DETECTOR_FITS_FILENAME_EXPOSURE_TYPE_DARK,
@@ -298,7 +528,7 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 	/* we have finished the multdark */
 	Bias_Dark_In_Progress = FALSE;
 #if RAPTOR_DEBUG > 1
-	Raptor_General_Log("multdark","raptor_bias_dark.c","Raptor_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,"MULTRUN",
+	Raptor_General_Log("multdark","raptor_bias_dark.c","Raptor_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,"MULTDARK",
 			   "Finished.");
 #endif		
 	return TRUE;
