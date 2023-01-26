@@ -55,7 +55,7 @@ DOCFLAGS 		= -static
 
 EXE_SRCS		= raptor_main.c
 OBJ_SRCS		= raptor_general.c raptor_config.c raptor_server.c raptor_fits_header.c raptor_command.c \
-			  raptor_multrun.c
+			  raptor_multrun.c raptor_bias_dark.c
 
 
 
