@@ -538,8 +538,6 @@ static int Multrun_Fits_Headers_Set(int exposure_count,int do_standard)
  * Routine to collect and insert FITS headers pertaining to the current exposure in the multrun.
  * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
  *         Raptor_General_Error_String should be set.
- * @see #CENTIGRADE_TO_KELVIN
- * @see #Multrun_Data
  * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
  * @see raptor_general.html#Raptor_General_Error_Number
  * @see raptor_general.html#Raptor_General_Error_String
