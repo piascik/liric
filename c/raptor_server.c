@@ -375,7 +375,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						 "Raptor_Server_Connection_Callback",
 						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_MultBias(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -402,7 +401,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 							 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strncmp(client_message,"multdark",8) == 0)
 	{
@@ -417,7 +415,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 						 "Raptor_Server_Connection_Callback",
 						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 		}
-		/* diddly
 		retval = Raptor_Command_MultDark(client_message,&reply_string);
 		if(retval == TRUE)
 		{
@@ -444,7 +441,6 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 							 LOG_VERBOSITY_VERY_TERSE,"SERVER");
 			}
 		}
-		*/
 	}
 	else if(strncmp(client_message,"multrun",7) == 0)
 	{

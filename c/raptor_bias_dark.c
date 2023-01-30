@@ -103,7 +103,7 @@ static int Bias_Dark_In_Progress = FALSE;
 static int Moptop_Abort = FALSE;
 
 /* internal function declarations */
-static int Bias_Dark_Fits_Headers_Set(int exposure_count);
+static int Bias_Dark_Fits_Headers_Set(int is_bias,int exposure_count);
 static int Bias_Dark_Exposure_Fits_Headers_Set(void);
 
 /* ----------------------------------------------------------------------------
@@ -243,7 +243,7 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 		return FALSE;
 	}
 	/* do any per-multbias FITS header changes here */
-	if(!Bias_Dark_Fits_Headers_Set(exposure_count))
+	if(!Bias_Dark_Fits_Headers_Set(TRUE,exposure_count))
 	{
 		Bias_Dark_In_Progress = FALSE;
 		return FALSE;
@@ -459,7 +459,7 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 		return FALSE;
 	}
 	/* do any per-multdark FITS header changes here */
-	if(!Bias_Dark_Fits_Headers_Set(exposure_count))
+	if(!Bias_Dark_Fits_Headers_Set(FALSE,exposure_count))
 	{
 		Bias_Dark_In_Progress = FALSE;
 		return FALSE;
@@ -541,19 +541,49 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 }
 
 /**
- *
+ * Routine to collect and insert FITS headers pertaining to the whole bias/dark multrun.
+ * @param is_bias A boolean, set to TRUE for biases and FALSE for darks. Used to set the OBSTYPE FITS header.
+ * @param exposure_count An integer, the number of individual exposures/darks in the bias/dark multrun.
+ * @see #CENTIGRADE_TO_KELVIN
+ * @see #Bias_Dark_Data
+ * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
+ * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
+ * @see raptor_fits_header.html#Raptor_Fits_Header_Logical_Add
+ * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
+ * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Log_Format
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
+ * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_X
+ * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_Y
+ * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Get_Position
+ * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Name
+ * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Position_To_Id
  */
-static int Bias_Dark_Fits_Headers_Set(int exposure_count)
+static int Bias_Dark_Fits_Headers_Set(int is_bias,int exposure_count)
 {
+	char filter_name_string[32];
+	double temperature;
+	int filter_wheel_position,retval;
+
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log("biasdark","raptor_bias_dark.c","Bias_Dark_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
 			   "Bias_Dark_Fits_Headers_Set started.");
 #endif
 	if(exposure_count < 1)
 	{
-		Raptor_General_Error_Number = ;
+		Raptor_General_Error_Number = 725;
 		sprintf(Raptor_General_Error_String,
 			"Bias_Dark_Fits_Headers_Set:exposure count was too small (%d).",exposure_count);
+		return FALSE;
+	}
+	if(!RAPTOR_GENERAL_IS_BOOLEAN(is_bias))
+	{
+		Raptor_General_Error_Number = 726;
+		sprintf(Raptor_General_Error_String,
+			"Bias_Dark_Fits_Headers_Set:is_bias was not a valid boolean (%d).",is_bias);
 		return FALSE;
 	}
 	/* OBSTYPE */
@@ -568,8 +598,8 @@ static int Bias_Dark_Fits_Headers_Set(int exposure_count)
 	{
 		if(!Filter_Wheel_Command_Get_Position(&filter_wheel_position))
 		{
-			Raptor_General_Error_Number = ;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
+			Raptor_General_Error_Number = 727;
+			sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
 					"Failed to get filter wheel position.");
 			return FALSE;
 			
@@ -577,8 +607,8 @@ static int Bias_Dark_Fits_Headers_Set(int exposure_count)
 		/* FILTER1 */
 		if(!Filter_Wheel_Config_Position_To_Name(filter_wheel_position,filter_name_string))
 		{
-			Raptor_General_Error_Number =;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
+			Raptor_General_Error_Number = 731;
+			sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
 				"Failed to get filter wheel name from position %d.",filter_wheel_position);
 			return FALSE;
 		}
@@ -587,8 +617,8 @@ static int Bias_Dark_Fits_Headers_Set(int exposure_count)
 		/* FILTERI1 */
 		if(!Filter_Wheel_Config_Position_To_Id(filter_wheel_position,filter_name_string))
 		{
-			Raptor_General_Error_Number = ;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
+			Raptor_General_Error_Number = 728;
+			sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
 				"Failed to get filter wheel Id from position %d.",filter_wheel_position);
 			return FALSE;
 		}
@@ -608,7 +638,7 @@ static int Bias_Dark_Fits_Headers_Set(int exposure_count)
 	if(!Raptor_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
 		return FALSE;
 	/* EXPTOTAL */
-	if(!Raptor_Fits_Header_Integer_Add("EXPTOTAL",Multrun_Data.Image_Count,
+	if(!Raptor_Fits_Header_Integer_Add("EXPTOTAL",Bias_Dark_Data.Image_Count,
 					   "Total number of exposures within Multrun"))
 		return FALSE;
 	/* CONFIGID diddly TODO in Java layer */
@@ -616,20 +646,20 @@ static int Bias_Dark_Fits_Headers_Set(int exposure_count)
 	/* CCDSTEMP */
 	if(!Detector_Temperature_Get_TEC_Setpoint(&temperature))
 	{
-		Raptor_General_Error_Number = ;
-		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get TEC set-point.");
+		Raptor_General_Error_Number = 729;
+		sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:Failed to get TEC set-point.");
 		return FALSE;
 	}
 	if(!Raptor_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"[Kelvin] Required temperature."))
 		return FALSE;	
 	/* CCDATEMP */
-	if(!Detector_Temperature_Get(&(Multrun_Data.CCD_Temperature)))
+	if(!Detector_Temperature_Get(&(Bias_Dark_Data.CCD_Temperature)))
 	{
-		Raptor_General_Error_Number = ;
-		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get detector temperature.");
+		Raptor_General_Error_Number = 730;
+		sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:Failed to get detector temperature.");
 		return FALSE;
 	}
-	if(!Raptor_Fits_Header_Float_Add("CCDATEMP",Multrun_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
+	if(!Raptor_Fits_Header_Float_Add("CCDATEMP",Bias_Dark_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
 					 "[Kelvin] Actual temperature."))
 		return FALSE;	
 	/* DETECTOR diddly TODO in Java layer */
