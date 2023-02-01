@@ -881,8 +881,8 @@ int Raptor_Command_MultBias(char *command_string,char **reply_string)
 	retval = sscanf(command_string,"multbias %d",&exposure_count);
 	if(retval != 1)
 	{
-		Raptor_General_Error_Number = ;
-		sprintf(Raptor_General_Error_String,"Raptor_Command_Multbias:"
+		Raptor_General_Error_Number = 544;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_MultBias:"
 			"Failed to parse command %s (%d).",command_string,retval);
 		Raptor_General_Error("command","raptor_command.c","Raptor_Command_MultBias",
 				     LOG_VERBOSITY_TERSE,"COMMAND");
@@ -895,7 +895,7 @@ int Raptor_Command_MultBias(char *command_string,char **reply_string)
 		return TRUE;
 	}
 	/* do multbias */
-	retval = Raptor_Bias_Dark_Multbias(exposure_count,&filename_list,&filename_count);
+	retval = Raptor_Bias_Dark_MultBias(exposure_count,&filename_list,&filename_count);
 	if(retval == FALSE)
 	{
 		Raptor_General_Error("command","raptor_command.c","Raptor_Command_MultBias",
@@ -956,7 +956,7 @@ int Raptor_Command_MultBias(char *command_string,char **reply_string)
 	}
 	if(!Detector_Fits_Filename_List_Free(&filename_list,&filename_count))
 	{
-		Raptor_General_Error_Number = ;
+		Raptor_General_Error_Number = 545;
 		sprintf(Raptor_General_Error_String,"Raptor_Command_MultBias:Detector_Fits_Filename_List_Free failed.");
 		Raptor_General_Error("command","raptor_command.c","Raptor_Command_MultBias",
 				     LOG_VERBOSITY_TERSE,"COMMAND");
@@ -966,6 +966,131 @@ int Raptor_Command_MultBias(char *command_string,char **reply_string)
 	}
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log("command","raptor_command.c","Raptor_Command_MultBias",LOG_VERBOSITY_TERSE,
+			   "COMMAND","finished.");
+#endif
+	return TRUE;
+}
+
+/**
+ * Handle a command of the form: "multdark <length> <count>".
+ * <ul>
+ * <li>The multdark command is parsed to get the exposure length, and exposure count values.
+ * <li>We call Raptor_Bias_Dark_MultDark to take the dark images.
+ * <li>The reply string is constructed of the form "0 <filename count> <multrun number> <last FITS filename>".
+ * <li>We log the returned filenames.
+ * <li>We free the returned filenames.
+ * </ul>
+ * @param command_string The command. This is not changed during this routine.
+ * @param reply_string The address of a pointer to allocate and set the reply string.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Add_String
+ * @see raptor_bias_dark.html#Raptor_Bias_Dark_MultDark
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
+ * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_List_Free
+ */
+int Raptor_Command_MultDark(char *command_string,char **reply_string)
+{
+	struct timespec start_time = {0L,0L};
+	char **filename_list = NULL;
+	char count_string[16];
+	int i,retval,exposure_length,exposure_count,filename_count,multrun_number;
+
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_MultDark",LOG_VERBOSITY_TERSE,
+			   "COMMAND","started.");
+#endif
+	/* parse command */
+	retval = sscanf(command_string,"multdark %d %d",&exposure_length,&exposure_count);
+	if(retval != 2)
+	{
+		Raptor_General_Error_Number = 546;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_MultDark:"
+			"Failed to parse command %s (%d).",command_string,retval);
+		Raptor_General_Error("command","raptor_command.c","Raptor_Command_MultDark",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log("command","raptor_command.c","Raptor_Command_MultDark",
+				       LOG_VERBOSITY_TERSE,"COMMAND","finished (command parse failed).");
+#endif
+		if(!Raptor_General_Add_String(reply_string,"1 Failed to parse multdark command."))
+			return FALSE;
+		return TRUE;
+	}
+	/* do multdark */
+	retval = Raptor_Bias_Dark_MultDark(exposure_length,exposure_count,&filename_list,&filename_count);
+	if(retval == FALSE)
+	{
+		Raptor_General_Error("command","raptor_command.c","Raptor_Command_MultDark",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log("command","raptor_command.c","Raptor_Command_MultDark",
+				   LOG_VERBOSITY_TERSE,"COMMAND","MultDark failed.");
+#endif
+		if(!Raptor_General_Add_String(reply_string,"1 MultDark failed."))
+			return FALSE;
+		return TRUE;
+	}
+	/* success */
+	if(!Raptor_General_Add_String(reply_string,"0 "))
+	{
+		Detector_Fits_Filename_List_Free(&filename_list,&filename_count);
+		return FALSE;
+	}
+	/* add number of FITS images */
+	sprintf(count_string,"%d ",filename_count);
+	if(!Raptor_General_Add_String(reply_string,count_string))
+	{
+		Detector_Fits_Filename_List_Free(&filename_list,&filename_count);
+		return FALSE;
+	}
+	/* get multrun number */
+	multrun_number = Detector_Fits_Filename_Multrun_Get();
+	sprintf(count_string,"%d ",multrun_number);
+	if(!Raptor_General_Add_String(reply_string,count_string))
+	{
+		Detector_Fits_Filename_List_Free(&filename_list,&filename_count);
+		return FALSE;
+	}
+	/* add last filename */
+	if(filename_count > 0)
+	{
+		if(!Raptor_General_Add_String(reply_string,filename_list[filename_count-1]))
+		{
+			Detector_Fits_Filename_List_Free(&filename_list,&filename_count);
+			return FALSE;
+		}
+	}
+	else
+	{
+		if(!Raptor_General_Add_String(reply_string,"none"))
+		{
+			Detector_Fits_Filename_List_Free(&filename_list,&filename_count);
+			return FALSE;
+		}
+	}
+	/* log filenames returned */
+	for(i=0; i < filename_count; i++)
+	{
+#if RAPTOR_DEBUG > 8
+		Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_MultDark",
+					  LOG_VERBOSITY_VERY_VERBOSE,"COMMAND","Filename %d : %s",i,filename_list[i]);
+#endif
+	}
+	if(!Detector_Fits_Filename_List_Free(&filename_list,&filename_count))
+	{
+		Raptor_General_Error_Number = 547;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_MultDark:Detector_Fits_Filename_List_Free failed.");
+		Raptor_General_Error("command","raptor_command.c","Raptor_Command_MultDark",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+		if(!Raptor_General_Add_String(reply_string,"1 MultDark failed (freeing filename list)."))
+			return FALSE;
+		return TRUE;
+	}
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_MultDark",LOG_VERBOSITY_TERSE,
 			   "COMMAND","finished.");
 #endif
 	return TRUE;
