@@ -48,8 +48,7 @@ public class MultrunCommand extends Command implements Runnable
 	}
 
 	/**
-	 * Setup the Multrun command. One of
-	 * exposureLength or exposureCount must be zero. 
+	 * Setup the Multrun command. 
 	 * @param exposureLength Set the length of each exposure in the multrun, in milliseconds. 
 	 * @param exposureCount Set the number of frames to take in the Multrun. 
 	 * @param standard A boolean. If true the multrun is of a standard, otherwise it is of a exposure.
@@ -68,7 +67,7 @@ public class MultrunCommand extends Command implements Runnable
 	{
 		MultrunCommand command = null;
 		String hostname = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 		int exposureLength,exposureCount;
 		boolean standard;
 

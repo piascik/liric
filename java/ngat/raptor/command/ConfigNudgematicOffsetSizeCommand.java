@@ -97,7 +97,7 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 		ConfigNudgematicOffsetSizeCommand command = null;
 		String hostname = null;
 		String nudgematicOffsetSizeString = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 3)
 		{

@@ -125,7 +125,7 @@ public class FitsHeaderAddCommand extends Command implements Runnable
 		String hostname = null;
 		String keyword = null;
 		String svalue = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 		int ivalue;
 		double dvalue;
 		boolean bvalue;

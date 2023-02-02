@@ -76,7 +76,7 @@ public class StatusExposureCountCommand extends IntegerReplyCommand implements R
 	public static void main(String args[])
 	{
 		StatusExposureCountCommand command = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 2)
 		{

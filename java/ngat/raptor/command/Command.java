@@ -307,7 +307,7 @@ public class Command implements Runnable, TelnetConnectionListener
 	public static void main(String args[])
 	{
 		Command command = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 3)
 		{

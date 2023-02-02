@@ -67,7 +67,7 @@ public class FitsHeaderDeleteCommand extends Command implements Runnable
 		FitsHeaderDeleteCommand command = null;
 		String hostname = null;
 		String keyword = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 3)
 		{

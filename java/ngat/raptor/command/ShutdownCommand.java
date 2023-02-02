@@ -58,7 +58,7 @@ public class ShutdownCommand extends Command implements Runnable
 	{
 		ShutdownCommand command = null;
 		String hostname = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if((args.length != 2))
 		{

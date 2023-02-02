@@ -78,7 +78,7 @@ public class StatusExposureLengthCommand extends IntegerReplyCommand implements 
 	{
 		StatusExposureLengthCommand command = null;
 		String hostname = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 2)
 		{

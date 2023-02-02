@@ -55,7 +55,7 @@ public class FitsHeaderClearCommand extends Command implements Runnable
 	public static void main(String args[])
 	{
 		FitsHeaderClearCommand command = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 2)
 		{

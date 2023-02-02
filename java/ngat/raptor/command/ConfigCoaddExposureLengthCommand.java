@@ -91,7 +91,7 @@ public class ConfigCoaddExposureLengthCommand extends Command implements Runnabl
 		ConfigCoaddExposureLengthCommand command = null;
 		String hostname = null;
 		String coaddExposureLengthString = null;
-		int portNumber = 1111;
+		int portNumber = 8284;
 
 		if(args.length != 3)
 		{
