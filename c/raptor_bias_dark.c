@@ -541,6 +541,48 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 }
 
 /**
+ * Routine to abort an in-progress bias/dark.
+ * @return The routine nominally returns TRUE on success and FALSE on failure. 
+ *         However, it currently always succeeds (returns TRUE).
+ * @see #Moptop_Abort
+ */
+int Raptor_Bias_Dark_Abort(void)
+{
+	Moptop_Abort = TRUE;
+	return TRUE;
+}
+
+/**
+ * Return whether we are currently performing a multbias/multdark or not.
+ * @return A boolean, TRUE if a multbias/multdark is in progress and FALSE if it is not in progress..
+ * @see #Bias_Dark_In_Progress
+ */
+int Raptor_Bias_Dark_In_Progress(void)
+{
+	return Bias_Dark_In_Progress;
+}
+
+/**
+ * Return the total number of exposures expected to be generated in the current/last multbias/multdark.
+ * @return The number of images/frames expected.
+ * @see #Bias_Dark_Data
+ */
+int Raptor_Bias_Dark_Count_Get(void)
+{
+	return Bias_Dark_Data.Image_Count;
+}
+
+/**
+ * Return which exposure in the multbias/multdark we are on.
+ * @return The exposure index in the multbias/multdark.
+ * @see #Bias_Dark_Data
+ */
+int Raptor_Bias_Dark_Exposure_Index_Get(void)
+{
+	return Bias_Dark_Data.Image_Index;
+}
+
+/**
  * Routine to collect and insert FITS headers pertaining to the whole bias/dark multrun.
  * @param is_bias A boolean, set to TRUE for biases and FALSE for darks. Used to set the OBSTYPE FITS header.
  * @param exposure_count An integer, the number of individual exposures/darks in the bias/dark multrun.
