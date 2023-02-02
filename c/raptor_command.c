@@ -77,6 +77,7 @@ static int Command_Parse_Date(char *time_string,int *time_secs);
  * Handle a command of the form: "abort".
  * <ul>
  * <li>We abort any running multrun's by calling Raptor_Multrun_Abort.
+ * <li>We abort any running multbias/multdarks by calling Raptor_Bias_Dark_Abort.
  * <li>We abort any running exposures by calling Detector_Exposure_Abort.
  * <li>We set the reply_string to a successful message.
  * </ul>
@@ -88,6 +89,7 @@ static int Command_Parse_Date(char *time_string,int *time_secs);
  * @see raptor_general.html#Raptor_General_Error_String
  * @see raptor_general.html#Raptor_General_Add_String
  * @see raptor_multrun.html#Raptor_Multrun_Abort
+ * @see raptor_bias_dark.html#Raptor_Bias_Dark_Abort
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Abort
  */
 int Raptor_Command_Abort(char *command_string,char **reply_string)
@@ -102,6 +104,11 @@ int Raptor_Command_Abort(char *command_string,char **reply_string)
 			   "COMMAND","Aborting multrun.");
 #endif
 	Raptor_Multrun_Abort();
+#if RAPTOR_DEBUG > 5
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Abort",LOG_VERBOSITY_INTERMEDIATE,
+			   "COMMAND","Aborting bias/darks.");
+#endif
+	Raptor_Bias_Dark_Abort();
 	/* abort exposure */
 #if RAPTOR_DEBUG > 5
 	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Abort",LOG_VERBOSITY_INTERMEDIATE,
@@ -1113,6 +1120,9 @@ int Raptor_Command_MultDark(char *command_string,char **reply_string)
  * @param command_string The command. This is not changed during this routine.
  * @param reply_string The address of a pointer to allocate and set the reply string.
  * @return The routine returns TRUE on success and FALSE on failure.
+ * @see raptor_bias_dark.html#Raptor_Bias_Dark_In_Progress
+ * @see raptor_bias_dark.html#Raptor_Bias_Dark_Count_Get
+ * @see raptor_bias_dark.html#Raptor_Bias_Dark_Exposure_Index_Get
  * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
  * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
  * @see raptor_general.html#Raptor_General_Log
@@ -1174,12 +1184,19 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 		{
 			if(Raptor_Multrun_In_Progress())
 				strcat(return_string,"true");
+			else if(Raptor_Bias_Dark_In_Progress())
+				strcat(return_string,"true");
 			else
 				strcat(return_string,"false");
 		}
 		else if(strncmp(command_string+command_string_index,"count",5)==0)
 		{
-			ivalue = Raptor_Multrun_Count_Get();
+			if(Raptor_Multrun_In_Progress())
+				ivalue = Raptor_Multrun_Count_Get();
+			else if(Raptor_Bias_Dark_In_Progress())
+				ivalue = Raptor_Bias_Dark_Count_Get();
+			else
+				ivalue = 0;
 			sprintf(return_string+strlen(return_string),"%d",ivalue);
 		}
 		else if(strncmp(command_string+command_string_index,"length",6)==0)
@@ -1195,7 +1212,12 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 		}
 		else if(strncmp(command_string+command_string_index,"index",5)==0)
 		{
-			ivalue = Raptor_Multrun_Exposure_Index_Get();
+			if(Raptor_Multrun_In_Progress())
+				ivalue = Raptor_Multrun_Exposure_Index_Get();
+			else if(Raptor_Bias_Dark_In_Progress())
+				ivalue = Raptor_Bias_Dark_Exposure_Index_Get();
+			else
+				ivalue = 0;
 			sprintf(return_string+strlen(return_string),"%d",ivalue);
 		}
 		else if(strncmp(command_string+command_string_index,"multrun",7)==0)
@@ -1417,66 +1439,42 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 		/* check subcommand */
 		if(strncmp(get_set_string,"get",3)==0)
 		{
-			/* diddly
-			if((Raptor_Multrun_In_Progress() == FALSE))
+			if(!Detector_Temperature_Get(&temperature))
 			{
-			*/
-				if(!Detector_Temperature_Get(&temperature))
-				{
-					Raptor_General_Error_Number = 513;
-					sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
-						"Failed to get temperature.");
-					Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
-							     LOG_VERBOSITY_TERSE,"COMMAND");
+				Raptor_General_Error_Number = 513;
+				sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
+					"Failed to get temperature.");
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
 #if RAPTOR_DEBUG > 1
-					Raptor_General_Log("command","raptor_command.c","Raptor_Command_Status",
-							   LOG_VERBOSITY_TERSE,"COMMAND","Failed to get temperature.");
+				Raptor_General_Log("command","raptor_command.c","Raptor_Command_Status",
+						   LOG_VERBOSITY_TERSE,"COMMAND","Failed to get temperature.");
 #endif
-					if(!Raptor_General_Add_String(reply_string,"1 Failed to get temperature."))
-						return FALSE;
-					return TRUE;
-				}
-				Raptor_General_Get_Current_Time_String(time_string,31);
-				/* diddly
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to get temperature."))
+					return FALSE;
+				return TRUE;
 			}
-			else
-			{
-				Detector_Temperature_Get_Cached_Temperature(&temperature,&status_time);
-				Raptor_General_Get_Time_String(status_time,time_string,31);
-			}
-				*/
+			Raptor_General_Get_Current_Time_String(time_string,31);
 			sprintf(return_string+strlen(return_string),"%s %.2f",time_string,temperature);
 		}
 		else if(strncmp(get_set_string,"pcb",6)==0)
 		{
-			/* diddly 
-			if((Raptor_Multrun_In_Progress() == FALSE))
+			if(!Detector_Temperature_PCB_Get(&temperature))
 			{
-			*/
-				if(!Detector_Temperature_PCB_Get(&temperature))
-				{
-					Raptor_General_Error_Number = 507;
-					sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
-						"Failed to get PCB temperature.");
-					Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
-							     LOG_VERBOSITY_TERSE,"COMMAND");
+				Raptor_General_Error_Number = 507;
+				sprintf(Raptor_General_Error_String,"Raptor_Command_Status:"
+					"Failed to get PCB temperature.");
+				Raptor_General_Error("command","raptor_command.c","Raptor_Command_Status",
+						     LOG_VERBOSITY_TERSE,"COMMAND");
 #if RAPTOR_DEBUG > 1
-					Raptor_General_Log("command","raptor_command.c","Raptor_Command_Status",
-							   LOG_VERBOSITY_TERSE,"COMMAND","Failed to get PCB temperature.");
+				Raptor_General_Log("command","raptor_command.c","Raptor_Command_Status",
+						   LOG_VERBOSITY_TERSE,"COMMAND","Failed to get PCB temperature.");
 #endif
-					if(!Raptor_General_Add_String(reply_string,"1 Failed to get PCB temperature."))
-						return FALSE;
-					return TRUE;
-				}
-				Raptor_General_Get_Current_Time_String(time_string,31);
-				/* diddly
+				if(!Raptor_General_Add_String(reply_string,"1 Failed to get PCB temperature."))
+					return FALSE;
+				return TRUE;
 			}
-			else
-			{
-				Detector_Temperature_Get_Cached_PCB_Temperature(&temperature,&status_time);
-				Raptor_General_Get_Time_String(status_time,time_string,31);
-			}
-				*/
+			Raptor_General_Get_Current_Time_String(time_string,31);
 			sprintf(return_string+strlen(return_string),"%s %.2f",time_string,temperature);
 		}
 		else
