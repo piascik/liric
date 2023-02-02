@@ -98,8 +98,7 @@ public class MULTRUNImplementation extends HardwareImplementation implements JMS
 	 * <li>getFitsHeadersFromISS is called to gets some FITS headers from the ISS (RCS). 
 	 *     These are sent on to the C layer.
 	 * <li>We send a Multrun command to the C layer.
-	 * <li>The done object is setup. We check whether any of the C layer threads threw an exception, 
-	 *     during execution.
+	 * <li>The done object is setup. 
 	 * </ul>
 	 * @see #testAbort
 	 * @see #sendMultrunCommand
@@ -114,7 +113,6 @@ public class MULTRUNImplementation extends HardwareImplementation implements JMS
 	public COMMAND_DONE processCommand(COMMAND command)
 	{
 		MULTRUN multRunCommand = (MULTRUN)command;
-		MULTRUN_ACK multRunAck = null;
 		MULTRUN_DONE multRunDone = new MULTRUN_DONE(command.getId());
 		int exposureLength,exposureCount;
 		boolean standard;
