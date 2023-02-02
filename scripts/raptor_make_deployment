@@ -304,7 +304,7 @@ foreach file ( ${file_list} )
 end
 echo "${file_count} camera configuration files copied."
 echo "Copying fmt files..."
-set file_list = "raptor/fmt/rap_1000ms.fmt raptor/fmt/rap_100ms.fmt raptor/fmt/rap_bias.fmt"
+set file_list = "raptor/fmt/rap_1000ms.fmt raptor/fmt/rap_100ms.fmt raptor/fmt/rap_0ms.fmt"
 set file_count = 0
 cd ${dev_dir}
 foreach file ( ${file_list} )
