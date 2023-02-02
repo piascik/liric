@@ -25,8 +25,7 @@ public class HardwareImplementation extends CommandImplementation implements JMS
 	public final static String RCSID = new String("$Id$");
 
 	/**
-	 * This method calls the super-classes method. It then tries to fill in the reference to the hardware
-	 * objects.
+	 * This method calls the super-classes method.
 	 * @param command The command to be implemented.
 	 */
 	public void init(COMMAND command)
