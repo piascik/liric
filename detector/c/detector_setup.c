@@ -249,7 +249,7 @@ int Detector_Setup_Open(char *driverparms,char *formatname, char *formatfile)
 	if(retval < 0)
 	{
 		Setup_Error_Number = 1;
-		sprintf(Setup_Error_String,"Detector_Setup_Open:pxd_PIXCIopen failed: %s (%d).",
+		sprintf(Setup_Error_String,"Detector_Setup_Open:pxd_PIXCIopen(formatfile='%s') failed: %s (%d).",formatfile,
 			pxd_mesgErrorCode(retval),retval);
 		return FALSE;
 	}
