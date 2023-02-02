@@ -115,7 +115,7 @@ static int Exposure_TimeSpec_To_Mjd(struct timespec time,int leap_second_correct
  */
 int Detector_Exposure_Set_Coadd_Frame_Exposure_Length(int coadd_frame_exposure_length_ms)
 {
-	if(coadd_frame_exposure_length_ms < 1)
+	if(coadd_frame_exposure_length_ms < 0)
 	{
 		Exposure_Error_Number = 1;
 		sprintf(Exposure_Error_String,
@@ -270,7 +270,8 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 #endif
 	/* range check exposure length / compute coadds */
 	Exposure_Data.Exposure_Length_Ms = exposure_length_ms;
-	/* may need to revisit this when thinking about bias frames */
+	/* The coadd frame exposure length can be set to 0 (for bias frames) but will cause division by zero
+	** errors if used for exposures. */
 	if(Exposure_Data.Coadd_Frame_Exposure_Length_Ms < 1)
 	{
 		Exposure_Error_Number = 3;
