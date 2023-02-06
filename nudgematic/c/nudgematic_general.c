@@ -131,10 +131,10 @@ int Nudgematic_General_Is_Error(void)
  * @see #Nudgematic_General_Get_Current_Time_String
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Error
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Get_Error_Number
+ * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
  * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Error
  */
-void USB_PIO_General_Error(void)
+void Nudgematic_General_Error(void)
 {
 	char time_string[32];
 	int found = FALSE;
@@ -144,7 +144,7 @@ void USB_PIO_General_Error(void)
 		found = TRUE;
 		Nudgematic_Command_Error();
 	}
-	if(USB_PIO_General_Get_Error_Number() != 0)
+	if(USB_PIO_General_Is_Error() != 0)
 	{
 		found = TRUE;
 		USB_PIO_General_Error();
