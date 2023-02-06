@@ -1,0 +1,13 @@
+*.java filter=rcs-keywords
+Makefile filter=rcs-keywords
+Makefile.common filter=rcs-keywords
+*.properties filter=rcs-keywords
+raptor_make_deployment filter=rcs-keywords
+raptor_tar_install filter=rcs-keywords
+README filter=rcs-keywords
+README.DEPLOYMENT filter=rcs-keywords
+icc_cshrc filter=rcs-keywords
+icc_cshrc_edit.awk filter=rcs-keywords
+make_binary_directories filter=rcs-keywords
+make_documentation_directories filter=rcs-keywords
+raptor_engineering_mode filter=rcs-keywords
