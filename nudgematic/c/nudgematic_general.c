@@ -25,7 +25,6 @@
 #ifdef MUTEXED
 #include <pthread.h>
 #endif
-#include "usb_pio_general.h"
 
 #include "nudgematic_general.h"
 #include "nudgematic_command.h"
@@ -109,14 +108,11 @@ static char General_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = "";
  * @return The routine returns TRUE if an error has been set, and FALSE if no error has been set.
  * @see #General_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
  */
 int Nudgematic_General_Is_Error(void)
 {
 	int found = FALSE;
 
-	if(USB_PIO_General_Is_Error() != 0)
-		found = TRUE;
 	if(Nudgematic_Command_Get_Error_Number() != 0)
 		found = TRUE;
 	if(General_Error_Number != 0)
@@ -131,8 +127,6 @@ int Nudgematic_General_Is_Error(void)
  * @see #Nudgematic_General_Get_Current_Time_String
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Error
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Error
  */
 void Nudgematic_General_Error(void)
 {
@@ -143,11 +137,6 @@ void Nudgematic_General_Error(void)
 	{
 		found = TRUE;
 		Nudgematic_Command_Error();
-	}
-	if(USB_PIO_General_Is_Error() != 0)
-	{
-		found = TRUE;
-		USB_PIO_General_Error();
 	}
 	if(General_Error_Number != 0)
 	{
@@ -172,8 +161,6 @@ void Nudgematic_General_Error(void)
  * @see #Nudgematic_General_Get_Current_Time_String
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Error_To_String
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
- * @see ../../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Error_To_String
  */
 void Nudgematic_General_Error_To_String(char *error_string)
 {
@@ -184,13 +171,9 @@ void Nudgematic_General_Error_To_String(char *error_string)
 	{
 		Nudgematic_Command_Error_To_String(error_string);
 	}
-	if(USB_PIO_General_Is_Error())
-	{
-		USB_PIO_General_Error_To_String(error_string);
-	}
 	if(General_Error_Number != 0)
 	{
-		USB_PIO_General_Get_Current_Time_String(time_string,32);
+		Nudgematic_General_Get_Current_Time_String(time_string,32);
 		sprintf(error_string+strlen(error_string),"%s Nudgematic_General:Error(%d) : %s\n",time_string,
 			General_Error_Number,General_Error_String);
 	}

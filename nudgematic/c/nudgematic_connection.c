@@ -25,8 +25,6 @@
 #ifdef MUTEXED
 #include <pthread.h>
 #endif
-#include "usb_pio_general.h"
-#include "usb_pio_connection.h"
 
 #include "nudgematic_general.h"
 #include "nudgematic_connection.h"
@@ -41,34 +39,20 @@ static char rcsid[] = "$Id$";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Routine to open a connection to the Nudgematic. This is controlled by the USB-PIO board, so USB_PIO_Connection_Open
- * is called.
+ * Routine to open a connection to the Nudgematic. 
  * @return The routine returns TRUE on success and FALSE on failure.
- * @see ../../usb_pio/cdocs/usb_pio_connection.html#USB_PIO_Connection_Open
  */
 int Nudgematic_Connection_Open(const char* device_name)
 {
-	if(!USB_PIO_Connection_Open(device_name))
-	{
-		/* error set in usb_pio library */
-		return FALSE;
-	}
 	return TRUE;
 }
 
 /**
- * Routine to close the connection to the Nudgematic. This is controlled by the USB-PIO board, 
- * so USB_PIO_Connection_Close is called.
+ * Routine to close the connection to the Nudgematic. 
  * @return The routine returns TRUE on success and FALSE on failure.
- * @see ../../usb_pio/cdocs/usb_pio_connection.html#USB_PIO_Connection_Close
  */
 int Nudgematic_Connection_Close(void)
 {
-	if(!USB_PIO_Connection_Close())
-	{
-		/* error set in usb_pio library */
-		return FALSE;
-	}
 	return TRUE;
 }
 

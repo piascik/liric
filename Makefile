@@ -2,7 +2,8 @@
 include ../Makefile.common
 include Makefile.common
 
-DIRS 	=  filter_wheel detector usb_pio nudgematic c java 
+DIRS 	=  filter_wheel detector nudgematic c java 
+# usb_pio 
 
 top:
 	@for i in $(DIRS); \

@@ -6,7 +6,6 @@
 #include "nudgematic_general.h"
 #include "nudgematic_connection.h"
 #include "nudgematic_command.h"
-#include "usb_pio_general.h"
 
 /**
  * Test program to move the nudgematic mechanism to a specified position.
@@ -57,11 +56,6 @@ static void Help(void);
  * @see ../cdocs/nudgematic_general.html#Nudgematic_General_Log_Filter_Level_Absolute
  * @see ../cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Handler_Function
  * @see ../cdocs/nudgematic_general.html#Nudgematic_General_Log_Handler_Stdout
- * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Level
- * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Function
- * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Log_Filter_Level_Absolute
- * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Handler_Function
- * @see ../cdocs/usb_pio_general.html#USB_PIO_General_Log_Handler_Stdout
  * @see ../cdocs/nudgematic_connection.html#Nudgematic_Connection_Open
  * @see ../cdocs/nudgematic_connection.html#Nudgematic_Connection_Close
  * @see ../cdocs/nudgematic_command.html#Nudgematic_Command_Offset_Size_Set
@@ -76,9 +70,6 @@ int main(int argc, char *argv[])
 	if(!Parse_Arguments(argc,argv))
 		return 1;
 	/* setup logging */
-	USB_PIO_General_Set_Log_Filter_Level(Log_Level);
-	USB_PIO_General_Set_Log_Filter_Function(USB_PIO_General_Log_Filter_Level_Absolute);
-	USB_PIO_General_Set_Log_Handler_Function(USB_PIO_General_Log_Handler_Stdout);
 	Nudgematic_General_Set_Log_Filter_Level(Log_Level);
 	Nudgematic_General_Set_Log_Filter_Function(Nudgematic_General_Log_Filter_Level_Absolute);
 	Nudgematic_General_Set_Log_Handler_Function(Nudgematic_General_Log_Handler_Stdout);

@@ -27,9 +27,6 @@
 #endif
 #include "log_udp.h"
 
-#include "usb_pio_general.h"
-#include "usb_pio_command.h"
-
 #include "nudgematic_general.h"
 #include "nudgematic_command.h"
 

@@ -4,7 +4,8 @@ Source code for the Raptor instrument.
 
 This is a near infra-red imaging instrument, based around a Raptor Photonics Ninox 640 camera, with a shortwave indium gallium arsenide (InGaAs) detector.
 
-The instrument also has a starlight express filter wheel. There is also a BMCM USB-PIO driving a BMCM OR8 IO board, used to drive the image plane offsetting mechanism.
+The instrument also has a starlight express filter wheel. There is also an offsetting mechanism (called the nudgematic) which moves the
+camera body slightly in x and y in the image plane, enabling us to do sky offsets quickly without moving the telescope. 
 
 ## Directory Structure
 
@@ -15,7 +16,8 @@ The instrument also has a starlight express filter wheel. There is also a BMCM U
 * **java** This contains the source code for the robotic layer, which receives commands from the LT robotic control system.
 * **detector** This is a C library that uses the Raptor SDK to provide a library to control the Raptor detector.
 * **filter_wheel** Starlight Express filter wheel control library
-* **usb_pio** Library to communicate with the BMCM USB-PIO controller, used to control the BMCM OR8 IO board.
+* **nudgematic** This contains code for a C library/test programs to move the nudgematic offseting mechanism. This is done by sending text commands over a USB link to an Arduino Mega, which has a motor controller board to control two motors moving the offset stage, and analogue inputs to read the motor output shaft encoders to determine the offset stage's position in x and y.
+* **usb_pio** Library to communicate with the BMCM USB-PIO controller, used to control the BMCM OR8 IO board. This is no longer used by Raptor.
 
 The Makefile.common file is included in Makefile's to provide common root directory information.
 
