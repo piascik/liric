@@ -104,15 +104,18 @@ static char General_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = "";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Routine to return whether an error has been set in the library. We also check the USB-PIO library.
+ * Routine to return whether an error has been set in the library. 
  * @return The routine returns TRUE if an error has been set, and FALSE if no error has been set.
  * @see #General_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
+ * @see nudgematic_connection.html#Nudgematic_Connection_Get_Error_Number
  */
 int Nudgematic_General_Is_Error(void)
 {
 	int found = FALSE;
 
+	if(Nudgematic_Connection_Get_Error_Number() != 0)
+		found = TRUE;
 	if(Nudgematic_Command_Get_Error_Number() != 0)
 		found = TRUE;
 	if(General_Error_Number != 0)
@@ -127,12 +130,19 @@ int Nudgematic_General_Is_Error(void)
  * @see #Nudgematic_General_Get_Current_Time_String
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Error
+ * @see nudgematic_connection.html#Nudgematic_Connection_Get_Error_Number
+ * @see nudgematic_connection.html#Nudgematic_Connection_Error
  */
 void Nudgematic_General_Error(void)
 {
 	char time_string[32];
 	int found = FALSE;
 
+	if(Nudgematic_Connection_Get_Error_Number() != 0)
+	{
+		found = TRUE;
+		Nudgematic_Connection_Error();
+	}
 	if(Nudgematic_Command_Get_Error_Number() != 0)
 	{
 		found = TRUE;
@@ -161,12 +171,18 @@ void Nudgematic_General_Error(void)
  * @see #Nudgematic_General_Get_Current_Time_String
  * @see nudgematic_command.html#Nudgematic_Command_Get_Error_Number
  * @see nudgematic_command.html#Nudgematic_Command_Error_To_String
+ * @see nudgematic_connection.html#Nudgematic_Connection_Get_Error_Number
+ * @see nudgematic_connection.html#Nudgematic_Connection_Error_To_String
  */
 void Nudgematic_General_Error_To_String(char *error_string)
 {
 	char time_string[32];
 
 	strcpy(error_string,"");
+	if(Nudgematic_Connection_Get_Error_Number() != 0)
+	{
+		Nudgematic_Connection_Error_To_String(error_string);
+	}
 	if(Nudgematic_Command_Get_Error_Number() != 0)
 	{
 		Nudgematic_Command_Error_To_String(error_string);
