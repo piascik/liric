@@ -39,8 +39,6 @@
 
 #include "nudgematic_general.h"
 
-#include "usb_pio_general.h"
-
 #include "raptor_config.h"
 #include "raptor_general.h"
 
@@ -188,8 +186,6 @@ static void General_Log_Handler_Filename_To_Fp(char *log_filename,FILE **log_fp)
  * @see ../detector/cdocs/detector_general.html#Detector_General_Error_To_String
  * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Is_Error
  * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Error_To_String
- * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Is_Error
- * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Error_To_String
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Is_Error
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Error_To_String
  */
@@ -237,14 +233,6 @@ void Raptor_General_Error(char *sub_system,char *source_filename,char *function,
 	{
 		found = TRUE;
 		Nudgematic_General_Error_To_String(buff);
-		fprintf(General_Data.Error_Fp,"\t%s\n",buff);
-		fflush(General_Data.Error_Fp);
-	}
-	strcpy(buff,"");
-	if(USB_PIO_General_Is_Error())
-	{
-		found = TRUE;
-		USB_PIO_General_Error_To_String(buff);
 		fprintf(General_Data.Error_Fp,"\t%s\n",buff);
 		fflush(General_Data.Error_Fp);
 	}
@@ -493,21 +481,6 @@ void Raptor_General_Call_Log_Handlers_Filter_Wheel(int level,char *message)
 void Raptor_General_Call_Log_Handlers_Nudgematic(int level,char *message)
 {
 	Raptor_General_Call_Log_Handlers("Nudgematic","","",level,"Nudgematic",message);
-}
-
-/**
- * Routine that goes through the General_Data.Log_Handler_List and invokes each non-null handler for logging
- * of the filter wheel subsystem. We call Raptor_General_Call_Log_Handlers with parameters as follows: 
- * "sub_system" and "category" are set to "USB-PIO". 
- * "source_filename" and "function" are set to an empty string. "level" and "message" are passed through.
- * @param level At what level is the log message (TERSE/high level or VERBOSE/low level), 
- *         a valid member of LOG_VERBOSITY.
- * @param message The message to log.
- * @see #Raptor_General_Call_Log_Handlers
- */
-void Raptor_General_Call_Log_Handlers_USB_PIO(int level,char *message)
-{
-	Raptor_General_Call_Log_Handlers("USB-PIO","","",level,"USB-PIO",message);
 }
 
 /**

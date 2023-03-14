@@ -27,8 +27,6 @@
 #include "nudgematic_connection.h"
 #include "nudgematic_general.h"
 
-#include "usb_pio_general.h"
-
 #include "raptor_config.h"
 #include "raptor_general.h"
 #include "raptor_fits_header.h"
@@ -217,7 +215,6 @@ static int Raptor_Initialise_Signal(void)
  * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Detector
  * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Filter_Wheel
  * @see raptor_general.html#Raptor_General_Call_Log_Handlers_Nudgematic
- * @see raptor_general.html#Raptor_General_Call_Log_Handlers_USB_PIO
  * @see raptor_general.html#Raptor_General_Set_Log_Filter_Function
  * @see raptor_general.html#Raptor_General_Log_Filter_Level_Absolute
  * @see raptor_config.html#Raptor_Config_Get_Boolean
@@ -232,9 +229,6 @@ static int Raptor_Initialise_Signal(void)
  * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Handler_Function
  * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Filter_Function
  * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Log_Filter_Level_Absolute
- * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Handler_Function
- * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Function
- * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Log_Filter_Level_Absolute
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Set_Log_Handler_Function
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Set_Log_Filter_Function
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Log_Filter_Level_Absolute
@@ -338,9 +332,6 @@ static int Raptor_Initialise_Logging(void)
 	/* nudgematic */
 	Nudgematic_General_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers_Nudgematic);
 	Nudgematic_General_Set_Log_Filter_Function(Nudgematic_General_Log_Filter_Level_Absolute);
-	/* usb_pio */
-	USB_PIO_General_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers_USB_PIO);
-	USB_PIO_General_Set_Log_Filter_Function(USB_PIO_General_Log_Filter_Level_Absolute);
 	/* setup command server logging */
 	Command_Server_Set_Log_Handler_Function(Raptor_General_Call_Log_Handlers);
 	Command_Server_Set_Log_Filter_Function(Command_Server_Log_Filter_Level_Absolute);
@@ -942,7 +933,6 @@ static void Help(void)
 	fprintf(stdout,"\t[-detector_log_level|-ddetll <level>\n");
 	fprintf(stdout,"\t[-filter_wheel_log_level|-fwll <level>\n");
 	fprintf(stdout,"\t[-nudgematic_log_level|-nll <level>\n");
-	fprintf(stdout,"\t[-usb_pio_log_level|-upll <level>\n");
 	fprintf(stdout,"\t[-command_server_log_level|-csll <level>\n");
 	fprintf(stdout,"\t<level> is an integer from 1..5.\n");
 }
@@ -958,7 +948,6 @@ static void Help(void)
  * @see ../detector/cdocs/detector_general.html#Detector_General_Set_Log_Filter_Level
  * @see ../filter_wheel/cdocs/filter_wheel_general.html#Filter_Wheel_General_Set_Log_Filter_Level
  * @see ../nudgematic/cdocs/nudgematic_general.html#Nudgematic_General_Set_Log_Filter_Level
- * @see ../usb_pio/cdocs/usb_pio_general.html#USB_PIO_General_Set_Log_Filter_Level
  * @see ../../commandserver/cdocs/command_server.html#Command_Server_Set_Log_Filter_Level
  */
 static int Parse_Arguments(int argc, char *argv[])
@@ -1077,25 +1066,6 @@ static int Parse_Arguments(int argc, char *argv[])
 					return FALSE;
 				}
 				Nudgematic_General_Set_Log_Filter_Level(log_level);
-				i++;
-			}
-			else
-			{
-				fprintf(stderr,"Parse_Arguments:Log Level requires a level.\n");
-				return FALSE;
-			}
-		}
-		else if((strcmp(argv[i],"-usb_pio_log_level")==0)||(strcmp(argv[i],"-upll")==0))
-		{
-			if((i+1)<argc)
-			{
-				retval = sscanf(argv[i+1],"%d",&log_level);
-				if(retval != 1)
-				{
-					fprintf(stderr,"Parse_Arguments:Parsing log level %s failed.\n",argv[i+1]);
-					return FALSE;
-				}
-				USB_PIO_General_Set_Log_Filter_Level(log_level);
 				i++;
 			}
 			else

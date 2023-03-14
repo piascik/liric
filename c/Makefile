@@ -2,7 +2,6 @@ include ../../Makefile.common
 include ../Makefile.common
 include ../detector/Makefile.common
 include ../filter_wheel/Makefile.common
-include ../usb_pio/Makefile.common
 include ../nudgematic/Makefile.common
 
 BINDIR			= $(RAPTOR_BIN_HOME)/c/$(HOSTTYPE)
@@ -32,8 +31,8 @@ NUDGEMATIC_CFLAGS 	= -I$(NUDGEMATIC_SRC_HOME)/include
 NUDGEMATIC_LDFLAGS 	= -l$(NUDGEMATIC_LIBNAME) 
 
 # USB-PIO I/O board library
-USB_PIO_CFLAGS 		= -I$(USB_PIO_SRC_HOME)/include
-USB_PIO_LDFLAGS 	= -l$(USB_PIO_LIBNAME) 
+#USB_PIO_CFLAGS 		= -I$(USB_PIO_SRC_HOME)/include
+#USB_PIO_LDFLAGS 	= -l$(USB_PIO_LIBNAME) 
 
 # CFITSIO
 CFITSIO_CFLAGS		= -I$(CFITSIOINCDIR) 
@@ -48,9 +47,9 @@ CONFIG_CFLAGS		= -I$(eSTAR_SRC_HOME)/config/include/
 CONFIG_LDFLAGS		= -L$(eSTAR_LIB_HOME) -lestar_config
 
 CFLAGS 			= -g -I$(INCDIR) $(DEBUG_CFLAGS) $(LOG_UDP_CFLAGS) \
-				$(DETECTOR_CFLAGS) $(FILTER_WHEEL_CFLAGS) $(NUDGEMATIC_CFLAGS) $(USB_PIO_CFLAGS) \
+				$(DETECTOR_CFLAGS) $(FILTER_WHEEL_CFLAGS) $(NUDGEMATIC_CFLAGS) \
 				$(COMMAND_SERVER_CFLAGS) $(CFITSIO_CFLAGS) $(MJD_CFLAGS) $(CONFIG_CFLAGS)
-
+# $(USB_PIO_CFLAGS) 
 DOCFLAGS 		= -static
 
 EXE_SRCS		= raptor_main.c
@@ -73,9 +72,10 @@ top: $(EXES) $(CONFIG_BINS) docs
 
 $(BINDIR)/raptor: $(OBJS)
 	$(CC) $^ -o $@  -L$(LT_LIB_HOME) $(COMMAND_SERVER_LDFLAGS) \
-		$(DETECTOR_LDFLAGS) $(FILTER_WHEEL_LDFLAGS) $(NUDGEMATIC_LDFLAGS) $(USB_PIO_LDFLAGS) \
+		$(DETECTOR_LDFLAGS) $(FILTER_WHEEL_LDFLAGS) $(NUDGEMATIC_LDFLAGS) \
 		$(LOG_UDP_LDFLAGS)  $(CFITSIO_LDFLAGS)  $(MJD_LDFLAGS) \
 		$(CONFIG_LDFLAGS) $(TIMELIB) $(SOCKETLIB) -lm -lc 
+# $(USB_PIO_LDFLAGS)
 
 $(BINDIR)/%.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@  
