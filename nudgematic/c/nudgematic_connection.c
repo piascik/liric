@@ -61,10 +61,13 @@ struct Nudgematic_Connection_Struct
  */
 static char rcsid[] = "$Id$";
 /**
- * Instance of the structure holding information on the conenction to the Arduino Mega.
+ * Instance of the structure holding information on the connection to the Arduino Mega.
  * @see #Nudgematic_Connection_Struct
  */
-static struct Nudgematic_Connection_Struct Nudgematic_Connection_Data;
+static struct Nudgematic_Connection_Struct Nudgematic_Connection_Data =
+{
+	-1,{0,0,0,0,' ',{' '},0,0},{0,0,0,0,' ',{' '},0,0}
+};
 
 /**
  * Variable holding error code of last operation performed.
@@ -149,7 +152,7 @@ int Nudgematic_Connection_Open(const char* device_name)
 	/* initialise new serial options */
 	bzero(&(Nudgematic_Connection_Data.Serial_Options), sizeof(Nudgematic_Connection_Data.Serial_Options));
 	/* set control flags and baud rate */
-	Nudgematic_Connection_Data.Serial_Options.c_cflag |= B115200 | CS8 | CLOCAL | CREAD;
+	Nudgematic_Connection_Data.Serial_Options.c_cflag |= B19200 | CS8 | CLOCAL | CREAD;
 #ifdef CNEW_RTSCTS
 	Nudgematic_Connection_Data.Serial_Options.c_cflag &= ~CNEW_RTSCTS;/* disable flow control */
 #endif
@@ -253,6 +256,121 @@ int Nudgematic_Connection_Close(void)
 		sprintf(Connection_Error_String,"Nudgematic_Connection_Close: close failed (%d,%d,%d).",Nudgematic_Connection_Data.Serial_Fd,retval,close_errno);
 		return FALSE;
 	}
+	return TRUE;
+}
+
+/**
+ * Write some data to the open connection.
+ * @param message An allocated buffer containing the data to write.
+ * @param message_length The length of data in the buffer, in bytes.
+ * @return TRUE if succeeded, FALSE otherwise.
+ * @see #Nudgematic_Connection_Data
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see nudgematic_general.html#Nudgematic_General_Log_Format
+ */
+int Nudgematic_Connection_Write(void *message,size_t message_length)
+{
+	int write_errno,retval;
+
+	if(Nudgematic_Connection_Data.Serial_Fd < 0)
+	{
+		Connection_Error_Number = 10;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Write: connection not opened (%d).",
+			Nudgematic_Connection_Data.Serial_Fd);
+		return FALSE;		
+	}
+	if(message == NULL)
+	{
+		Connection_Error_Number = 11;
+		sprintf(Connection_Error_String,"Arcom_ESS_Serial_Write:Message was NULL.");
+		return FALSE;
+	}
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Write(%d bytes).",
+				      message_length);
+#endif /* LOGGING */
+	retval = write(Nudgematic_Connection_Data.Serial_Fd,message,message_length);
+#if LOGGING > 1
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Write returned %d.",retval);
+#endif /* LOGGING */
+	if(retval != message_length)
+	{
+		write_errno = errno;
+		Connection_Error_Number = 12;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Write: failed (%d,%d,%d).",
+			Nudgematic_Connection_Data.Serial_Fd,retval,write_errno);
+		return FALSE;
+	}
+#if LOGGING > 0
+	Nudgematic_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Write:Finished.");
+#endif /* LOGGING */
+	return TRUE;
+}
+
+/**
+ * Routine to read a message/some bytes from the serial link.
+ * @param message A buffer of message_length bytes, to fill with any serial data returned.
+ * @param message_length The length of the message buffer.
+ * @param bytes_read The address of an integer. On return this will be filled with the number of bytes read from
+ *        the serial interface. The address can be NULL, if this data is not needed.
+ * @return TRUE if succeeded, FALSE otherwise.
+ */
+int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_read)
+{
+	int read_errno,retval;
+
+	/* check input parameters */
+	if(message == NULL)
+	{
+		Connection_Error_Number = 13;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Read:Message was NULL.");
+		return FALSE;
+	}
+	if(message_length < 0)
+	{
+		Connection_Error_Number = 14;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Read:Message length was too small:%ld.",
+			message_length);
+		return FALSE;
+	}
+	/* initialise bytes_read */
+	if(bytes_read != NULL)
+		(*bytes_read) = 0;
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:Max length %d.",
+				      message_length);
+#endif /* LOGGING */
+	retval = read(Nudgematic_Connection_Data.Serial_Fd,message,message_length);
+#if LOGGING > 1
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:returned %d.",retval);
+#endif /* LOGGING */
+	if(retval < 0)
+	{
+		read_errno = errno;
+		/* if the errno is EAGAIN, a non-blocking read has failed to return any data. */
+		if(read_errno != EAGAIN)
+		{
+			Connection_Error_Number = 15;
+			sprintf(Connection_Error_String,"Nudgematic_Connection_Read: failed (%d,%d,%d).",
+				Nudgematic_Connection_Data.Serial_Fd,retval,read_errno);
+			return FALSE;
+		}
+		else
+		{
+			if(bytes_read != NULL)
+				(*bytes_read) = 0;
+		}
+	}
+	else
+	{
+		if(bytes_read != NULL)
+			(*bytes_read) = retval;
+	}
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:returned %d of %d.",
+				      retval,message_length);
+#endif /* LOGGING */
 	return TRUE;
 }
 

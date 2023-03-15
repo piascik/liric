@@ -54,7 +54,7 @@
  * @return A double, in seconds, representing the time elapsed from t0 to t1.
  * @see #NUDGEMATIC_GENERAL_ONE_SECOND_NS
  */
-#define fdifftime(t1, t0) (((double)(((t1).tv_sec)-((t0).tv_sec))+(double)(((t1).tv_nsec)-((t0).tv_nsec))/USB_PIO_GENERAL_ONE_SECOND_NS))
+#define fdifftime(t1, t0) (((double)(((t1).tv_sec)-((t0).tv_sec))+(double)(((t1).tv_nsec)-((t0).tv_nsec))/NUDGEMATIC_GENERAL_ONE_SECOND_NS))
 #endif
 
 /* external functions */

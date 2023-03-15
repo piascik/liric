@@ -23,7 +23,7 @@ LDFLAGS		= -L$(LT_LIB_HOME) $(NUDGEMATIC_LDFLAGS)
 
 DOCFLAGS 	= -static
 
-SRCS 		= nudgematic_test_position_set.c nudgematic_test_position_get.c
+SRCS 		= nudgematic_send_command_low_level.c nudgematic_test_position_set.c nudgematic_test_position_get.c
 OBJS 		= $(SRCS:%.c=$(BINDIR)/%.o)
 PROGS 		= $(SRCS:%.c=$(BINDIR)/%)
 DOCS 		= $(SRCS:%.c=$(DOCSDIR)/%.html)
