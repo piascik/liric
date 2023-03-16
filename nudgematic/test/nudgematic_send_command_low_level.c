@@ -124,10 +124,10 @@ int main(int argc, char *argv[])
 		}
 		/* check for a timeout */
 		clock_gettime(CLOCK_REALTIME,&current_time);
-		if(fdifftime(read_start_time,current_time) > 10.0)
+		if(fdifftime(current_time,read_start_time) > 10.0)
 		{
 			fprintf(stderr,"nudgematic_send_command_low_level : timeout after %.2f seconds.\n",
-				fdifftime(read_start_time,current_time));
+				fdifftime(current_time,read_start_time));
 			done  = TRUE;
 		}
 	}/* end while */

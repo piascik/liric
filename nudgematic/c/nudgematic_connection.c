@@ -314,6 +314,14 @@ int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_r
 {
 	int read_errno,retval;
 
+	/* check serial link is open */
+	if(Nudgematic_Connection_Data.Serial_Fd < 0)
+	{
+		Connection_Error_Number = 4;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Read: connection not opened (%d).",
+			Nudgematic_Connection_Data.Serial_Fd);
+		return FALSE;		
+	}
 	/* check input parameters */
 	if(message == NULL)
 	{
@@ -365,6 +373,91 @@ int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_r
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:returned %d of %d.",
 				      retval,message_length);
 #endif /* LOGGING */
+	return TRUE;
+}
+
+/**
+ * Routine to read a message/some bytes from the serial link, until a newline is found or a timeout occurs.
+ * @param message A buffer of message_length bytes, to fill with any serial data returned.
+ * @param message_length The length of the message buffer.
+ * @param bytes_read The address of an integer. On return this will be filled with the number of bytes read from
+ *        the serial interface. The address can be NULL, if this data is not needed.
+ * @return TRUE if succeeded, FALSE otherwise.
+ * @see #Nudgematic_Connection_Read
+ */
+int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *return_bytes_read)
+{
+	struct timespec read_start_time,sleep_time,current_time;
+	int read_errno,sleep_errno,retval,done,bytes_read,total_bytes_read;
+
+	/* check serial link is open */
+	if(Nudgematic_Connection_Data.Serial_Fd < 0)
+	{
+		Connection_Error_Number = 16;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Read: connection not opened (%d).",
+			Nudgematic_Connection_Data.Serial_Fd);
+		return FALSE;		
+	}
+	/* check input parameters */
+	if(message == NULL)
+	{
+		Connection_Error_Number = 17;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Read:Message was NULL.");
+		return FALSE;
+	}
+	if(message_length < 0)
+	{
+		Connection_Error_Number = 18;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Read:Message length was too small:%ld.",
+			message_length);
+		return FALSE;
+	}
+	/* initialise bytes_read */
+	if(return_bytes_read != NULL)
+		(*return_bytes_read) = 0;
+	done = FALSE;
+	total_bytes_read = 0;
+	bytes_read = 0;
+	clock_gettime(CLOCK_REALTIME,&read_start_time);
+	while(done == FALSE)
+	{
+		/* read some bytes into message */
+		retval = Nudgematic_Connection_Read(message+bytes_read,message_length-bytes_read,&bytes_read);
+		if(retval == FALSE)
+		{
+			return FALSE;
+		}
+		/* update total bytes read and add a terminator to the string */
+		total_bytes_read += bytes_read;
+		message[total_bytes_read] = '\0';
+		/* we have finished if we have received a '\n' */
+		done = (strchr(message,'\n') != NULL);
+		/* sleep a bit */
+		sleep_time.tv_sec = 0;
+		sleep_time.tv_nsec = NUDGEMATIC_GENERAL_ONE_MILLISECOND_NS;
+		retval = nanosleep(&sleep_time,NULL);
+		if(retval != 0)
+		{
+			sleep_errno = errno;
+			Connection_Error_Number = 19;
+			sprintf(Connection_Error_String,"Nudgematic_Connection_Read_Line: sleep error (%d).",
+				sleep_errno);
+			Nudgematic_General_Warning();
+			/* not a fatal error, don't return */
+		}
+		/* check for a timeout */
+		clock_gettime(CLOCK_REALTIME,&current_time);
+		if(fdifftime(current_time,read_start_time) > 10.0)
+		{
+			Connection_Error_Number = 20;
+			sprintf(Connection_Error_String,"Nudgematic_Connection_Read_Line: timeout after %.2f seconds (%s).",
+				fdifftime(current_time,read_start_time),message);
+			done  = TRUE;
+			return FALSE;
+		}
+	}/* end while */
+	if(return_bytes_read != NULL)
+		(*return_bytes_read) = total_bytes_read;
 	return TRUE;
 }
 
