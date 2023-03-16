@@ -29,6 +29,7 @@
 
 #include "nudgematic_general.h"
 #include "nudgematic_command.h"
+#include "nudgematic_connection.h"
 
 /* hash defines */
 /**
@@ -52,18 +53,24 @@
  * How many offset positions there are per offset size.
  */
 #define NUDGEMATIC_POSITION_COUNT    (9)
+/**
+ * The length of some internal strings.
+ */
+#define STRING_LENGTH                (256)
 
 /* data types */
 /**
  * Data type holding local data to nudgematic_command. This consists of the following:
  * <dl>
  * <dt>Offset_Size</dt> <dd>The current set size of offsets the nudgematic will perform.</dd>
+ * <dt>Target_Position</dt> <dd>The postion (0..9) we are currently trying to attain.</dd>
  * </dl>
  * @see #NUDGEMATIC_OFFSET_SIZE_T
  */
 struct Command_Struct
 {
 	NUDGEMATIC_OFFSET_SIZE_T Offset_Size;
+	int Target_Position;
 };
 
 /* internal variables */
@@ -76,12 +83,13 @@ static char rcsid[] = "$Id$";
  * This is statically initialised to the following:
  * <dl>
  * <dt>Offset_Size</dt> <dd>NONE</dd>
+ * <dt>Target_Position</dt> <dd>-1</dd>
  * </dl>
  * @see #Command_Struct
  */
 static struct Command_Struct Command_Data = 
 {
-	NONE
+	NONE,-1
 };
 
 /**
@@ -127,15 +135,87 @@ static char Command_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = "";
  * Routine to move the nudgematic to the specified position.
  * @param position The position to move to.
  * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #NUDGEMATIC_CAM_COUNT
  * @see #Command_Error_Number
  * @see #Command_Error_String
+ * @see #Command_Data
+ * @see #Move_Command_List
+ * @see #Where_Command_List
+ * @see nudgematic_connection.html#Nudgematic_Connection_Send_Command
  */
 int Nudgematic_Command_Position_Set(int position)
 {
+	char command_string[STRING_LENGTH];
+	char reply_string[STRING_LENGTH];
+	char horizontal_cam_command, vertical_cam_command;
+	int cam;
+	int done[NUDGEMATIC_CAM_COUNT];
+	
 #if LOGGING > 0
-	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Nudgematic_Command_Position_Set: Started with position %d.",
-				      position);
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Position_Set: Started with position %d and offset size '%s'.",
+				      position,Nudgematic_Command_Offset_Size_To_String(Command_Data.Offset_Size));
 #endif /* LOGGING */
+	if((position < 0)||(position >= NUDGEMATIC_POSITION_COUNT))
+	{
+		Command_Error_Number = 7;
+		sprintf(Command_Error_String,"Nudgematic_Command_Position_Set:position %d was out of range (0,%d).",
+			position,NUDGEMATIC_POSITION_COUNT);
+		return FALSE;		
+	}
+	Command_Data.Target_Position = position;
+	horizontal_cam_command = Move_Command_List[Command_Data.Target_Position][Command_Data.Offset_Size][NUDGEMATIC_HORIZONTAL];
+	vertical_cam_command = Move_Command_List[Command_Data.Target_Position][Command_Data.Offset_Size][NUDGEMATIC_VERTICAL];
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Position_Set: Position %d and Offset Size '%s' maps to "
+				      "horizontal cam command '%c' and vertical cam command '%c'.",
+				      Command_Data.Target_Position,Nudgematic_Command_Offset_Size_To_String(Command_Data.Offset_Size),
+				      horizontal_cam_command,vertical_cam_command);
+#endif /* LOGGING */
+	/* move horizontal cam */
+	command_string[0] = horizontal_cam_command;
+	command_string[1] = '\0';
+	if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
+	{
+		Command_Error_Number = 8;
+		sprintf(Command_Error_String,"Nudgematic_Command_Position_Set:Failed to send horizontal command string '%s'.",
+			command_string);
+		return FALSE;		
+	}
+	/* diddly parse reply string */
+	/* move vertical cam */
+	command_string[0] = vertical_cam_command;
+	command_string[1] = '\0';
+	if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
+	{
+		Command_Error_Number = 9;
+		sprintf(Command_Error_String,"Nudgematic_Command_Position_Set:Failed to send vertical command string '%s'.",
+			command_string);
+		return FALSE;		
+	}
+	/* diddly parse reply string */
+	/* monitor for completion of move */
+	for(cam = NUDGEMATIC_VERTICAL; cam < NUDGEMATIC_CAM_COUNT; cam++)
+	{
+		done[cam] = FALSE;
+	}
+	while((done[NUDGEMATIC_VERTICAL] == FALSE)&&(done[NUDGEMATIC_HORIZONTAL] == FALSE))
+	{
+		for(cam = NUDGEMATIC_VERTICAL; cam < NUDGEMATIC_CAM_COUNT; cam++)
+		{
+			command_string[0] = Where_Command_List[cam];
+			command_string[1] = '\0';
+			if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
+			{
+				Command_Error_Number = 10;
+				sprintf(Command_Error_String,"Nudgematic_Command_Position_Set:Failed to send where command string '%s'.",
+					command_string);
+				return FALSE;		
+			}
+			/* diddly parse reply string */
+		}/* end for on cam */
+	}/* end while not done[] */
 	return TRUE;
 }
 
@@ -336,4 +416,77 @@ void Nudgematic_Command_Error_To_String(char *error_string)
 		sprintf(Command_Error_String,"Logic Error:No Error defined");
 	sprintf(error_string+strlen(error_string),"%s Nudgematic_Command:Error(%d) : %s\n",time_string,
 		Command_Error_Number,Command_Error_String);
+}
+
+/* =======================================
+**  internal functions 
+** ======================================= */
+/**
+ * Parse a reply string from the nudgematic. These are usually in the form: '&lt;pc&gt; &lt;adu&gt; &lt;pe&gt; &lt;nc&gt; &lt;t&gt;' where
+ * <dl>
+ * <dt>pc</dt> <dd>Position character, one of 'a','b','c','d','e','A','B','C','D','E','w','W'</dd>
+ * <dt>adu</dt> <dd>An integer, the ADU of the position potentiometer for this cam.</dd>
+ * <dt>pe</dt> <dd>The error (number of ADUs) between the attained position and it's ideal position.</dd>
+ * <dt>nc</dt> <dd>The number of nudges used to attain the position.</dd>
+ * <dt>t</dt> <dd>How long it took to attain the position, in milliseconds.</dd>
+ * </dl>
+ * @param reply_string The reply received from the Arduino.
+ * @param position_char The address of a character, on return from the routine the position character.
+ * @param position_adu The address of an integer, on return from the routine the relevant potentiometer ADUS (proxy for angle).
+ * @param position_error The address of an integer, on return from the routine error (number of ADUs) between the 
+ *                       attained position and it's ideal position.
+ * @param nudges The address of an integer, on return from the routine the number of nudges used to attain the position.
+ * @param time_ms The address of an integer, on return how long it took to attain the position, in milliseconds.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #Command_Error_Number
+ * @see #Command_Error_String
+ */
+static int Command_Parse_Reply_String(char *reply_string,char *position_char,int *position_adu,int *position_error,int *nudges,int *time_ms)
+{
+	int retval;
+	
+	if(reply_string == NULL)
+	{
+		Command_Error_Number = 11;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:reply_string was NULL.");
+		return FALSE;		
+	}
+	if(position_char == NULL)
+	{
+		Command_Error_Number = 12;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:position_char was NULL.");
+		return FALSE;		
+	}
+	if(position_adu == NULL)
+	{
+		Command_Error_Number = 13;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:position_adu was NULL.");
+		return FALSE;		
+	}
+	if(position_error == NULL)
+	{
+		Command_Error_Number = 14;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:position_error was NULL.");
+		return FALSE;		
+	}
+	if(nudges == NULL)
+	{
+		Command_Error_Number = 15;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:nudges was NULL.");
+		return FALSE;		
+	}
+	if(time_ms == NULL)
+	{
+		Command_Error_Number = 16;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:time_ms was NULL.");
+		return FALSE;		
+	}
+	retval = sscanf(reply_string,"%c %d %d %d %d",position_char,position_adu,position_error,nudges,time_ms);
+	if(retval != 5)
+	{
+		Command_Error_Number = 17;
+		sprintf(Command_Error_String,"Command_Parse_Reply_String:Failed to parse reply_string '%s' (%d).",reply_string,retval);
+		return FALSE;		
+	}
+	return TRUE;
 }

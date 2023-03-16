@@ -505,7 +505,8 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 int Nudgematic_Connection_Send_Command(char *command_string,char *reply_string,size_t reply_length)
 {
 	int bytes_read;
-	
+
+	/* diddly mutex at this level around one command write/read reply */
 	/* send command */
 	if(!Nudgematic_Connection_Write(command_string,strlen(command_string)))
 	{
