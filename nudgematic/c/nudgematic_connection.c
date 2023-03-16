@@ -94,7 +94,7 @@ static char Connection_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = ""
  */
 int Nudgematic_Connection_Open(const char* device_name)
 {
-	int open_errno,retval;
+	int open_errno,retval,file_flags;
 
 	if(device_name == NULL)
 	{
@@ -122,22 +122,16 @@ int Nudgematic_Connection_Open(const char* device_name)
 				      "Nudgematic_Connection_Open: Using Serial FD %d.",Nudgematic_Connection_Data.Serial_Fd);
 #endif /* LOGGING */
 	/* make non-blocking */
-	retval = fcntl(Nudgematic_Connection_Data.Serial_Fd, F_SETFL, FNDELAY);
+	file_flags = fcntl(Nudgematic_Connection_Data.Serial_Fd, F_GETFL);
+	file_flags |= FNDELAY;
+	retval = fcntl(Nudgematic_Connection_Data.Serial_Fd, F_SETFL, file_flags);
 	if(retval != 0)
 	{
 		open_errno = errno;
 		close(Nudgematic_Connection_Data.Serial_Fd);
 		Connection_Error_Number = 3;
-		sprintf(Connection_Error_String,"Nudgematic_Connection_Open:fcntl failed (%d).",open_errno);
-		return FALSE;
-	}
-	retval = fcntl(Nudgematic_Connection_Data.Serial_Fd, F_SETFL, FASYNC);
-	if(retval != 0)
-	{
-		open_errno = errno;
-		close(Nudgematic_Connection_Data.Serial_Fd);
-		Connection_Error_Number = 4;
-		sprintf(Connection_Error_String,"Nudgematic_Connection_Open: fcntl failed (%d).",open_errno);
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Open:fcntl set flags (%#x) failed (%d).",
+			file_flags,open_errno);
 		return FALSE;
 	}
 	/* get current serial options */
@@ -337,12 +331,12 @@ int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_r
 	/* initialise bytes_read */
 	if(bytes_read != NULL)
 		(*bytes_read) = 0;
-#if LOGGING > 0
+#if LOGGING > 11
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:Max length %d.",
 				      message_length);
 #endif /* LOGGING */
 	retval = read(Nudgematic_Connection_Data.Serial_Fd,message,message_length);
-#if LOGGING > 1
+#if LOGGING > 11
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:returned %d.",retval);
 #endif /* LOGGING */
 	if(retval < 0)
@@ -367,7 +361,7 @@ int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_r
 		if(bytes_read != NULL)
 			(*bytes_read) = retval;
 	}
-#if LOGGING > 0
+#if LOGGING > 11
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read:returned %d of %d.",
 				      retval,message_length);
 #endif /* LOGGING */

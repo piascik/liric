@@ -83,7 +83,8 @@ int main(int argc, char *argv[])
 		return 3;
 	}
 	/* Add a newline */
-	strcat(Command,"\n");
+	/*strcat(Command,"\r"); */
+	/*	strcat(Command,"\n");*/
 	/* send command to the arduino */
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_TERSE,"nudgematic_send_command_low_level : Sending command '%s'.",
 				      Command);
