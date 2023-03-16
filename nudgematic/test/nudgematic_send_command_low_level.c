@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 {
 	struct timespec read_start_time,sleep_time,current_time;
 	char reply_string[STRING_LENGTH];
-	int retval,done,bytes_read,total_bytes_read,sleep_errno;
+	int retval,done,bytes_read,total_bytes_read,sleep_errno,loop_count;
 	
        	/* parse arguments */
 	fprintf(stdout,"nudgematic_send_command_low_level : Parsing Arguments.\n");
@@ -82,9 +82,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "nudgematic_send_command_low_level : No command specified.\n");
 		return 3;
 	}
-	/* Add a newline */
-	/*strcat(Command,"\r"); */
-	/*	strcat(Command,"\n");*/
 	/* send command to the arduino */
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_TERSE,"nudgematic_send_command_low_level : Sending command '%s'.",
 				      Command);
@@ -97,19 +94,30 @@ int main(int argc, char *argv[])
 	done = FALSE;
 	total_bytes_read = 0;
 	bytes_read = 0;
+	loop_count = 0;
 	clock_gettime(CLOCK_REALTIME,&read_start_time);
+	fprintf(stderr,"nudgematic_send_command_low_level : Reading reply.\n");
 	while(done == FALSE)
 	{
 		/* read some bytes into reply_string */
-		retval = Nudgematic_Connection_Read(reply_string+bytes_read,STRING_LENGTH-bytes_read,&bytes_read);
+		retval = Nudgematic_Connection_Read(reply_string+total_bytes_read,STRING_LENGTH-bytes_read,&bytes_read);
 		if(retval == FALSE)
 		{
 			Nudgematic_General_Error();
 			return 5;
 		}
+		if(bytes_read > 0)
+		{
+			fprintf(stderr,"nudgematic_send_command_low_level : Read %d bytes on loop %d.\n",bytes_read,
+				loop_count);
+		}
 		/* update total bytes read and add a terminator to the string */
 		total_bytes_read += bytes_read;
+		if(bytes_read > 0)
+			fprintf(stderr,"nudgematic_send_command_low_level : Total bytes read %d bytes.\n",total_bytes_read);
 		reply_string[total_bytes_read] = '\0';
+		if(bytes_read > 0)
+			fprintf(stderr,"nudgematic_send_command_low_level : String now '%s'.\n",reply_string);
 		/* we have finished if we have received a '\n' */
 		done = (strchr(reply_string,'\n') != NULL);
 		/* sleep a bit */
@@ -130,6 +138,7 @@ int main(int argc, char *argv[])
 				fdifftime(current_time,read_start_time));
 			done  = TRUE;
 		}
+		loop_count ++;
 	}/* end while */
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_TERSE,"nudgematic_send_command_low_level : Reply '%s'.",
 				      reply_string);

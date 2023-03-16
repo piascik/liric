@@ -296,6 +296,16 @@ int Nudgematic_Connection_Write(void *message,size_t message_length)
 			Nudgematic_Connection_Data.Serial_Fd,retval,write_errno);
 		return FALSE;
 	}
+	/* wait until all output written to fd */
+	retval = tcdrain(Nudgematic_Connection_Data.Serial_Fd);
+	if(retval != 0)
+	{
+		write_errno = errno;
+		Connection_Error_Number = 21;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Write: tcdrain failed (%d,%d,%d).",
+			Nudgematic_Connection_Data.Serial_Fd,retval,write_errno);
+		return FALSE;
+	}
 #if LOGGING > 0
 	Nudgematic_General_Log(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Write:Finished.");
 #endif /* LOGGING */
@@ -431,7 +441,7 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 	while(done == FALSE)
 	{
 		/* read some bytes into message */
-		retval = Nudgematic_Connection_Read(message+bytes_read,message_length-bytes_read,&bytes_read);
+		retval = Nudgematic_Connection_Read(message+total_bytes_read,message_length-bytes_read,&bytes_read);
 		if(retval == FALSE)
 		{
 			return FALSE;
@@ -474,6 +484,38 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 					      message);
 	}
 #endif /* LOGGING */
+	return TRUE;
+}
+
+/**
+ * Send a command string to the nudgematic, and read a newline terminated reply.
+ * @param command_string The string containing the command to send.
+ * @param reply_string An allocated memory buffer of reply_length chars, on exit from this routine and reply read will
+ *        be stored in this string.
+ * @param reply_length The size of reply_string in bytes.
+ * @return TRUE if succeeded, FALSE otherwise.
+ * @see #Nudgematic_Connection_Write
+ * @see #Nudgematic_Connection_Read_Line
+ * @see #Nudgematic_Connection_Data
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see nudgematic_general.html#Nudgematic_General_Error
+ * @see nudgematic_general.html#Nudgematic_General_Log_Format
+ */
+int Nudgematic_Connection_Send_Command(char *command_string,char *reply_string,size_t reply_length)
+{
+	int bytes_read;
+	
+	/* send command */
+	if(!Nudgematic_Connection_Write(command_string,strlen(command_string)))
+	{
+		return FALSE;
+	}
+	/* read a reply */
+	if(!Nudgematic_Connection_Read_Line(reply_string,reply_length,&bytes_read))
+	{
+		return FALSE;
+	}	
 	return TRUE;
 }
 

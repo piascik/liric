@@ -30,6 +30,29 @@
 #include "nudgematic_general.h"
 #include "nudgematic_command.h"
 
+/* hash defines */
+/**
+ * Index used in array for variables pertaining to the vertical cam of the nudgematic. 
+ */
+#define NUDGEMATIC_VERTICAL          (0)
+/**
+ * Index used in array for variables pertaining to the horizontal cam of the nudgematic. 
+ */
+#define NUDGEMATIC_HORIZONTAL        (1)
+/**
+ * The number of cams/motors in the nudgematic. 
+ */
+#define NUDGEMATIC_CAM_COUNT         (2)
+/**
+ * How many offsets are in NUDGEMATIC_OFFSET_SIZE_ENUM  (there is actually 3, as NONE is an offset).
+ * @see #NUDGEMATIC_OFFSET_SIZE_ENUM 
+ */
+#define NUDGEMATIC_OFFSET_SIZE_COUNT (3)
+/**
+ * How many offset positions there are per offset size.
+ */
+#define NUDGEMATIC_POSITION_COUNT    (9)
+
 /* data types */
 /**
  * Data type holding local data to nudgematic_command. This consists of the following:
@@ -59,6 +82,32 @@ static char rcsid[] = "$Id$";
 static struct Command_Struct Command_Data = 
 {
 	NONE
+};
+
+/**
+ * List of characters representing commands to retrieve the current status (where the cam is) for each cam.
+ * @see #NUDGEMATIC_CAM_COUNT
+ * @see #NUDGEMATIC_VERTICAL
+ * @see #NUDGEMATIC_HORIZONTAL
+ */
+static char Where_Command_List[NUDGEMATIC_CAM_COUNT] = {'w','W'};
+/**
+ * List of move commands to send, for each cam, for each offset size, for each position.
+ * @see #NUDGEMATIC_POSITION_COUNT
+ * @see #NUDGEMATIC_OFFSET_SIZE_COUNT
+ * @see #NUDGEMATIC_CAM_COUNT
+ */
+static char Move_Command_List[NUDGEMATIC_POSITION_COUNT][NUDGEMATIC_OFFSET_SIZE_COUNT][NUDGEMATIC_CAM_COUNT] =
+{     /* NONE(V,H),SMALL(V,H),LARGE(V,H) */
+	{{'c','C'},{'c','C'},{'c','C'}}, /* centre */
+	{{'c','C'},{'b','B'},{'a','A'}}, /* top left */
+	{{'c','C'},{'d','D'},{'e','E'}}, /* bottom right */
+	{{'c','C'},{'b','D'},{'a','E'}}, /* top right */
+	{{'c','C'},{'d','B'},{'e','A'}}, /* bottom left */
+	{{'c','C'},{'c','B'},{'c','A'}}, /* centre left */
+	{{'c','C'},{'c','D'},{'c','E'}}, /* centre right */
+	{{'c','C'},{'b','C'},{'a','C'}}, /* top centre */
+	{{'c','C'},{'d','C'},{'e','C'}}  /* bottom centre */
 };
 
 /**
