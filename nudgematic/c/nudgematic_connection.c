@@ -309,6 +309,10 @@ int Nudgematic_Connection_Write(void *message,size_t message_length)
  * @param bytes_read The address of an integer. On return this will be filled with the number of bytes read from
  *        the serial interface. The address can be NULL, if this data is not needed.
  * @return TRUE if succeeded, FALSE otherwise.
+ * @see #Nudgematic_Connection_Data
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see nudgematic_general.html#Nudgematic_General_Log_Format
  */
 int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_read)
 {
@@ -384,6 +388,11 @@ int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_r
  *        the serial interface. The address can be NULL, if this data is not needed.
  * @return TRUE if succeeded, FALSE otherwise.
  * @see #Nudgematic_Connection_Read
+ * @see #Nudgematic_Connection_Data
+ * @see #Connection_Error_Number
+ * @see #Connection_Error_String
+ * @see nudgematic_general.html#Nudgematic_General_Error
+ * @see nudgematic_general.html#Nudgematic_General_Log_Format
  */
 int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *return_bytes_read)
 {
@@ -442,7 +451,7 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 			Connection_Error_Number = 19;
 			sprintf(Connection_Error_String,"Nudgematic_Connection_Read_Line: sleep error (%d).",
 				sleep_errno);
-			Nudgematic_General_Warning();
+			Nudgematic_General_Error();
 			/* not a fatal error, don't return */
 		}
 		/* check for a timeout */
@@ -458,6 +467,13 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 	}/* end while */
 	if(return_bytes_read != NULL)
 		(*return_bytes_read) = total_bytes_read;
+#if LOGGING > 4
+	if(total_bytes_read > 0)
+	{
+		Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Read_Line:Read '%s'.",
+					      message);
+	}
+#endif /* LOGGING */
 	return TRUE;
 }
 
