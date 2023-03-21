@@ -79,7 +79,8 @@ static void Help(void);
  * @see ../cdocs/detector_setup.html#Detector_Setup_Open
  * @see ../cdocs/detector_setup.html#Detector_Setup_Close
  * @see ../cdocs/detector_serial.html#Detector_Serial_Open
- * @see ../cdocs/detector_serial.html#Detector_Serial_Command_Get_System_Status
+ * @see ../cdocs/detector_serial.html#Detector_Serial_Initialise
+ * @see ../cdocs/detector_serial.html#Detector_Serial_Command_Get_FPGA_Status
  */
 int main(int argc, char *argv[])
 {
@@ -109,13 +110,23 @@ int main(int argc, char *argv[])
 		Detector_Setup_Close();
 		return 3;
 	}
+	/* initialise the serial connection. The library connection has to be already open to do this 
+	** We need to turn checksums/acks on using this command, before Detector_Serial_Command_Get_FPGA_Status
+	** returns the right number of bytes */
+	if(!Detector_Serial_Initialise())
+	{
+		Detector_General_Error();
+		Detector_Setup_Close();
+		return 3;
+	}
+	/* get the FPGA status */
 	if(!Detector_Serial_Command_Get_FPGA_Status(&status))
 	{
 		Detector_General_Error();
 		Detector_Setup_Close();
 		return 4;
 	}
-	fprintf(stdout,"System status byte: %02x.\n",status);
+	fprintf(stdout,"System status byte: 0x%02X.\n",status);
 	if((status & DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED) > 0)
 		fprintf(stdout,"TEC is enabled.\n");
 	else

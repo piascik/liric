@@ -161,6 +161,7 @@ int Detector_Serial_Initialise(void)
 {
 	struct timespec start_time,sleep_time,current_time,build_date;
 	char build_code[8];
+	unsigned char fpga_status;
 	int serial_number,adc_zeroC,adc_fortyC,dac_zeroC,dac_fortyC;
 	int fpga_booted;
 	
@@ -231,6 +232,43 @@ int Detector_Serial_Initialise(void)
 		sprintf(Serial_Error_String,"Detector_Serial_Initialise:Detector_Temperature_Initialise failed.");
 		return FALSE;
 	}
+	/* get the FPGA status */
+	if(!Detector_Serial_Command_Get_FPGA_Status(&fpga_status))
+	{
+		Serial_Error_Number = 64;
+		sprintf(Serial_Error_String,"Detector_Serial_Initialise:Failed to get FPGA status.");
+		return FALSE;
+	}
+#if LOGGING > 2
+	Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+				    "Detector_Serial_Initialise:FPGA status byte : 0x%02X.",fpga_status);
+	if((fpga_status & DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED) > 0)
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:TEC is enabled.");
+	else
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:TEC is disabled.");
+	if((fpga_status & DETECTOR_SERIAL_FPGA_CTRL_AUTO_EXPOSURE_ENABLED) > 0)
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Auto Exposure is enabled.");
+	else
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Auto Exposure is disabled.");
+	if((fpga_status & DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED) > 0)
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Fan is enabled.");
+	else
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Fan is disabled.");
+	if((fpga_status & DETECTOR_SERIAL_FPGA_CTRL_INVERT_VIDEO_ENABLED) > 0)
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Invert Video is enabled.");
+	else
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,"Detector_Serial_Initialise:Invert Video is disabled.");
+	if((fpga_status & DETECTOR_SERIAL_FPGA_CTRL_HORIZONTAL_FLIP_ENABLED) > 0)
+	{
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,
+				     "Detector_Serial_Initialise:Horizontal Flip is enabled.");
+	}
+	else
+	{
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,
+				     "Detector_Serial_Initialise:Horizontal Flip is disabled.");
+	}
+#endif
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Serial_Initialise:Finished.");
 #endif
