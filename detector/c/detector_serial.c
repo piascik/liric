@@ -47,12 +47,12 @@
 #define SERIAL_SYSTEM_STATUS_REGISTER_WRITE   (0x4F)
 /**
  * Command termintor / successful command acknowledge.
- * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/ERROR codes", P20."
  */
 #define SERIAL_ETX                            (0x50)
 /**
  * Partial command packet received, camera timed out waiting for end of packet. Command not processed
- * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/EROOR codes", P20."
+ * See OWL_640_Cooled_IM_v1_0.pdf, Sec 4.2 "ETX/ERROR codes", P20."
  */
 #define SERIAL_ETX_SER_TIMEOUT                (0x51)
 /**
@@ -1289,8 +1289,11 @@ int Detector_Serial_Command_Get_TEC_Setpoint(int *dac_value)
  *        this will be filled with the FPGA status byte.
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Serial_Error_Number/Serial_Error_String are set.
- * @see DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
- * @see DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_AUTO_EXPOSURE_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_INVERT_VIDEO_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_HORIZONTAL_FLIP_ENABLED
  * @see #SERIAL_ETX
  * @see #Serial_Error_Number
  * @see #Serial_Error_String
@@ -1397,8 +1400,11 @@ int Detector_Serial_Command_Get_FPGA_Status(unsigned char *status_byte)
  * @param ctrl_byte An unsigned character, containing the FPGA control bits.
  * @return The routine returns TRUE on success and FALSE on failure. 
  *         On failure, Serial_Error_Number/Serial_Error_String are set.
- * @see DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
- * @see DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_AUTO_EXPOSURE_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_INVERT_VIDEO_ENABLED
+ * @see #DETECTOR_SERIAL_FPGA_CTRL_HORIZONTAL_FLIP_ENABLED
  * @see #SERIAL_ETX
  * @see #Serial_Error_Number
  * @see #Serial_Error_String

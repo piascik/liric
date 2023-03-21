@@ -3,15 +3,31 @@
 #define DETECTOR_SERIAL_H
 
 /**
- * FPGA control bit, this is 1 if the fan is enabled (OWL 640 cooled variant only).
- * Also returned by Getting FPGA status.
- */
-#define DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED (1<<2)
-/**
  * FPGA control bit, this is 1 if the TEC (thermo-electric cooler) is enabled.
  * Also returned by Getting FPGA status.
  */
-#define DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED (1<<0)
+#define DETECTOR_SERIAL_FPGA_CTRL_TEC_ENABLED              (1<<0)
+/**
+ * FPGA control bit, this is 1 if the automatic light level/automatic exposure length is enabled.
+ * We want this turned off!
+ * Also returned by Getting FPGA status.
+ */
+#define DETECTOR_SERIAL_FPGA_CTRL_AUTO_EXPOSURE_ENABLED    (1<<1)
+/**
+ * FPGA control bit, this is 1 if the fan is enabled (OWL 640 cooled variant only).
+ * Also returned by Getting FPGA status.
+ */
+#define DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED              (1<<2)
+/**
+ * FPGA control bit, this is 1 if video signal is inverted.
+ * Also returned by Getting FPGA status.
+ */
+#define DETECTOR_SERIAL_FPGA_CTRL_INVERT_VIDEO_ENABLED     (1<<6)
+/**
+ * FPGA control bit, this is 1 if the image is horizontally flipped.
+ * Also returned by Getting FPGA status.
+ */
+#define DETECTOR_SERIAL_FPGA_CTRL_HORIZONTAL_FLIP_ENABLED  (1<<7)
 
 extern int Detector_Serial_Initialise(void);
 

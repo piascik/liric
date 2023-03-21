@@ -12,7 +12,8 @@ CFLAGS 		= -g -I$(INCDIR) $(LOG_UDP_CFLAGS) $(FITSCFLAGS) $(XCLIB_CFLAGS) $(MJDC
 
 DOCFLAGS 	= -static
 
-SRCS 		= detector_test_exposure.c detector_test_hex_parsing.c detector_test_get_system_status.c \
+SRCS 		= detector_test_exposure.c detector_test_hex_parsing.c \
+		  detector_test_get_fpga_status.c detector_test_get_system_status.c \
 		  detector_test_serial_initialise.c \
 		  detector_test_temperature_get.c detector_test_temperature_pcb_get.c \
 		  detector_test_tec_setpoint_get.c detector_test_tec_setpoint_set.c \
