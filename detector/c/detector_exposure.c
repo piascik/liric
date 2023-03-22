@@ -306,6 +306,13 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
 	/* initialise last_buffer */
+	/* diddly Theres a chance this doesn't work properly, over the end of a pxd_goLivePair loop and start of another.
+	** We reset last_buffer here, so we could end up with the same coadd in the end of one exposure and the start of the next.
+	** This could especially effect exposures consisting of a single coadd, as several exposures could potentially contain the same data
+	** if the cycle time between each exposure is small enough  - testing appears to show this happening.
+	** We need to monitor how last_buffer changes, we may need this variable to maintain it's value over multiple calls to 
+	** Detector_Exposure_Expose
+	 */
 	last_buffer = 0;
 	/* turn on image capture into frame buffers 1 and 2 */
 	retval = pxd_goLivePair(1,1,2);
