@@ -39,20 +39,29 @@
 /**
  * Index used in array for variables pertaining to the horizontal cam of the nudgematic. 
  */
-#define NUDGEMATIC_HORIZONTAL        (1)
+#define NUDGEMATIC_HORIZONTAL          (1)
 /**
  * The number of cams/motors in the nudgematic. 
  */
-#define NUDGEMATIC_CAM_COUNT         (2)
+#define NUDGEMATIC_CAM_COUNT           (2)
 /**
  * How many offsets are in NUDGEMATIC_OFFSET_SIZE_ENUM  (there is actually 3, as OFFSET_SIZE_NONE is an offset).
  * @see #NUDGEMATIC_OFFSET_SIZE_ENUM 
  */
-#define NUDGEMATIC_OFFSET_SIZE_COUNT (3)
+#define NUDGEMATIC_OFFSET_SIZE_COUNT   (3)
 /**
  * How many offset positions there are per offset size.
  */
-#define NUDGEMATIC_POSITION_COUNT    (9)
+#define NUDGEMATIC_POSITION_COUNT      (9)
+/**
+ * A length of time to sleep between querying the nudgematics position, in the move (Position_Set) loop.
+ */
+#define COMMAND_MOVE_SLEEP_TIME_MS     (50)
+/**
+ * How long to wait for the nudgematic to move to a new position before we time out, in seconds.
+ */
+#define COMMAND_POSITION_SET_TIMEOUT_S (10.0)
+
 /**
  * The length of some internal strings.
  */
@@ -140,6 +149,7 @@ static int Command_Parse_Reply_String(char *reply_string,char *position_char,int
  * @param position The position to move to.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see #NUDGEMATIC_CAM_COUNT
+ * @see #COMMAND_MOVE_SLEEP_TIME_MS
  * @see #Command_Error_Number
  * @see #Command_Error_String
  * @see #Command_Data
@@ -191,7 +201,19 @@ int Nudgematic_Command_Position_Set(int position)
 			command_string);
 		return FALSE;		
 	}
-	/* diddly parse reply string */
+	/* parse reply string */
+	if(!Command_Parse_Reply_String(reply_string,&position_char,&position_adu,&position_error,&nudges,&time_ms))
+	{
+		return FALSE;
+	}
+	/* check we are moving to the right position */
+	if(position_char != horizontal_cam_command)
+	{
+		Command_Error_Number = 21;
+		sprintf(Command_Error_String,"Nudgematic_Command_Position_Set:Horizontal move command reply does not match "
+			"('%c' vs '%c').",position_char,horizontal_cam_command);
+		return FALSE;		
+	}
 	/* move vertical cam */
 	command_string[0] = vertical_cam_command;
 	command_string[1] = '\0';
@@ -202,7 +224,19 @@ int Nudgematic_Command_Position_Set(int position)
 			command_string);
 		return FALSE;		
 	}
-	/* diddly parse reply string */
+	/* parse reply string */
+	if(!Command_Parse_Reply_String(reply_string,&position_char,&position_adu,&position_error,&nudges,&time_ms))
+	{
+		return FALSE;
+	}
+	/* check we are moving to the right position */
+	if(position_char != vertical_cam_command)
+	{
+		Command_Error_Number = 22;
+		sprintf(Command_Error_String,"Nudgematic_Command_Position_Set:Vertical move command reply does not match "
+			"('%c' vs '%c').",position_char,vertical_cam_command);
+		return FALSE;		
+	}
 	/* monitor for completion of move */
 	for(cam = NUDGEMATIC_VERTICAL; cam < NUDGEMATIC_CAM_COUNT; cam++)
 	{
@@ -242,7 +276,7 @@ int Nudgematic_Command_Position_Set(int position)
 		}/* end for on cam */
 		/* check for a timeout */
 		clock_gettime(CLOCK_REALTIME,&current_time);
-		if(fdifftime(current_time,start_time) > 10.0)
+		if(fdifftime(current_time,start_time) > COMMAND_POSITION_SET_TIMEOUT_S)
 		{
 			Command_Error_Number = 18;
 			sprintf(Command_Error_String,"Nudgematic_Command_Position_Set: timeout after %.2f seconds.",
@@ -251,7 +285,7 @@ int Nudgematic_Command_Position_Set(int position)
 		}
 		/* sleep a bit */
 		sleep_time.tv_sec = 0;
-		sleep_time.tv_nsec = NUDGEMATIC_GENERAL_ONE_MILLISECOND_NS;
+		sleep_time.tv_nsec = COMMAND_MOVE_SLEEP_TIME_MS*NUDGEMATIC_GENERAL_ONE_MILLISECOND_NS;
 		retval = nanosleep(&sleep_time,NULL);
 		if(retval != 0)
 		{

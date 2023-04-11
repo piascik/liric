@@ -38,6 +38,12 @@
 #include "nudgematic_general.h"
 #include "nudgematic_connection.h"
 
+/* hash defines */
+/**
+ * A timeout (in seconds), how long we wait for the Arduino to return a complete line.
+ */
+#define CONNECTION_READ_LINE_TIMEOUT_S  (10.0)
+
 /* internal data structures */
 /**
  * Structure holding information on the conenction to the Arduino Mega.
@@ -397,6 +403,7 @@ int Nudgematic_Connection_Read(void *message,size_t message_length, int *bytes_r
  * @param bytes_read The address of an integer. On return this will be filled with the number of bytes read from
  *        the serial interface. The address can be NULL, if this data is not needed.
  * @return TRUE if succeeded, FALSE otherwise.
+ * @see #CONNECTION_READ_LINE_TIMEOUT_S
  * @see #Nudgematic_Connection_Read
  * @see #Nudgematic_Connection_Data
  * @see #Connection_Error_Number
@@ -466,7 +473,7 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 		}
 		/* check for a timeout */
 		clock_gettime(CLOCK_REALTIME,&current_time);
-		if(fdifftime(current_time,read_start_time) > 10.0)
+		if(fdifftime(current_time,read_start_time) > CONNECTION_READ_LINE_TIMEOUT_S)
 		{
 			Connection_Error_Number = 20;
 			sprintf(Connection_Error_String,"Nudgematic_Connection_Read_Line: timeout after %.2f seconds (%s).",
