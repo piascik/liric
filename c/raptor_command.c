@@ -325,15 +325,15 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 #endif
 		if(strcmp(nudgematic_offset_size_string,"none") == 0)
 		{
-			offset_size = NONE;
+			offset_size = OFFSET_SIZE_NONE;
 		}
 		else if(strcmp(nudgematic_offset_size_string,"small") == 0)
 		{
-			offset_size = SMALL;
+			offset_size = OFFSET_SIZE_SMALL;
 		}
 		else if(strcmp(nudgematic_offset_size_string,"large") == 0)
 		{
-			offset_size = LARGE;
+			offset_size = OFFSET_SIZE_LARGE;
 		}
 		else
 		{

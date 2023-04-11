@@ -31,7 +31,7 @@ static int Position = -1;
  * Whether the nudgematic positions are small offsets or large offsets.
  * @see ../cdocs/nudgematic_command.html#NUDGEMATIC_OFFSET_SIZE_T
  */
-static NUDGEMATIC_OFFSET_SIZE_T Offset_Size = SMALL;
+static NUDGEMATIC_OFFSET_SIZE_T Offset_Size = OFFSET_SIZE_SMALL;
 
 
 /* internal functions */

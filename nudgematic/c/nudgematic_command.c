@@ -45,7 +45,7 @@
  */
 #define NUDGEMATIC_CAM_COUNT         (2)
 /**
- * How many offsets are in NUDGEMATIC_OFFSET_SIZE_ENUM  (there is actually 3, as NONE is an offset).
+ * How many offsets are in NUDGEMATIC_OFFSET_SIZE_ENUM  (there is actually 3, as OFFSET_SIZE_NONE is an offset).
  * @see #NUDGEMATIC_OFFSET_SIZE_ENUM 
  */
 #define NUDGEMATIC_OFFSET_SIZE_COUNT (3)
@@ -82,14 +82,14 @@ static char rcsid[] = "$Id$";
  * The instance of Command_Struct that contains local data for this module.
  * This is statically initialised to the following:
  * <dl>
- * <dt>Offset_Size</dt> <dd>NONE</dd>
+ * <dt>Offset_Size</dt> <dd>OFFSET_SIZE_NONE</dd>
  * <dt>Target_Position</dt> <dd>-1</dd>
  * </dl>
  * @see #Command_Struct
  */
 static struct Command_Struct Command_Data = 
 {
-	NONE,-1
+	OFFSET_SIZE_NONE,-1
 };
 
 /**
@@ -277,19 +277,79 @@ int Nudgematic_Command_Position_Set(int position)
  * @param position The address of an integer, on return containing the current position, or '-1' if the mechanism
  *        is not in a defined position/moving.
  * @return The routine returns TRUE on success and FALSE on failure.
+ * @see #NUDGEMATIC_POSITION_COUNT
+ * @see #NUDGEMATIC_CAM_COUNT
  * @see #Command_Error_Number
  * @see #Command_Error_String
+ * @see #Move_Command_List
+ * @see #Where_Command_List
+ * @see #Command_Parse_Reply_String
+ * @see #Nudgematic_Command_Offset_Size_To_String
+ * @see nudgematic_connection.html#Nudgematic_Connection_Send_Command
  */
 int Nudgematic_Command_Position_Get(int *position)
 {
+	char command_string[STRING_LENGTH];
+	char reply_string[STRING_LENGTH];
+	char position_char[NUDGEMATIC_CAM_COUNT];
+	int found,i,offset_size,retval,cam,position_adu,position_error,nudges,time_ms;
+	
 	if(position == NULL)
 	{
 		Command_Error_Number = 1;
 		sprintf(Command_Error_String,"Nudgematic_Command_Position_Get:position was NULL.");
 		return FALSE;
 	}
+	/* initialise position to moving */
 	(*position) = -1;
-	/* diddly write this ! */
+	/* get the current position of each cam */
+	for(cam = NUDGEMATIC_VERTICAL; cam < NUDGEMATIC_CAM_COUNT; cam++)
+	{
+		/* send a where command for this cam */
+		command_string[0] = Where_Command_List[cam];
+		command_string[1] = '\0';
+		if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
+		{
+			Command_Error_Number = 20;
+			sprintf(Command_Error_String,"Nudgematic_Command_Position_Get:Failed to send where command string '%s'.",
+				command_string);
+			return FALSE;		
+		}
+		/* parse reply string */
+		if(!Command_Parse_Reply_String(reply_string,&(position_char[cam]),&position_adu,&position_error,&nudges,&time_ms))
+		{
+			return FALSE;
+		}
+	}/* end for on cam */
+#if LOGGING > 1
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Position_Get: Current cam positions '%c', '%c'.",
+				      position_char[NUDGEMATIC_VERTICAL],position_char[NUDGEMATIC_HORIZONTAL]);
+#endif /* LOGGING */
+	/* find the current position based on cam positions */
+	i = 0;
+	found = FALSE;
+	while((i < NUDGEMATIC_POSITION_COUNT)&&(found == FALSE))
+	{
+		offset_size = OFFSET_SIZE_SMALL;
+		while((offset_size < NUDGEMATIC_OFFSET_SIZE_COUNT) && (found == FALSE))
+		{
+
+			if((Move_Command_List[i][offset_size][NUDGEMATIC_HORIZONTAL] == position_char[NUDGEMATIC_HORIZONTAL]) &&
+			   (Move_Command_List[i][offset_size][NUDGEMATIC_VERTICAL] == position_char[NUDGEMATIC_VERTICAL]))
+			{
+				(*position) = i;
+				found = TRUE;
+#if LOGGING > 1
+				Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				    "Nudgematic_Command_Position_Get: Found a position match at position %d, offset size %s.",
+							      i,Nudgematic_Command_Offset_Size_To_String(offset_size));
+#endif /* LOGGING */
+			}
+			offset_size ++;
+		}/* end while on offset_size */
+		i++;
+	}/* end while on i (position) */
 #if LOGGING > 0
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Nudgematic_Command_Position_Get: Current position %d.",
 				      (*position));
@@ -299,7 +359,7 @@ int Nudgematic_Command_Position_Get(int *position)
 
 /**
  * Routine to set the offset size of the positions of the Nudgematic.
- * @param size The size of the offset to use, either SMALL or LARGE.
+ * @param size The size of the offset to use, either OFFSET_SIZE_NONE, OFFSET_SIZE_SMALL or OFFSET_SIZE_LARGE.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see #Nudgematic_Command_Offset_Size_To_String
  * @see #Command_Error_Number
@@ -308,7 +368,7 @@ int Nudgematic_Command_Position_Get(int *position)
  */
 int Nudgematic_Command_Offset_Size_Set(NUDGEMATIC_OFFSET_SIZE_T size)
 {
-	if((size != NONE)&&(size != SMALL)&&(size != LARGE))
+	if((size != OFFSET_SIZE_NONE)&&(size != OFFSET_SIZE_SMALL)&&(size != OFFSET_SIZE_LARGE))
 	{
 		Command_Error_Number = 2;
 		sprintf(Command_Error_String,"Nudgematic_Command_Offset_Size_Set:Illegal size '%d'.",size);
@@ -325,8 +385,8 @@ int Nudgematic_Command_Offset_Size_Set(NUDGEMATIC_OFFSET_SIZE_T size)
 
 /**
  * Routine to get the current offset size of the positions of the Nudgematic.
- * @param size The address of a UDGEMATIC_OFFSET_SIZE_T, on a successful return should contain 
- *             the size of the offset to use, either SMALL or LARGE.
+ * @param size The address of a NUDGEMATIC_OFFSET_SIZE_T, on a successful return should contain 
+ *             the size of the offset to use, either OFFSET_SIZE_NONE, OFFSET_SIZE_SMALL or OFFSET_SIZE_LARGE.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see #Nudgematic_Command_Offset_Size_To_String
  * @see #Command_Error_Number
@@ -353,7 +413,7 @@ int Nudgematic_Command_Offset_Size_Get(NUDGEMATIC_OFFSET_SIZE_T *size)
 /**
  * Routine to parse the specified string into a valid instance of NUDGEMATIC_OFFSET_SIZE_T.
  * @param size The address of a NUDGEMATIC_OFFSET_SIZE_T, on a successful return should contain 
- *             an offset size, either NONE, SMALL or LARGE.
+ *             an offset size, either OFFSET_SIZE_NONE, OFFSET_SIZE_SMALL or OFFSET_SIZE_LARGE.
  * @return The routine returns TRUE on success and FALSE on failure.
  * @see #Command_Error_Number
  * @see #Command_Error_String
@@ -378,11 +438,11 @@ int Nudgematic_Command_Offset_Size_Parse(char *offset_size_string, NUDGEMATIC_OF
 				      "Nudgematic_Command_Offset_Size_Parse: Parsing offset size '%s'.",offset_size_string);
 #endif /* LOGGING */
 	if((strcmp(offset_size_string,"none") == 0)||(strcmp(offset_size_string,"NONE") == 0))
-		(*size) = NONE;
+		(*size) = OFFSET_SIZE_NONE;
 	else if((strcmp(offset_size_string,"small") == 0)||(strcmp(offset_size_string,"SMALL") == 0))
-		(*size) = SMALL;
+		(*size) = OFFSET_SIZE_SMALL;
 	else if((strcmp(offset_size_string,"large") == 0)||(strcmp(offset_size_string,"LARGE") == 0))
-		(*size) = LARGE;
+		(*size) = OFFSET_SIZE_LARGE;
 	else
 	{
 		Command_Error_Number = 6;
@@ -407,11 +467,11 @@ char *Nudgematic_Command_Offset_Size_To_String(NUDGEMATIC_OFFSET_SIZE_T size)
 {
 	switch(size)
 	{
-		case NONE:
+		case OFFSET_SIZE_NONE:
 			return "NONE";
-		case SMALL:
+		case OFFSET_SIZE_SMALL:
 			return "SMALL";
-		case LARGE:
+		case OFFSET_SIZE_LARGE:
 			return "LARGE";
 		default:
 			return "ERROR";
