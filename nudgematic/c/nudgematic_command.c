@@ -128,6 +128,10 @@ static int Command_Error_Number = 0;
  */
 static char Command_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = "";
 
+/* internal functions */
+static int Command_Parse_Reply_String(char *reply_string,char *position_char,int *position_adu,int *position_error,
+				      int *nudges,int *time_ms);
+
 /* =======================================
 **  external functions 
 ** ======================================= */
@@ -145,10 +149,12 @@ static char Command_Error_String[NUDGEMATIC_GENERAL_ERROR_STRING_LENGTH] = "";
  */
 int Nudgematic_Command_Position_Set(int position)
 {
+	struct timespec start_time,sleep_time,current_time;
 	char command_string[STRING_LENGTH];
 	char reply_string[STRING_LENGTH];
-	char horizontal_cam_command, vertical_cam_command;
-	int cam;
+	char horizontal_cam_command, vertical_cam_command,position_char;
+	char cam_command[NUDGEMATIC_CAM_COUNT];
+	int retval,cam,position_adu,position_error,nudges,time_ms,sleep_errno;
 	int done[NUDGEMATIC_CAM_COUNT];
 	
 #if LOGGING > 0
@@ -166,6 +172,8 @@ int Nudgematic_Command_Position_Set(int position)
 	Command_Data.Target_Position = position;
 	horizontal_cam_command = Move_Command_List[Command_Data.Target_Position][Command_Data.Offset_Size][NUDGEMATIC_HORIZONTAL];
 	vertical_cam_command = Move_Command_List[Command_Data.Target_Position][Command_Data.Offset_Size][NUDGEMATIC_VERTICAL];
+	cam_command[NUDGEMATIC_HORIZONTAL] = Move_Command_List[Command_Data.Target_Position][Command_Data.Offset_Size][NUDGEMATIC_HORIZONTAL];
+	cam_command[NUDGEMATIC_VERTICAL] = Move_Command_List[Command_Data.Target_Position][Command_Data.Offset_Size][NUDGEMATIC_VERTICAL];
 #if LOGGING > 0
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
 				      "Nudgematic_Command_Position_Set: Position %d and Offset Size '%s' maps to "
@@ -200,10 +208,12 @@ int Nudgematic_Command_Position_Set(int position)
 	{
 		done[cam] = FALSE;
 	}
+	clock_gettime(CLOCK_REALTIME,&start_time);
 	while((done[NUDGEMATIC_VERTICAL] == FALSE)&&(done[NUDGEMATIC_HORIZONTAL] == FALSE))
 	{
 		for(cam = NUDGEMATIC_VERTICAL; cam < NUDGEMATIC_CAM_COUNT; cam++)
 		{
+			/* send a where command for this cam */
 			command_string[0] = Where_Command_List[cam];
 			command_string[1] = '\0';
 			if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
@@ -213,9 +223,52 @@ int Nudgematic_Command_Position_Set(int position)
 					command_string);
 				return FALSE;		
 			}
-			/* diddly parse reply string */
+			/* parse reply string */
+			if(!Command_Parse_Reply_String(reply_string,&position_char,&position_adu,&position_error,&nudges,&time_ms))
+			{
+				return FALSE;
+			}
+			/* are we in position? */
+			if(position_char == cam_command[cam])
+			{
+				done[cam] = TRUE;
+#if LOGGING > 0
+				Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Position_Set: Position %d: Cam %d acheived position '%c' "
+				      "with ADU %d error %d nudges %d and time(ms) %d.",
+				      Command_Data.Target_Position,cam,position_char,position_adu,position_error,nudges,time_ms);
+#endif /* LOGGING */
+			} /* end if cam is in position */
 		}/* end for on cam */
+		/* check for a timeout */
+		clock_gettime(CLOCK_REALTIME,&current_time);
+		if(fdifftime(current_time,start_time) > 10.0)
+		{
+			Command_Error_Number = 18;
+			sprintf(Command_Error_String,"Nudgematic_Command_Position_Set: timeout after %.2f seconds.",
+				fdifftime(current_time,start_time));
+			return FALSE;
+		}
+		/* sleep a bit */
+		sleep_time.tv_sec = 0;
+		sleep_time.tv_nsec = NUDGEMATIC_GENERAL_ONE_MILLISECOND_NS;
+		retval = nanosleep(&sleep_time,NULL);
+		if(retval != 0)
+		{
+			sleep_errno = errno;
+			Command_Error_Number = 19;
+			sprintf(Command_Error_String,"Nudgematic_Command_Position_Set: sleep error (%d).",
+				sleep_errno);
+			Nudgematic_General_Error();
+			/* not a fatal error, don't return */
+		}
 	}/* end while not done[] */
+#if LOGGING > 0
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+				      "Nudgematic_Command_Position_Set: Now in Position %d with Offset Size '%s'.",
+				      Command_Data.Target_Position,
+				      Nudgematic_Command_Offset_Size_To_String(Command_Data.Offset_Size));
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -236,6 +289,7 @@ int Nudgematic_Command_Position_Get(int *position)
 		return FALSE;
 	}
 	(*position) = -1;
+	/* diddly write this ! */
 #if LOGGING > 0
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Nudgematic_Command_Position_Get: Current position %d.",
 				      (*position));

@@ -72,5 +72,8 @@ extern void Nudgematic_General_Log_Handler_Stdout(int level,char *string);
 extern void Nudgematic_General_Set_Log_Filter_Level(int level);
 extern int Nudgematic_General_Log_Filter_Level_Absolute(int level,char *string);
 extern int Nudgematic_General_Log_Filter_Level_Bitwise(int level,char *string);
-
+#ifdef MUTEXED
+extern int Nudgematic_General_Mutex_Lock(void);
+extern int Nudgematic_General_Mutex_Unlock(void);
+#endif
 #endif

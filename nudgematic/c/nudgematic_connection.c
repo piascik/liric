@@ -488,7 +488,8 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
 }
 
 /**
- * Send a command string to the nudgematic, and read a newline terminated reply.
+ * Send a command string to the nudgematic, and read a newline terminated reply. We lock a mutex around sending a command to the
+ * nudgematic and receiving a reply.
  * @param command_string The string containing the command to send.
  * @param reply_string An allocated memory buffer of reply_length chars, on exit from this routine and reply read will
  *        be stored in this string.
@@ -501,22 +502,45 @@ int Nudgematic_Connection_Read_Line(char *message,size_t message_length, int *re
  * @see #Connection_Error_String
  * @see nudgematic_general.html#Nudgematic_General_Error
  * @see nudgematic_general.html#Nudgematic_General_Log_Format
+ * @see nudgematic_general.html#Nudgematic_General_Mutex_Lock
+ * @see nudgematic_general.html#Nudgematic_General_Mutex_Unlock
  */
 int Nudgematic_Connection_Send_Command(char *command_string,char *reply_string,size_t reply_length)
 {
 	int bytes_read;
 
-	/* diddly mutex at this level around one command write/read reply */
+	/* mutex at this level around one command write/read reply */
+	if(!Nudgematic_General_Mutex_Lock())
+	{
+		Connection_Error_Number = 22;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Send_Command: Failed to lock mutex for '%s'.",
+			command_string);
+		return FALSE;
+	}
 	/* send command */
+#if LOGGING > 1
+	Nudgematic_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,"Nudgematic_Connection_Send_Command:Sending command '%s'.",
+				      command_string);
+#endif /* LOGGING */
 	if(!Nudgematic_Connection_Write(command_string,strlen(command_string)))
 	{
+		Nudgematic_General_Mutex_Unlock();
 		return FALSE;
 	}
 	/* read a reply */
 	if(!Nudgematic_Connection_Read_Line(reply_string,reply_length,&bytes_read))
 	{
+		Nudgematic_General_Mutex_Unlock();
 		return FALSE;
-	}	
+	}
+	/* release mutex */
+	if(!Nudgematic_General_Mutex_Unlock())
+	{
+		Connection_Error_Number = 23;
+		sprintf(Connection_Error_String,"Nudgematic_Connection_Send_Command: Failed to unlock mutex for '%s'.",
+			command_string);
+		return FALSE;
+	}		
 	return TRUE;
 }
 
