@@ -243,7 +243,7 @@ int Nudgematic_Command_Position_Set(int position)
 		done[cam] = FALSE;
 	}
 	clock_gettime(CLOCK_REALTIME,&start_time);
-	while((done[NUDGEMATIC_VERTICAL] == FALSE)&&(done[NUDGEMATIC_HORIZONTAL] == FALSE))
+	while((done[NUDGEMATIC_VERTICAL] == FALSE)||(done[NUDGEMATIC_HORIZONTAL] == FALSE))
 	{
 		for(cam = NUDGEMATIC_VERTICAL; cam < NUDGEMATIC_CAM_COUNT; cam++)
 		{
