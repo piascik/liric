@@ -30,7 +30,7 @@ end
 # Send a shutdown command to raptor C layer, after killing the autobooter
 if ( -x /icc/bin/commandserver/test/x86_64-linux/send_command  ) then
     echo "Sending shutdown to raptor C layer."
-    /icc/bin/commandserver/test/x86_64-linux/send_command -h raptor -p 1111 -c "shutdown"
+    /icc/bin/commandserver/test/x86_64-linux/send_command -h raptor -p 8284 -c "shutdown"
     echo "Waiting to see if that worked..."
     /bin/sleep 5
 else
