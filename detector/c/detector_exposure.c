@@ -253,7 +253,8 @@ int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
 int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 {
 	struct timespec current_time,coadd_start_time,sleep_time;
-	pxbuffer_t last_buffer,captured_buffer;
+	pxbuffer_t last_buffer;
+	pxvbtime_t field_count;
 	uint32 systicks,systicksh;
 	int i,retval;
 	
@@ -334,7 +335,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		/* get a timestamp for the start of this coadd */
 		clock_gettime(CLOCK_REALTIME,&coadd_start_time);
 		/* enter a loop until the last capture buffer changes */ 
-		while ((captured_buffer = pxd_capturedBuffer(1)) == last_buffer)
+		while (pxd_capturedBuffer(1) == last_buffer)
 		{
 			/* sleep a bit (500 us) */
 			sleep_time.tv_sec = 0;
@@ -367,14 +368,22 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		/* update last_buffer */
 		last_buffer = pxd_capturedBuffer(1);
 #if LOGGING > 1
-		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Exposure_Expose:Captured buffer %d.",last_buffer);
+		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+					    "Detector_Exposure_Expose:Captured buffer %d.",last_buffer);
 #endif
-		captured_buffer = last_buffer;
+		/* print some debugging about this buffer capture */
 		systicks = pxd_capturedSysTicks(1);
 		systicksh = pxd_capturedSysTicksHi(1);
 #if LOGGING > 1
-		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Exposure_Expose:Captured buffer sys ticks %u : %u.",
+		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+					    "Detector_Exposure_Expose:Captured buffer sys ticks %u : %u.",
 					    systicksh,systicks);
+#endif
+		field_count = pxd_capturedFieldCount(1);
+#if LOGGING > 1
+		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+					    "Detector_Exposure_Expose:Captured buffer field count %lu.",
+					    field_count);
 #endif
 		/* copy frame grabber buffer into mono image buffer 
 		** Assuming UNITS = 1  here, e.g. 1 detector */
