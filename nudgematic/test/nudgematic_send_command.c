@@ -81,6 +81,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "nudgematic_send_command : No command specified.\n");
 		return 3;
 	}
+	/* the arduino looks for \n at the end of some commands - add \n if necessary */
+	strcat(Command,"\n");
 	/* send command to the arduino */
 	Nudgematic_General_Log_Format(LOG_VERBOSITY_TERSE,"nudgematic_send_command : Sending command '%s'.",
 				      Command);

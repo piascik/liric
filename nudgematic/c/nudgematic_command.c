@@ -193,7 +193,8 @@ int Nudgematic_Command_Position_Set(int position)
 #endif /* LOGGING */
 	/* move horizontal cam */
 	command_string[0] = horizontal_cam_command;
-	command_string[1] = '\0';
+	command_string[1] = '\n';
+	command_string[2] = '\0';
 	if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
 	{
 		Command_Error_Number = 8;
@@ -216,7 +217,8 @@ int Nudgematic_Command_Position_Set(int position)
 	}
 	/* move vertical cam */
 	command_string[0] = vertical_cam_command;
-	command_string[1] = '\0';
+	command_string[1] = '\n';
+	command_string[2] = '\0';
 	if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
 	{
 		Command_Error_Number = 9;
@@ -249,7 +251,8 @@ int Nudgematic_Command_Position_Set(int position)
 		{
 			/* send a where command for this cam */
 			command_string[0] = Where_Command_List[cam];
-			command_string[1] = '\0';
+			command_string[1] = '\n';
+			command_string[2] = '\0';
 			if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
 			{
 				Command_Error_Number = 10;
@@ -341,7 +344,8 @@ int Nudgematic_Command_Position_Get(int *position)
 	{
 		/* send a where command for this cam */
 		command_string[0] = Where_Command_List[cam];
-		command_string[1] = '\0';
+		command_string[1] = '\n';
+		command_string[2] = '\0';
 		if(!Nudgematic_Connection_Send_Command(command_string,reply_string,STRING_LENGTH))
 		{
 			Command_Error_Number = 20;
