@@ -185,12 +185,12 @@ int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
  * <li>We initialise the coadd image buffer to 0 by calling Detector_Buffer_Initialise_Coadd_Image.
  * <li>We reset the Abort flag in Exposure_Data.
  * <li>We take a timestamp for the start of this 'exposure' and store it in Exposure_Data.Exposure_Start_Timestamp.
- * <li>We initialise last_buffer to 0.
+ * <li>We initialise captured_field_count to the last field count captured (pxd_capturedFieldCount(1)).
  * <li>We call pxd_goLivePair to start camera 1 saving frames to frame grabber buffers 1 and 2.
  * <li>We enter a for loop over Exposure_Data.Coadd_Count:
  *     <ul>
  *     <li>We get a timestamp for the start of this coadd.
- *     <li>We enter a loop until the last capture buffer changes: while (pxd_capturedBuffer(1) == last_buffer).
+ *     <li>We enter a loop until the last capture buffer field count changes: while (pxd_capturedFieldCount(1) == captured_field_count).
  *         <ul>
  *         <li>We sleep for a bit (500 us).
  *         <li>We take a current timestamp.
@@ -199,8 +199,9 @@ int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
  *         <li>We check whether the Abort flag has been set in Exposure_Data (by another thread calling 
  *             Detector_Exposure_Abort) and abort this exposure if this is the case.
  *         </ul>
- *     <li>We update last_buffer to the last captured buffer pxd_capturedBuffer(1).
- *     <li>We call pxd_readushort to read out last_buffer from the frame grabber and put the image contents 
+ *     <li>We update captured_field_count to the last captured buffer field count pxd_capturedFieldCount(1).
+ *     <li>We update captured_buffer to the last captured buffer pxd_capturedBuffer(1).
+ *     <li>We call pxd_readushort to read out captured_buffer from the frame grabber and put the image contents 
  *         into the allocated mono image buffer (Detector_Buffer_Get_Mono_Image), which has allocated 
  *         Detector_Buffer_Get_Pixel_Count pixels, reading out the whole image from (0,0) to 
  *         (Detector_Setup_Get_Sensor_Size_X,Detector_Setup_Get_Sensor_Size_Y).
@@ -253,8 +254,8 @@ int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
 int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 {
 	struct timespec current_time,coadd_start_time,sleep_time;
-	pxbuffer_t last_buffer;
-	pxvbtime_t field_count;
+	pxbuffer_t captured_buffer;
+	pxvbtime_t captured_field_count;
 	uint32 systicks,systicksh;
 	int i,retval;
 	
@@ -307,15 +308,20 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	Exposure_Data.Abort = FALSE;
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
-	/* initialise last_buffer */
-	/* diddly Theres a chance this doesn't work properly, over the end of a pxd_goLivePair loop and start of another.
-	** We reset last_buffer here, so we could end up with the same coadd in the end of one exposure and the start of the next.
-	** This could especially effect exposures consisting of a single coadd, as several exposures could potentially contain the same data
-	** if the cycle time between each exposure is small enough  - testing appears to show this happening.
-	** We need to monitor how last_buffer changes, we may need this variable to maintain it's value over multiple calls to 
-	** Detector_Exposure_Expose
-	 */
-	last_buffer = 0;
+	/* initialise captured_field_count */
+	/* we initialise the captured_field_count to the current last captured field count. This will then increment after the pxd_goLivePair
+	** starts capturing new fields */
+	/* We previously used last_buffer/pxd_capturedBuffer, but this this doesn't work properly, 
+	** over the end of a pxd_goLivePair loop and start of another, as captured_buffer was reset here, 
+	** and we ended up with the same coadd in the end of one exposure and the start of the next.
+	** This especially effected exposures consisting of a single coadd, as several exposures contained the same data
+	** if the cycle time between each exposure is small enough  - testing showed this happening.
+	*/
+	captured_field_count = pxd_capturedFieldCount(1);
+#if LOGGING > 1
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Exposure_Expose:Captured buffer field count initialise to %lu.",
+				    captured_field_count);
+#endif
 	/* turn on image capture into frame buffers 1 and 2 */
 	retval = pxd_goLivePair(1,1,2);
 	if(retval < 0)
@@ -334,8 +340,8 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 #endif
 		/* get a timestamp for the start of this coadd */
 		clock_gettime(CLOCK_REALTIME,&coadd_start_time);
-		/* enter a loop until the last capture buffer changes */ 
-		while (pxd_capturedBuffer(1) == last_buffer)
+		/* enter a loop until the last captured field count changes */ 
+		while (pxd_capturedFieldCount(1) == captured_field_count)
 		{
 			/* sleep a bit (500 us) */
 			sleep_time.tv_sec = 0;
@@ -364,12 +370,19 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 				pxd_goAbortLive(1);
 				return FALSE;
 			}
-		}/* end while the frame grabber captured buffer is the last_buffer */
-		/* update last_buffer */
-		last_buffer = pxd_capturedBuffer(1);
+		}/* end while the frame grabber captured field count is captured_field_count */
+		/* update captured field count */
+		captured_field_count = pxd_capturedFieldCount(1);
 #if LOGGING > 1
 		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
-					    "Detector_Exposure_Expose:Captured buffer %d.",last_buffer);
+					    "Detector_Exposure_Expose:Captured buffer field count %lu.",
+					    captured_field_count);
+#endif
+		/* update captured_buffer */
+		captured_buffer = pxd_capturedBuffer(1);
+#if LOGGING > 1
+		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
+					    "Detector_Exposure_Expose:Captured buffer %d.",captured_buffer);
 #endif
 		/* print some debugging about this buffer capture */
 		systicks = pxd_capturedSysTicks(1);
@@ -379,15 +392,9 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 					    "Detector_Exposure_Expose:Captured buffer sys ticks %u : %u.",
 					    systicksh,systicks);
 #endif
-		field_count = pxd_capturedFieldCount(1);
-#if LOGGING > 1
-		Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,
-					    "Detector_Exposure_Expose:Captured buffer field count %lu.",
-					    field_count);
-#endif
 		/* copy frame grabber buffer into mono image buffer 
 		** Assuming UNITS = 1 here, e.g. 1 detector */
-		retval = pxd_readushort(1,last_buffer,0,0,
+		retval = pxd_readushort(1,captured_buffer,0,0,
 					Detector_Setup_Get_Sensor_Size_X(),Detector_Setup_Get_Sensor_Size_Y(),
 					Detector_Buffer_Get_Mono_Image(),Detector_Buffer_Get_Pixel_Count(),"Grey");
 		if(retval < 0)
@@ -475,10 +482,10 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
  * <li>We initialise the coadd image buffer to 0 by calling Detector_Buffer_Initialise_Coadd_Image.
  * <li>We reset the Abort flag in Exposure_Data.
  * <li>We take a timestamp for the start of this 'exposure' and store it in Exposure_Data.Exposure_Start_Timestamp.
- * <li>We initialise last_buffer to 0.
+ * <li>We initialise captured_field_count to the last field count captured (pxd_capturedFieldCount(1)).
  * <li>We call pxd_goLivePair to start camera 1 saving frames to frame grabber buffers 1 and 2.
  * <li>We get a timestamp for the start of this coadd.
- * <li>We enter a loop until the last capture buffer changes: while (pxd_capturedBuffer(1) == last_buffer).
+ * <li>We enter a loop until the last capture buffer field count changes: while (pxd_capturedFieldCount(1) == captured_field_count).
  *     <ul>
  *     <li>We sleep for a bit (500 us).
  *     <li>We take a current timestamp.
@@ -487,8 +494,9 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
  *      <li>We check whether the Abort flag has been set in Exposure_Data (by another thread calling 
  *          Detector_Exposure_Abort) and abort this exposure if this is the case.
  *     </ul>
- * <li>We update last_buffer to the last captured buffer pxd_capturedBuffer(1).
- * <li>We call pxd_readushort to read out last_buffer from the frame grabber and put the image contents 
+ * <li>We update captured_field_count to the last captured buffer field count pxd_capturedFieldCount(1).
+ * <li>We update captured_buffer to the last captured buffer pxd_capturedBuffer(1).
+ * <li>We call pxd_readushort to read out captured_buffer from the frame grabber and put the image contents 
  *     into the allocated mono image buffer (Detector_Buffer_Get_Mono_Image), which has allocated 
  *     Detector_Buffer_Get_Pixel_Count pixels, reading out the whole image from (0,0) to 
  *     (Detector_Setup_Get_Sensor_Size_X,Detector_Setup_Get_Sensor_Size_Y).
@@ -538,7 +546,8 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 int Detector_Exposure_Bias(char* fits_filename)
 {
 	struct timespec current_time,coadd_start_time,sleep_time;
-	pxbuffer_t last_buffer;
+	pxvbtime_t captured_field_count;
+	pxbuffer_t captured_buffer;
 	int i,retval;
 
 	Exposure_Error_Number = 0;
@@ -574,8 +583,8 @@ int Detector_Exposure_Bias(char* fits_filename)
 	Exposure_Data.Abort = FALSE;
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
-	/* initialise last_buffer */
-	last_buffer = 0;
+	/* initialise captured field count */
+	captured_field_count = pxd_capturedFieldCount(1);
 	/* turn on image capture into frame buffers 1 and 2 */
 	retval = pxd_goLivePair(1,1,2);
 	if(retval < 0)
@@ -590,8 +599,8 @@ int Detector_Exposure_Bias(char* fits_filename)
 #endif
 	/* get a timestamp for the start of this coadd */
 	clock_gettime(CLOCK_REALTIME,&coadd_start_time);
-	/* enter a loop until the last capture buffer changes */ 
-	while (pxd_capturedBuffer(1) == last_buffer)
+	/* enter a loop until the last captured buffer field count changes */ 
+	while (pxd_capturedFieldCount(1) == captured_field_count)
 	{
 		/* sleep a bit (500 us) */
 		sleep_time.tv_sec = 0;
@@ -615,12 +624,14 @@ int Detector_Exposure_Bias(char* fits_filename)
 			pxd_goAbortLive(1);
 			return FALSE;
 		}
-	}/* end while the frame grabber captured buffer is the last_buffer */
-	/* update last_buffer */
-	last_buffer = pxd_capturedBuffer(1);
+	}/* end while the frame grabber captured buffer field count is the last captured_field_count */
+	/* update captured buffer field count */
+	captured_field_count = pxd_capturedFieldCount(1);	
+	/* update captured_buffer */
+	captured_buffer = pxd_capturedBuffer(1);
 	/* copy frame grabber buffer into mono image buffer 
 	** Assuming UNITS = 1  here, e.g. 1 detector */
-	retval = pxd_readushort(1,last_buffer,0,0,
+	retval = pxd_readushort(1,captured_buffer,0,0,
 				Detector_Setup_Get_Sensor_Size_X(),Detector_Setup_Get_Sensor_Size_Y(),
 				Detector_Buffer_Get_Mono_Image(),Detector_Buffer_Get_Pixel_Count(),"Grey");
 	if(retval < 0)
