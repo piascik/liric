@@ -386,7 +386,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 					    field_count);
 #endif
 		/* copy frame grabber buffer into mono image buffer 
-		** Assuming UNITS = 1  here, e.g. 1 detector */
+		** Assuming UNITS = 1 here, e.g. 1 detector */
 		retval = pxd_readushort(1,last_buffer,0,0,
 					Detector_Setup_Get_Sensor_Size_X(),Detector_Setup_Get_Sensor_Size_Y(),
 					Detector_Buffer_Get_Mono_Image(),Detector_Buffer_Get_Pixel_Count(),"Grey");
