@@ -319,7 +319,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	*/
 	captured_field_count = pxd_capturedFieldCount(1);
 #if LOGGING > 1
-	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Exposure_Expose:Captured buffer field count initialise to %lu.",
+	Detector_General_Log_Format(LOG_VERBOSITY_INTERMEDIATE,"Detector_Exposure_Expose:Captured buffer field count initialised to %lu.",
 				    captured_field_count);
 #endif
 	/* turn on image capture into frame buffers 1 and 2 */
