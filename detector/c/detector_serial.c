@@ -1089,7 +1089,7 @@ int Detector_Serial_Command_Get_Sensor_PCB_Temp(double *pcb_temp)
 			command_buffer[command_buffer_length-1],reply_buffer[2]);
 		return FALSE;	
 	}
-	/* reply_buffer[0] contains data byte, bites 7..0 are temp bits 7..0 */
+	/* reply_buffer[0] contains data byte, bits 7..0 are temp bits 7..0 */
 	lsb = reply_buffer[0];
 #if LOGGING > 9
 	Detector_General_Log_Format(LOG_VERBOSITY_VERY_VERBOSE,
