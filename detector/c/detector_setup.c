@@ -18,6 +18,7 @@
 #include "detector_buffer.h"
 #include "detector_serial.h"
 #include "detector_setup.h"
+#include "detector_temperature.h"
 #include "detector_general.h"
 #include "xcliball.h"
 
@@ -84,7 +85,14 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
 /**
  * Routine to initialise the Raptor detector.
  * <ul>
- * <li>If the connection to the library has been previously opened (Setup_Data.Is_Open), we close it by calling Detector_Setup_Shutdown.
+ * <li>Initialise turn_fan_on to TRUE.
+ * <li>If the connection to the library has been previously opened (Setup_Data.Is_Open): 
+ *     <ul>
+ *     <li>We retrieve the current fpga status byte using Detector_Serial_Command_Get_FPGA_Status.
+ *     <li>We extract whether the fan is currently turned on or off 
+ *         (is the DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED bit set?), and set turn_fan_on accordingly.
+ *     <li>We close the connection to the library by calling Detector_Setup_Shutdown.
+ *     </ul>
  * <li>Detector_Setup_Open is called with the specified format_file.
  * <li>We log some information from the frame grabber by calling pxd_infoMemsize, pxd_imageZdim, pxd_infoUnits.
  * <li>We call Setup_Get_Dimensions to get the frame grabbers image dimensions from the frame grabber. We
@@ -94,6 +102,10 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  *     the buffers will only be freed/reallocated, if the size dimensions have changed (or Detector_Buffer_Allocate has not been called before).
  * <li>We initialise the internal serial link to the detector by calling Detector_Serial_Initialise.
  * <li>Setup_Data.Is_Open is set to TRUE as the connection to the detector is now open.
+ * <li>We use the previously initialsed / extracted fan status to turn the fan off if necessary by calling 
+ *     Detector_Temperature_Set_Fan with turn_fan_on. Detector_Setup_Open reinitialises the fan to on 
+ *     (with the format files we are currently using), and this call allows us to retain the fan status (on or off) 
+ *     over a call to Detector_Setup_Startup.
  * </ul>
  * @param formatfile The filename of a '.fmt' format file, used to configure the video mode of the detector.
  * @return The routine returns TRUE on success and FALSE on failure. 
@@ -105,16 +117,22 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
  * @see #Detector_Setup_Open
  * @see #Detector_Setup_Shutdown
  * @see #Setup_Get_Dimensions
+ * @see detector_serial.html#DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED
  * @see detector_buffer.html#Detector_Buffer_Allocate
  * @see detector_serial.html#Detector_Serial_Initialise
+ * @see detector_serial.html#Detector_Serial_Command_Get_FPGA_Status
+ * @see detector_temperature.html#Detector_Temperature_Set_Fan
  * @see detector_general.html#Detector_General_Log
  * @see detector_general.html#Detector_General_Log_Format
  */
 int Detector_Setup_Startup(char *format_filename)
 {
-	int retval;
+	unsigned char fpga_status;
+	int retval,turn_fan_on;
 	
 	Setup_Error_Number = 0;
+	/* default to turning the fan on (by default an open on out format files will do this) */
+	turn_fan_on = TRUE;
 	if(format_filename == NULL)
 	{
 		Setup_Error_Number = 3;
@@ -129,6 +147,27 @@ int Detector_Setup_Startup(char *format_filename)
 	/* if a connection to the library is already open, close it */
 	if(Setup_Data.Is_Open)
 	{
+		/* get current fpga status and extract current fan setting. */
+		if(Detector_Serial_Command_Get_FPGA_Status(&fpga_status))
+		{
+			turn_fan_on = ((fpga_status & DETECTOR_SERIAL_FPGA_CTRL_FAN_ENABLED) > 0);
+#if LOGGING > 1
+			Detector_General_Log_Format(LOG_VERBOSITY_VERBOSE,
+						    "Detector_Setup_Startup:FPGA Status was %#02x,turn_fan_on = %d.",
+						    fpga_status,turn_fan_on);
+#endif
+		}
+		else 
+		{
+			/* if getting the fpga status failed, log it and try and continue anyway. */
+			Detector_General_Error();
+			turn_fan_on = TRUE;
+		}
+		/* shutdown connection */
+#if LOGGING > 1
+		Detector_General_Log(LOG_VERBOSITY_VERBOSE,
+				     "Detector_Setup_Startup:Shutdown previously opened connection.");
+#endif
 		if(!Detector_Setup_Shutdown())
 		{
 			/* if the shutdown failed, log it and try and continue anyway. */
@@ -184,6 +223,13 @@ int Detector_Setup_Startup(char *format_filename)
 	}
 	/* we have now finished initialing the detector */
 	Setup_Data.Is_Open = TRUE;
+	/* Detector_Setup_Open will have turned the fan back on (for our format files).
+	** If it was previously turned off, turn it off again */
+	if(!Detector_Temperature_Set_Fan(turn_fan_on))
+	{
+		/* if reseting the fan failed, log it and try and continue anyway. */
+		Detector_General_Error();
+	}
 #if LOGGING > 1
 	Detector_General_Log(LOG_VERBOSITY_INTERMEDIATE,"Detector_Setup_Startup:Finished.");
 #endif
