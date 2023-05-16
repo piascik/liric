@@ -846,20 +846,23 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	}
 
 	/**
-	 * Get the status/position of the nudgematic mechanism.
+	 * Get the status/position/offsetsize of the nudgematic mechanism.
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
 	 * @see ngat.raptor.command.StatusNudgematicPositionCommand
 	 * @see ngat.raptor.command.StatusNudgematicStatusCommand
+	 * @see ngat.raptor.command.StatusNudgematicOffsetSizeCommand
 	 */
 	protected void getNudgematicStatus() throws Exception
 	{
 		StatusNudgematicPositionCommand statusNudgematicPositionCommand = null;
 		StatusNudgematicStatusCommand statusNudgematicStatusCommand = null;
+		StatusNudgematicOffsetSizeCommand statusNudgematicOffsetSizeCommand = null;
 		
 		String errorString = null;
 		String nudgematicStatus = null;
+		String nudgematicOffsetSize = null;
 		int returnCode;
 		int nudgematicPosition;
 
@@ -903,6 +906,26 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		nudgematicStatus = statusNudgematicStatusCommand.getNudgematicStatus();
 		hashTable.put("Nudgematic Status",new String(nudgematicStatus));
+		// "status nudgematic offset size" command
+		statusNudgematicOffsetSizeCommand = new StatusNudgematicOffsetSizeCommand();
+		statusNudgematicOffsetSizeCommand.setAddress(cLayerHostname);
+		statusNudgematicOffsetSizeCommand.setPortNumber(cLayerPortNumber);
+		// actually send the command to the C layer
+		statusNudgematicOffsetSizeCommand.sendCommand();
+		// check the parsed reply
+		if(statusNudgematicOffsetSizeCommand.getParsedReplyOK() == false)
+		{
+			returnCode = statusNudgematicOffsetSizeCommand.getReturnCode();
+			errorString = statusNudgematicOffsetSizeCommand.getParsedReply();
+			raptor.log(Logging.VERBOSITY_TERSE,
+				   "getNudgematicStatus:nudgematic status command failed with return code "+
+				   returnCode+" and error string:"+errorString);
+			throw new Exception(this.getClass().getName()+
+					    ":getNudgematicStatus:nudgematic status command failed with return code "+
+					    returnCode+" and error string:"+errorString);
+		}
+		nudgematicOffsetSize = statusNudgematicOffsetSizeCommand.getNudgematicOffsetSize();
+		hashTable.put("Nudgematic Offset Size",new String(nudgematicOffsetSize));
 	}
 
 	/**
