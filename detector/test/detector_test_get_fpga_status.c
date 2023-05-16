@@ -103,16 +103,9 @@ int main(int argc, char *argv[])
 		Detector_General_Error();
 		return 3;
 	}
-	/* open a serial connection. The library connection has to be already open to do this */
-	if(!Detector_Serial_Open())
-	{
-		Detector_General_Error();
-		Detector_Setup_Close();
-		return 3;
-	}
 	/* initialise the serial connection. The library connection has to be already open to do this 
 	** We need to turn checksums/acks on using this command, before Detector_Serial_Command_Get_FPGA_Status
-	** returns the right number of bytes */
+	** returns the right number of bytes. This also opens the internal serial connection. */
 	if(!Detector_Serial_Initialise())
 	{
 		Detector_General_Error();
