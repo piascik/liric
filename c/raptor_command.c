@@ -396,6 +396,93 @@ int Raptor_Command_Config(char *command_string,char **reply_string)
 }
 
 /**
+ * Command to turn the camera head fan on or off: "fan <on|off>".
+ * @param command_string The command. This is not changed during this routine.
+ * @param reply_string The address of a pointer to allocate and set the reply string.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see raptor_general.html#Raptor_General_Log
+ * @see raptor_general.html#Raptor_General_Error_Number
+ * @see raptor_general.html#Raptor_General_Error_String
+ * @see raptor_general.html#Raptor_General_Add_String
+ * @see raptor_general.html#Raptor_General_Add_Integer_To_String
+ * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_Set_Fan
+ */
+int Raptor_Command_Fan(char *command_string,char **reply_string)
+{
+	int retval,onoff,parameter_index;
+	char onoff_string[16];
+
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Fan",LOG_VERBOSITY_TERSE,
+			   "COMMAND","started.");
+#endif
+	/* parse command */
+	retval = sscanf(command_string,"fan %15s",onoff_string);
+	if(retval != 1)
+	{
+		Raptor_General_Error_Number = 548;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_Fan:"
+			"Failed to parse command %s (%d).",command_string,retval);
+		Raptor_General_Error("command","raptor_command.c","Raptor_Command_Fan",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log("command","raptor_command.c","Raptor_Command_Fan",
+				       LOG_VERBOSITY_TERSE,"COMMAND","finished (command parse failed).");
+#endif
+		if(!Raptor_General_Add_String(reply_string,"1 Failed to parse fan command."))
+			return FALSE;
+		return TRUE;
+	}
+	/* parse onoff string */
+	if(strcmp(onoff_string,"on")==0)
+	{
+		onoff = TRUE;
+	}
+	else if(strcmp(onoff_string,"off")==0)
+	{
+		onoff = FALSE;
+	}
+	else
+	{
+		Raptor_General_Error_Number = 549;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_Fan:"
+			"Unknown fan state %s:Failed to parse command %s.",onoff_string,command_string);
+		Raptor_General_Error("command","raptor_command.c","Raptor_Command_Fan",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log_Format("command","raptor_command.c","Raptor_Command_Fan",
+					  LOG_VERBOSITY_TERSE,
+					  "COMMAND","Unknown fan state %s:Failed to parse command %s.",
+					  onoff_string,command_string);
+#endif
+		if(!Raptor_General_Add_String(reply_string,"1 Failed to parse fan command: Unknown fan state."))
+			return FALSE;
+		return TRUE;
+	}
+	/* actually change the fan state */
+	if(!Detector_Temperature_Set_Fan(onoff))
+	{
+		Raptor_General_Error_Number = 550;
+		sprintf(Raptor_General_Error_String,"Raptor_Command_Fan:"
+			"Failed to set fan state.");
+		Raptor_General_Error("command","raptor_command.c","Raptor_Command_Fan",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log("command","raptor_command.c","Raptor_Command_Fan",
+				   LOG_VERBOSITY_TERSE,"COMMAND","Failed to set fan state.");
+#endif
+		if(!Raptor_General_Add_String(reply_string,"1 Failed to set fan state."))
+			return FALSE;
+		return TRUE;
+	}
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log("command","raptor_command.c","Raptor_Command_Fan",LOG_VERBOSITY_TERSE,
+			   "COMMAND","finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * Implementation of FITS Header commands.
  * @param command_string The command. This is not changed during this routine.
  * @param reply_string The address of a pointer to allocate and set the reply string.
@@ -1108,7 +1195,7 @@ int Raptor_Command_MultDark(char *command_string,char **reply_string)
  * <ul>
  * <li>status temperature [get|status]
  * <li>status filterwheel [filter|position|status]
- * <li>status nudgematic [position|status]
+ * <li>status nudgematic [position|status|offsetsize]
  * <li>status exposure [status|count|length|start_time]
  * <li>status exposure [index|multrun|run]
  * </ul>
@@ -1142,9 +1229,12 @@ int Raptor_Command_MultDark(char *command_string,char **reply_string)
  * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_PCB_Get
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#Filter_Wheel_Command_Get_Position
  * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Position_Get
+ * @see ../nudgematic/cdocs/nudgematic_command.html#NUDGEMATIC_OFFSET_SIZE_T
+ * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Offset_Size_Get
  */
 int Raptor_Command_Status(char *command_string,char **reply_string)
 {
+	NUDGEMATIC_OFFSET_SIZE_T offset_size;
 	struct timespec status_time;
 	char time_string[32];
 	char return_string[128];
@@ -1368,6 +1458,27 @@ int Raptor_Command_Status(char *command_string,char **reply_string)
 					strcat(return_string,"moving");
 				else
 					strcat(return_string,"stopped");
+			}
+			else if(strncmp(command_string+command_string_index,"offsetsize",10)==0)
+			{
+				/* this should always work if offset_size is non-NULL */
+				Nudgematic_Command_Offset_Size_Get(&offset_size);
+				if(offset_size == OFFSET_SIZE_NONE)
+				{
+					strcat(return_string,"none");
+				}
+				else if(offset_size == OFFSET_SIZE_SMALL)
+				{
+					strcat(return_string,"small");
+				}
+				else if(offset_size == OFFSET_SIZE_LARGE)
+				{
+					strcat(return_string,"large");
+				}
+				else
+				{
+					strcat(return_string,"UNKNOWN");
+				}
 			}
 			else
 			{

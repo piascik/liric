@@ -3,6 +3,7 @@
 #define RAPTOR_COMMAND_H
 extern int Raptor_Command_Abort(char *command_string,char **reply_string);
 extern int Raptor_Command_Config(char *command_string,char **reply_string);
+extern int Raptor_Command_Fan(char *command_string,char **reply_string);
 extern int Raptor_Command_Fits_Header(char *command_string,char **reply_string);
 extern int Raptor_Command_Multrun(char *command_string,char **reply_string);
 extern int Raptor_Command_MultBias(char *command_string,char **reply_string);
