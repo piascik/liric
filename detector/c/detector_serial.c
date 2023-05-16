@@ -125,7 +125,7 @@ static char Serial_Error_String[DETECTOR_GENERAL_ERROR_STRING_LENGTH] = "";
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Routine toopen the camera-link's internal serial connection to the 
+ * Routine to open the camera-link's internal serial connection to the 
  * Raptor Ninox-640 camera head, and configure it. This call only works if a connection has been opened to the library/driver
  * by calling Detector_Setup_Open.
  * See the Raptor Ninox-640 serial command manual (OWL_640_Cooled_IM_v1_0.pdf), Sec. 4.5.1 Example Initialisation Sequence (P28)
