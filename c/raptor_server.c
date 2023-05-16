@@ -289,6 +289,46 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			}
 		}
 	}
+	else if(strncmp(client_message,"fan",3) == 0)
+	{
+#if RAPTOR_DEBUG > 1
+		Raptor_General_Log("server","raptor_server.c","Raptor_Server_Connection_Callback",
+				       LOG_VERBOSITY_VERY_TERSE,"SERVER","fan detected.");
+#endif
+		/* normal thread priority */
+		if(!Raptor_General_Thread_Priority_Set_Normal())
+		{
+			Raptor_General_Error("server","raptor_server.c",
+						 "Raptor_Server_Connection_Callback",
+						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
+		}
+		retval = Raptor_Command_Fan(client_message,&reply_string);
+		if(retval == TRUE)
+		{
+			retval = Send_Reply(connection_handle,reply_string);
+			if(reply_string != NULL)
+				free(reply_string);
+			if(retval == FALSE)
+			{
+				Raptor_General_Error("server","raptor_server.c",
+							 "Raptor_Server_Connection_Callback",
+							 LOG_VERBOSITY_VERY_TERSE,"SERVER");
+			}
+		}
+		else
+		{
+			Raptor_General_Error("server","raptor_server.c",
+					     "Raptor_Server_Connection_Callback",
+					     LOG_VERBOSITY_VERY_TERSE,"SERVER");
+			retval = Send_Reply(connection_handle, "1 Raptor_Command_Fan failed.");
+			if(retval == FALSE)
+			{
+				Raptor_General_Error("server","raptor_server.c",
+						     "Raptor_Server_Connection_Callback",
+						     LOG_VERBOSITY_VERY_TERSE,"SERVER");
+			}
+		}
+	}
 	else if(strncmp(client_message,"fitsheader",10) == 0)
 	{
 #if RAPTOR_DEBUG > 1
@@ -347,6 +387,7 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tconfig filter <filter_name>\n"
 			   "\tconfig coadd_exp_len <short|long>\n"
 			   "\tconfig nudgematic <none|small|large>\n"
+			   "\tfan <on|off>\n"
 			   "\tfitsheader add <keyword> <boolean|float|integer|string|comment|units> <value>\n"
 			   "\tfitsheader delete <keyword>\n"
 			   "\tfitsheader clear\n"
@@ -357,7 +398,7 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tstatus [name|identification|fits_instrument_code]\n"
 			   "\tstatus temperature [get|pcb]\n"
 			   "\tstatus filterwheel [filter|position|status]\n"
-			   "\tstatus nudgematic [position|status]\n"
+			   "\tstatus nudgematic [offsetsize|position|status]\n"
 			   "\tstatus exposure [status|count|length|start_time]\n"
 			   "\tstatus exposure [index|multrun|run]\n"
 			   "\tshutdown\n");
