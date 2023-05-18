@@ -462,7 +462,12 @@ static void Raptor_Shutdown_Mechanisms(void)
  * <li>We call Raptor_Config_Get_String with key "detector.format_dir" to get the format directory 
  *     (directory containing '.fmt' files used by the Raptor SDK / Detector_Setup_Startup).
  * <li>We call Raptor_Config_Get_Integer with key "detector.coadd_exposure_length.long" to get an initial value for 
- * <li>Call Detector_Setup_Startup to initialise the Detector.
+ *     the coadd exposure length.
+ * <li>We generate a format filename to use as a parameter to Detector_Setup_Startup, based on the above config.
+ * <li>We call Raptor_Config_Get_Boolean to get "detector.fan.enable" to see whether the Detector to turn the detector fan on or off.
+ * <li>We call Detector_Setup_Startup to initialise the Detector.
+ * <li>We call Detector_Exposure_Set_Coadd_Frame_Exposure_Length to set the coadded exposure length to use for exposures.
+ * <li>We call Detector_Temperature_Set_Fan to turn the detector fan on or off.
  * <li>We call Raptor_Config_Get_Character to get the instrument code for Raptor
  *     with property keyword: "file.fits.instrument_code".
  * <li>We call Raptor_Config_Get_String to get the data directory to store generated FITS images in using the
@@ -482,6 +487,7 @@ static void Raptor_Shutdown_Mechanisms(void)
  * @see raptor_general.html#Raptor_General_Log_Format
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Initialise
  * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Startup
+ * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_Set_Fan
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Set_Coadd_Frame_Exposure_Length
  */
 static int Raptor_Startup_Detector(void)
