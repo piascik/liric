@@ -486,7 +486,7 @@ static void Raptor_Shutdown_Mechanisms(void)
  */
 static int Raptor_Startup_Detector(void)
 {
-	int enabled,coadd_exposure_length;
+	int enabled,fan_enabled,coadd_exposure_length;
 	char instrument_code;
 	char format_filename[256];
 	char* data_dir = NULL;
@@ -533,6 +533,14 @@ static int Raptor_Startup_Detector(void)
 	sprintf(format_filename,"%s/rap_%dms.fmt",format_dir_string,coadd_exposure_length);	
 	if(format_dir_string != NULL)
 		free(format_dir_string);
+	/* get whether to turn the fan on of off */
+	if(!Raptor_Config_Get_Boolean("detector.fan.enable",&fan_enabled))
+	{
+		Raptor_General_Error_Number = 15;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Startup_Detector:Failed to get whether the detector fan is enabled for initialisation.");
+		return FALSE;
+	}
 	/* actually do initialisation of the detector library */
 #if RAPTOR_DEBUG > 1
 	Raptor_General_Log_Format("main","raptor_main.c","Raptor_Startup_Detector",LOG_VERBOSITY_TERSE,"STARTUP",
@@ -550,6 +558,18 @@ static int Raptor_Startup_Detector(void)
 		Raptor_General_Error_Number = 3;
 		sprintf(Raptor_General_Error_String,
 			"Raptor_Startup_Detector:Detector_Exposure_Set_Coadd_Frame_Exposure_Length failed.");
+		return FALSE;
+	}
+#if RAPTOR_DEBUG > 1
+	Raptor_General_Log_Format("main","raptor_main.c","Raptor_Startup_Detector",LOG_VERBOSITY_VERBOSE,"STARTUP",
+				  "Calling Detector_Temperature_Set_Fan with fan enabled '%s'.",fan_enabled ? "True" : "False");
+#endif
+	/* turn the detector fan on or off */
+	if(!Detector_Temperature_Set_Fan(fan_enabled))
+	{
+		Raptor_General_Error_Number = 25;
+		sprintf(Raptor_General_Error_String,
+			"Raptor_Startup_Detector:Detector_Temperature_Set_Fan(%d) failed.",fan_enabled);
 		return FALSE;
 	}
 	/* fits filename initialisation */
