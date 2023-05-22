@@ -16,6 +16,7 @@
 #include "detector_fits_filename.h"
 #include "detector_fits_header.h"
 #include "detector_setup.h"
+#include "detector_temperature.h"
 #include "detector_general.h"
 
 /* data types */
@@ -76,6 +77,10 @@ static char FMT_Directory[STRING_LENGTH] = DEFAULT_FMT_DIRECTORY;
  * @see #DEFAULT_FITS_DIRECTORY
  */
 static char FITS_Directory[STRING_LENGTH] = DEFAULT_FITS_DIRECTORY;
+/**
+ * Whether to turn the Raptor Nonox-640 fan on.
+ */
+static int Fan_Enable = TRUE;
 
 /* internal functions */
 static int Parse_Arguments(int argc, char *argv[]);
@@ -96,6 +101,7 @@ static void Help(void);
  * @see #Exposure_Length_Ms
  * @see #FITS_Directory
  * @see #FITS_Filename
+ * @see #Fan_Enable
  * @see ../cdocs/detector_exposure.html#Detector_Exposure_Set_Coadd_Frame_Exposure_Length
  * @see ../cdocs/detector_exposure.html#Detector_Exposure_Expose
  * @see ../cdocs/detector_fits_filename.html#Detector_Fits_Filename_Initialise
@@ -114,6 +120,7 @@ static void Help(void);
  * @see ../cdocs/detector_general.html#Detector_General_Error
  * @see ../cdocs/detector_setup.html#Detector_Setup_Startup
  * @see ../cdocs/detector_setup.html#Detector_Setup_Shutdown
+ * @see ../cdocs/detector_temperature.html#Detector_Temperature_Set_Fan
  */
 int main(int argc, char *argv[])
 {
@@ -137,6 +144,7 @@ int main(int argc, char *argv[])
 	/* create a FITS filename, if one does not already exist */
 	if(strcmp(FITS_Filename,"") == 0)
 	{
+		fprintf(stdout,"detector_test_exposure : Initialising FITS filename.\n");
 		if(!Detector_Fits_Filename_Initialise(DETECTOR_FITS_FILENAME_DEFAULT_INSTRUMENT_CODE,FITS_Directory))
 		{
 			Detector_General_Error();
@@ -159,6 +167,7 @@ int main(int argc, char *argv[])
 			Detector_General_Error();
 			return 7;
 		}
+		fprintf(stdout,"detector_test_exposure : Data will be saved to '%s'.\n",FITS_Filename);
 	}
 	/* initialise fits headers */
 	if(!Detector_Fits_Header_Initialise())
@@ -167,12 +176,21 @@ int main(int argc, char *argv[])
 		return 8;
 	}
 	/* setup coadd exposure length */
+	fprintf(stdout,"detector_test_exposure : Setting Coadd frame exposure length to %d ms.\n",Coadd_Frame_Exposure_Length_Ms);
 	if(!Detector_Exposure_Set_Coadd_Frame_Exposure_Length(Coadd_Frame_Exposure_Length_Ms))
 	{
 		Detector_General_Error();
 		return 9;
 	}
+	/* setup detector fan */
+	fprintf(stdout,"detector_test_exposure : Setting fan to '%s'.\n",Fan_Enable ? "On" : "Off");
+	if(!Detector_Temperature_Set_Fan(Fan_Enable))
+	{
+		Detector_General_Error();
+		return 11;
+	}
 	/* do exposure */
+	fprintf(stdout,"detector_test_exposure : Taking exposure of length %d ms and saving to '%s'.\n",Exposure_Length_Ms,FITS_Filename);
 	if(!Detector_Exposure_Expose(Exposure_Length_Ms,FITS_Filename))
 	{
 		Detector_General_Error();
@@ -199,6 +217,7 @@ int main(int argc, char *argv[])
  * @see #STRING_LENGTH
  * @see #Coadd_Frame_Exposure_Length_Ms
  * @see #Exposure_Length_Ms
+ * @see #Fan_Enable
  * @see #FITS_Directory
  * @see #FITS_Filename
  * @see #FMT_Directory
@@ -243,6 +262,27 @@ static int Parse_Arguments(int argc, char *argv[])
 			else
 			{
 				fprintf(stderr,"Parse_Arguments:-exposure_length requires an exposure length in milliseconds.\n");
+				return FALSE;
+			}
+		}
+		else if((strcmp(argv[i],"-fan")==0))
+		{
+			if((i+1)<argc)
+			{
+				if(strcmp(argv[i+1],"on")==0)
+					Fan_Enable = TRUE;
+				else if(strcmp(argv[i+1],"off")==0)
+					Fan_Enable = FALSE;
+				else
+				{
+					fprintf(stderr,"Parse_Arguments:-fan requires either 'on' or 'off' as an argument.\n");
+					return FALSE;
+				}
+				i++;
+			}
+			else
+			{
+				fprintf(stderr,"Parse_Arguments:-fan requires either 'on' or 'off' as an argument.\n");
 				return FALSE;
 			}
 		}
@@ -328,7 +368,7 @@ static void Help(void)
 	fprintf(stdout,"Detector Test Exposure:Help.\n");
 	fprintf(stdout,"This program takes a series of coadd frames to create an individual exposure using the Raptor Ninox-640 IR detector.\n");
 	fprintf(stdout,"detector_test_exposure -e[posure_length] <ms> [-coadd[_exposure_length] <ms>]\n");
-	fprintf(stdout,"\t[-fmt[_directory] <dir>][-fits_dir[ectory] <dir>][-fits_file[name] <filename>]\n");
+	fprintf(stdout,"\t[-fan <on|off>][-fmt[_directory] <dir>][-fits_dir[ectory] <dir>][-fits_file[name] <filename>]\n");
 	fprintf(stdout,"\t[-help][-l[og_level <0..5>].\n");
 	fprintf(stdout,"\n");
 	fprintf(stdout,"The FITS image to save the data into can specified as a filename (-fits_filename),\n");
@@ -337,4 +377,5 @@ static void Help(void)
 	fprintf(stdout,"this defaults to %d, a valid '.fmt' file for that exposure length must exist \n",
 		DEFAULT_COADD_FRAME_EXPOSURE_LENGTH);
 	fprintf(stdout,"in the directory specified by -fmt_directory (default '%s')\n",DEFAULT_FMT_DIRECTORY);
+	fprintf(stdout,"-fan turns the Ninox-640 fan on or off.\n");
 }
