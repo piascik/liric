@@ -54,6 +54,10 @@ static int Coadd_Frame_Exposure_Length_Ms = DEFAULT_COADD_FRAME_EXPOSURE_LENGTH;
  * @see #DEFAULT_FMT_DIRECTORY
  */
 static char FMT_Directory[STRING_LENGTH] = DEFAULT_FMT_DIRECTORY;
+/**
+ * Whether to turn the Raptor Nonox-640 fan on.
+ */
+static int Fan_Enable = TRUE;
 
 /* internal functions */
 static int Parse_Arguments(int argc, char *argv[]);
@@ -71,6 +75,7 @@ static void Help(void);
  * @see #Log_Level
  * @see #FMT_Directory
  * @see #Coadd_Frame_Exposure_Length_Ms
+ * @see #Fan_Enable
  * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Filter_Level
  * @see ../cdocs/detector_general.html#Detector_General_Set_Log_Filter_Function
  * @see ../cdocs/detector_general.html#Detector_General_Log_Filter_Level_Absolute
@@ -81,6 +86,7 @@ static void Help(void);
  * @see ../cdocs/detector_setup.html#Detector_Setup_Close
  * @see ../cdocs/detector_serial.html#Detector_Serial_Initialise
  * @see ../cdocs/detector_temperature.html#Detector_Temperature_Get
+ * @see ../cdocs/detector_temperature.html#Detector_Temperature_Set_Fan
  */
 int main(int argc, char *argv[])
 {
@@ -108,6 +114,13 @@ int main(int argc, char *argv[])
 		Detector_General_Error();
 		Detector_Setup_Close();
 		return 3;
+	}
+	/* setup detector fan */
+	fprintf(stdout,"detector_test_temperature_ge : Setting fan to '%s'.\n",Fan_Enable ? "On" : "Off");
+	if(!Detector_Temperature_Set_Fan(Fan_Enable))
+	{
+		Detector_General_Error();
+		return 11;
 	}
 	/* get the detector temperature. We must have already initialised the serial device, which causes the 
 	** manufacturers data to be read (including ADC/DAC calibration values), and the temperature software
@@ -138,6 +151,7 @@ int main(int argc, char *argv[])
  * @param argv An array of argument strings.
  * @see #STRING_LENGTH
  * @see #Coadd_Frame_Exposure_Length_Ms
+ * @see #Fan_Enable
  * @see #FMT_Directory
  * @see #Log_Level
  */
@@ -162,6 +176,27 @@ static int Parse_Arguments(int argc, char *argv[])
 			else
 			{
 				fprintf(stderr,"Parse_Arguments:-coadd_exposure_length requires an exposure length in milliseconds (for which a valid .fmt file exists).\n");
+				return FALSE;
+			}
+		}
+		else if((strcmp(argv[i],"-fan")==0))
+		{
+			if((i+1)<argc)
+			{
+				if(strcmp(argv[i+1],"on")==0)
+					Fan_Enable = TRUE;
+				else if(strcmp(argv[i+1],"off")==0)
+					Fan_Enable = FALSE;
+				else
+				{
+					fprintf(stderr,"Parse_Arguments:-fan requires either 'on' or 'off' as an argument.\n");
+					return FALSE;
+				}
+				i++;
+			}
+			else
+			{
+				fprintf(stderr,"Parse_Arguments:-fan requires either 'on' or 'off' as an argument.\n");
 				return FALSE;
 			}
 		}
@@ -219,10 +254,11 @@ static void Help(void)
 	fprintf(stdout,"Detector Test Getting the sensor temperature:Help.\n");
 	fprintf(stdout,"This program tests retrieving the sensor temperature from the Raptor Ninox-640 camera head.\n");
 	fprintf(stdout,"detector_test_temperature_get [-coadd[_exposure_length] <ms>][-fmt[_directory] <dir>]\n");
-	fprintf(stdout,"\t[-help][-l[og_level <0..5>].\n");
+	fprintf(stdout,"\t[-fan <on|off>][-help][-l[og_level <0..5>].\n");
 	fprintf(stdout,"The exposure length of an individual coadd is specified in milliseconds (-coadd_exposure_length),\n");
 	fprintf(stdout,"this defaults to %d, a valid '.fmt' file for that exposure length must exist \n",
 		DEFAULT_COADD_FRAME_EXPOSURE_LENGTH);
 	fprintf(stdout,"The -coadd_exposure_length / -fmt_directory arguments are needed to construct a valid '.fmt. filename, which is needed to open a connection to the XCLIB library.\n");
+	fprintf(stdout,"The -fan <on|off> enables us to turn the fan on or off before monitoring the temeprature, this enables us to keep the fan off (the fan is always turned on when the library is initialised).\n");
 }
 
