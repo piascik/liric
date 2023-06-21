@@ -29,7 +29,7 @@
 /**
  * The default directory containing the '.fmt' format files to use to configure the detector.
  */
-#define DEFAULT_FMT_DIRECTORY               ("/icc/bin/raptor/fmt")
+#define DEFAULT_FMT_DIRECTORY               ("/icc/bin/liric/fmt")
 
 /* internal variables */
 /**
