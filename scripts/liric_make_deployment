@@ -82,7 +82,7 @@ endif
 #
 echo "Creating directory structure..."
 set dir_count = 0
-set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_icc_dir} ${deployment_bin_dir} ${deployment_dir}/icc/tmp ${deployment_dir}/icc/tmp/log_archive ${deployment_dir}/icc/log ${deployment_icc_dir}/config ${deployment_bin_dir}/scripts ${deployment_bin_dir}/liric/scripts ${deployment_bin_dir}/liric/test ${deployment_bin_dir}/liric/fmt ${deployment_bin_dir}/liric/java/ ${deployment_bin_dir}/ics_gui/java ${deployment_bin_dir}/ics_gui/java/wav ${deployment_bin_dir}/liric/c/${HOSTTYPE} ${deployment_bin_dir}/liric/detector/test/${HOSTTYPE} ${deployment_bin_dir}/liric/filter_wheel/test/${HOSTTYPE} ${deployment_bin_dir}/liric/nudgematic/test/${HOSTTYPE} ${deployment_bin_dir}/liric/usb_pio/test/${HOSTTYPE} ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/ccd/misc/${HOSTTYPE} ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/commandserver/test/${HOSTTYPE} ${deployment_bin_dir}/ngatastro/test/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/autobooter/java ${deployment_bin_dir}/ics_util/c/${HOSTTYPE}"
+set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_icc_dir} ${deployment_bin_dir} ${deployment_dir}/icc/tmp ${deployment_dir}/icc/tmp/log_archive ${deployment_dir}/icc/log ${deployment_icc_dir}/config ${deployment_bin_dir}/scripts ${deployment_bin_dir}/liric/scripts ${deployment_bin_dir}/liric/test ${deployment_bin_dir}/liric/fmt ${deployment_bin_dir}/liric/java/ ${deployment_bin_dir}/ics_gui/java ${deployment_bin_dir}/ics_gui/java/wav ${deployment_bin_dir}/liric/c/${HOSTTYPE} ${deployment_bin_dir}/liric/detector/test/${HOSTTYPE} ${deployment_bin_dir}/liric/filter_wheel/test/${HOSTTYPE} ${deployment_bin_dir}/liric/nudgematic/test/${HOSTTYPE} ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/ccd/misc/${HOSTTYPE} ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/commandserver/test/${HOSTTYPE} ${deployment_bin_dir}/ngatastro/test/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/autobooter/java ${deployment_bin_dir}/ics_util/c/${HOSTTYPE}"
 foreach dir ( ${dir_list} )
 	mkdir -p ${dir}
 	if ($status != 0) then
@@ -166,7 +166,7 @@ echo "${java_class_dir_count} Java class directories copied with ${java_class_fi
 # C libraries
 #
 echo "Copying C libraries..."
-set clib_list = "libcfitsio.so libngatastro.so libngatutil.so libestar_config.so liblog_udp.so libcommandserver.so libliric_detector.so libliric_filter_wheel.so libliric_nudgematic.so libliric_usb_pio.so"
+set clib_list = "libcfitsio.so libngatastro.so libngatutil.so libestar_config.so liblog_udp.so libcommandserver.so libliric_detector.so libliric_filter_wheel.so libliric_nudgematic.so"
 set clib_count = 0
 foreach clib ( ${clib_list} )
 	echo "C Library : ${clib}"
@@ -204,7 +204,7 @@ echo "${clib_count} C libraries copied."
 # C programs
 #
 echo "Copying C program directories..."
-set dir_list = "ics_util/c/${HOSTTYPE} ccd/misc/${HOSTTYPE} log_udp/test/${HOSTTYPE} ngatastro/test/${HOSTTYPE} commandserver/test/${HOSTTYPE} liric/c/${HOSTTYPE} liric/detector/test/${HOSTTYPE} liric/filter_wheel/test/${HOSTTYPE} liric/nudgematic/test/${HOSTTYPE} liric/usb_pio/test/${HOSTTYPE}"
+set dir_list = "ics_util/c/${HOSTTYPE} ccd/misc/${HOSTTYPE} log_udp/test/${HOSTTYPE} ngatastro/test/${HOSTTYPE} commandserver/test/${HOSTTYPE} liric/c/${HOSTTYPE} liric/detector/test/${HOSTTYPE} liric/filter_wheel/test/${HOSTTYPE} liric/nudgematic/test/${HOSTTYPE}"
 set dir_count = 0
 set file_count = 0
 # clean out deployment_tmp_dir
