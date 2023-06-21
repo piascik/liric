@@ -1,10 +1,10 @@
 # $Header$
 
 SHELL                   =       /bin/sh
-RAPTOR_HOME		=	raptor
-RAPTOR_SRC_HOME		=	$(LT_SRC_HOME)/$(RAPTOR_HOME)
-RAPTOR_BIN_HOME       	=       $(LT_BIN_HOME)/$(RAPTOR_HOME)
-RAPTOR_DOC_HOME		=	$(LT_DOC_HOME)/$(RAPTOR_HOME)
+LIRIC_HOME		=	liric
+LIRIC_SRC_HOME		=	$(LT_SRC_HOME)/$(LIRIC_HOME)
+LIRIC_BIN_HOME       	=       $(LT_BIN_HOME)/$(LIRIC_HOME)
+LIRIC_DOC_HOME		=	$(LT_DOC_HOME)/$(LIRIC_HOME)
 
 # log_udp library (log_udp.h is included for verbosity settings)
 LOG_UDP_HOME		= log_udp

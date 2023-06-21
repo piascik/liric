@@ -1,6 +1,6 @@
-# Raptor
+# LIRIC
 
-Source code for the Raptor instrument.
+Source code for the Liverpool Infra Red Imaging Camera (LIRIC) instrument.
 
 This is a near infra-red imaging instrument, based around a Raptor Photonics Ninox 640 camera, with a shortwave indium gallium arsenide (InGaAs) detector.
 
@@ -9,15 +9,15 @@ camera body slightly in x and y in the image plane, enabling us to do sky offset
 
 ## Directory Structure
 
-* **fmt** Raptor configuration files
+* **fmt** Raptor Photonics Ninox 640 configuration files
 * **c** This contains the source code for the C layer, that is sent commands from the Java software and controls the mechanisms.
 * **include** The header files for the C layer source code.
 * **scripts** Deployment and engineering scripts.
 * **java** This contains the source code for the robotic layer, which receives commands from the LT robotic control system.
-* **detector** This is a C library that uses the Raptor SDK to provide a library to control the Raptor detector.
+* **detector** This is a C library that uses the Raptor SDK to provide a library to control the Raptor Ninox 640 detector.
 * **filter_wheel** Starlight Express filter wheel control library
 * **nudgematic** This contains code for a C library/test programs to move the nudgematic offseting mechanism. This is done by sending text commands over a USB link to an Arduino Mega, which has a motor controller board to control two motors moving the offset stage, and analogue inputs to read the motor output shaft encoders to determine the offset stage's position in x and y.
-* **usb_pio** Library to communicate with the BMCM USB-PIO controller, used to control the BMCM OR8 IO board. This is no longer used by Raptor.
+* **usb_pio** Library to communicate with the BMCM USB-PIO controller, used to control the BMCM OR8 IO board. This is no longer used by LIRIC.
 
 The Makefile.common file is included in Makefile's to provide common root directory information.
 
