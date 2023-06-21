@@ -8,7 +8,9 @@
 #include "nudgematic_connection.h"
 
 /**
- * Test program to move the nudgematic mechanism to a specified position.
+ * Test program to send a command to the nudgematic, and receive a reply. The reply loop code developed here was used
+ * as a basis for the higher level Nudgematic_Connection_Read_Line API.
+ * @see ../cdocs/nudgematic_connection.html#Nudgematic_Connection_Read_Line
  */
 /**
  * Length of some of the strings used in this program.

@@ -8,7 +8,7 @@
 #include "nudgematic_connection.h"
 
 /**
- * Test program to move the nudgematic mechanism to a specified position.
+ * Test program to send a command to the nudgematic Arduino, and receive it's reply.
  */
 /**
  * Length of some of the strings used in this program.
