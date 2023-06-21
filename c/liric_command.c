@@ -1633,7 +1633,7 @@ int Liric_Command_Status(char *command_string,char **reply_string)
 }
 
 /**
- * On a change in coadd exposure length, the whole connection to xclib / the detecot needs to be closed and
+ * On a change in coadd exposure length, the whole connection to xclib / the detector needs to be closed and
  * re-opened again: the library needs to read a different format '.fmt' file.
  * <ul>
  * <li>We retrieve the "detector.enable" flag from config. If it is FALSE (detector not enabled) we just return from
