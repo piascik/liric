@@ -1,8 +1,8 @@
-/* raptor_multrun.c
-** Raptor multrun routines
+/* liric_multrun.c
+** Liric multrun routines
 */
 /**
- * Multrun routines for the raptor program.
+ * Multrun routines for the liric program.
  * @author Chris Mottram
  * @version $Revision$
  */
@@ -37,10 +37,10 @@
 
 #include "nudgematic_command.h"
 
-#include "raptor_config.h"
-#include "raptor_fits_header.h"
-#include "raptor_general.h"
-#include "raptor_multrun.h"
+#include "liric_config.h"
+#include "liric_fits_header.h"
+#include "liric_general.h"
+#include "liric_multrun.h"
 
 /* hash defines */
 /**
@@ -54,7 +54,7 @@
 
 /* data types */
 /**
- * Data type holding local data to raptor multruns.
+ * Data type holding local data to liric multruns.
  * <dl>
  * <dt>CCD_Temperature</dt> <dd>A copy of the current CCD temperature, taken at the start of a multrun. 
  *                              Used to populate FITS headers. In degrees centigrade.</dd>
@@ -77,7 +77,7 @@ struct Multrun_Struct
  */
 static char rcsid[] = "$Id$";
 /**
- * Multrun Data holding local data to raptor multruns.
+ * Multrun Data holding local data to liric multruns.
  * <dl>
  * <dt>CCD_Temperature</dt>               <dd>0.0</dd>
  * <dt>Image_Index</dt>                   <dd>0</dd>
@@ -112,7 +112,7 @@ static int Multrun_Exposure_Fits_Headers_Set(void);
  * <ul>
  * <li>We check the input arguments are valid.
  * <li>We initialise the internal variables.
- * <li>We retrieve the multrun flipping configuration fron config ("raptor.multrun.image.flip.[x|y]" and configure
+ * <li>We retrieve the multrun flipping configuration fron config ("liric.multrun.image.flip.[x|y]" and configure
  *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multrun.
  * <li>We figure out the DETECTOR_FITS_FILENAME_EXPOSURE_TYPE to use, based on the do_standard flag.
@@ -121,7 +121,7 @@ static int Multrun_Exposure_Fits_Headers_Set(void);
  * <li>We enter a for loop, looping Multrun_Data.Image_Index over Multrun_Data.Image_Count.
  *     <ul>
  *     <li>We check Moptop_Abort to see if the multrun has been aborted by another command thread.
- *     <li>If the nudgematic is enabled (Raptor_Config_Nudgematic_Is_Enabled), 
+ *     <li>If the nudgematic is enabled (Liric_Config_Nudgematic_Is_Enabled), 
  *         we move the nudgematic by calling Nudgematic_Command_Position_Set.
  *     <li>We call Detector_Fits_Filename_Next_Run to increment the run number in the FITS filename generation code.
  *     <li>We call Detector_Fits_Filename_Get_Filename to generate a suitable FITS image filename.
@@ -143,20 +143,20 @@ static int Multrun_Exposure_Fits_Headers_Set(void);
  *        of one frame/exposure in the multrun. This list will need freeing.
  * @param filename_count The address of an integer, on a successful return from this routine contains the
  *        number of filenames in filename_list.
- * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
- *         Raptor_General_Error_String should be set.
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Liric_General_Error_Number and
+ *         Liric_General_Error_String should be set.
  * @see #Moptop_Abort
  * @see #Multrun_In_Progress
  * @see #Multrun_Data
  * @see #Multrun_Fits_Headers_Set
  * @see #Multrun_Exposure_Fits_Headers_Set
- * @see raptor_config.html#Raptor_Config_Get_Boolean
- * @see raptor_config.html#Raptor_Config_Nudgematic_Is_Enabled
- * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @see liric_config.html#Liric_Config_Get_Boolean
+ * @see liric_config.html#Liric_Config_Nudgematic_Is_Enabled
+ * @see liric_general.html#LIRIC_GENERAL_IS_BOOLEAN
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../nudgematic/cdocs/nudgematic_command.html#NUDGEMATIC_POSITION_COUNT
  * @see ../nudgematic/cdocs/nudgematic_command.html#Nudgematic_Command_Position_Set
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Flip_Set
@@ -168,7 +168,7 @@ static int Multrun_Exposure_Fits_Headers_Set(void);
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Get_Filename
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_List_Add
  */
-int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
+int Liric_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 		   char ***filename_list,int *filename_count)
 {
 	char fits_filename[256];
@@ -179,39 +179,39 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	/* check arguments */
 	if(exposure_length_ms < 1)
 	{
-		Raptor_General_Error_Number = 600;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Multrun:exposure length was too short (%d).",exposure_length_ms);
+		Liric_General_Error_Number = 600;
+		sprintf(Liric_General_Error_String,
+			"Liric_Multrun:exposure length was too short (%d).",exposure_length_ms);
 		return FALSE;
 	}
 	if(exposure_count < 1)
 	{
-		Raptor_General_Error_Number = 601;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Multrun:exposure count was too small (%d).",exposure_count);
+		Liric_General_Error_Number = 601;
+		sprintf(Liric_General_Error_String,
+			"Liric_Multrun:exposure count was too small (%d).",exposure_count);
 		return FALSE;
 	}
-	if(!RAPTOR_GENERAL_IS_BOOLEAN(do_standard))
+	if(!LIRIC_GENERAL_IS_BOOLEAN(do_standard))
 	{
-		Raptor_General_Error_Number = 602;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Multrun:do_standard was not a valid boolean (%d).",do_standard);
+		Liric_General_Error_Number = 602;
+		sprintf(Liric_General_Error_String,
+			"Liric_Multrun:do_standard was not a valid boolean (%d).",do_standard);
 		return FALSE;
 	}
 	if(filename_list == NULL)	
 	{
-		Raptor_General_Error_Number = 603;
-		sprintf(Raptor_General_Error_String,"Raptor_Multrun:filename_list was NULL.");
+		Liric_General_Error_Number = 603;
+		sprintf(Liric_General_Error_String,"Liric_Multrun:filename_list was NULL.");
 		return FALSE;
 	}
 	if(filename_count == NULL)	
 	{
-		Raptor_General_Error_Number = 604;
-		sprintf(Raptor_General_Error_String,"Raptor_Multrun:filename_count was NULL.");
+		Liric_General_Error_Number = 604;
+		sprintf(Liric_General_Error_String,"Liric_Multrun:filename_count was NULL.");
 		return FALSE;
 	}
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log_Format("multrun","raptor_multrun.c","Raptor_Multrun",LOG_VERBOSITY_TERSE,
+#if LIRIC_DEBUG > 1
+	Liric_General_Log_Format("multrun","liric_multrun.c","Liric_Multrun",LOG_VERBOSITY_TERSE,
 				  "MULTRUN","Started with exposure_length %d ms, exposure count %d.",
 				  exposure_length_ms,exposure_count);
 #endif
@@ -223,17 +223,17 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	(*filename_list) = NULL;
 	(*filename_count) = 0;
 	/* configure flipping of output image */
-	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.x",&flip_x))
+	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.x",&flip_x))
 		return FALSE;		
-	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.y",&flip_y))
+	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.y",&flip_y))
 		return FALSE;		
 	Detector_Exposure_Flip_Set(flip_x,flip_y);
 	/* intialise FITS filenames for new multrun*/
 	if(!Detector_Fits_Filename_Next_Multrun())
 	{
 		Multrun_In_Progress = FALSE;
-		Raptor_General_Error_Number = 605;
-		sprintf(Raptor_General_Error_String,"Raptor_Multrun:Failed to initialise FITS filename multrun.");
+		Liric_General_Error_Number = 605;
+		sprintf(Liric_General_Error_String,"Liric_Multrun:Failed to initialise FITS filename multrun.");
 		return FALSE;
 	}
 	if(do_standard)
@@ -256,19 +256,19 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 		if(Moptop_Abort)
 		{
 			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 606;
-			sprintf(Raptor_General_Error_String,"Raptor_Multrun:Aborted.");
+			Liric_General_Error_Number = 606;
+			sprintf(Liric_General_Error_String,"Liric_Multrun:Aborted.");
 			return FALSE;
 		}
 		/* move to next nudgematic position */
-		if(Raptor_Config_Nudgematic_Is_Enabled())
+		if(Liric_Config_Nudgematic_Is_Enabled())
 		{
 			if(!Nudgematic_Command_Position_Set(nudgematic_position_index))
 			{
 				Multrun_In_Progress = FALSE;
-				Raptor_General_Error_Number = 607;
-				sprintf(Raptor_General_Error_String,
-					"Raptor_Multrun:Failed to move Nudgematic to position %d.",
+				Liric_General_Error_Number = 607;
+				sprintf(Liric_General_Error_String,
+					"Liric_Multrun:Failed to move Nudgematic to position %d.",
 					nudgematic_position_index);
 				return FALSE;
 			}
@@ -277,8 +277,8 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 		if(!Detector_Fits_Filename_Next_Run())
 		{
 			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 608;
-			sprintf(Raptor_General_Error_String,"Raptor_Multrun:Failed to generate next FITS filename run number.");
+			Liric_General_Error_Number = 608;
+			sprintf(Liric_General_Error_String,"Liric_Multrun:Failed to generate next FITS filename run number.");
 			return FALSE;
 		}
 		if(!Detector_Fits_Filename_Get_Filename(fits_filename_exposure_type,
@@ -286,16 +286,16 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 							fits_filename,256))
 		{
 			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 609;
-			sprintf(Raptor_General_Error_String,"Raptor_Multrun:Failed to generate next FITS filename.");
+			Liric_General_Error_Number = 609;
+			sprintf(Liric_General_Error_String,"Liric_Multrun:Failed to generate next FITS filename.");
 			return FALSE;
 		}
 		/* check for aborts */
 		if(Moptop_Abort)
 		{
 			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 610;
-			sprintf(Raptor_General_Error_String,"Raptor_Multrun:Aborted.");
+			Liric_General_Error_Number = 610;
+			sprintf(Liric_General_Error_String,"Liric_Multrun:Aborted.");
 			return FALSE;
 		}
 		/* do any per-multrun frame FITS header changes here */
@@ -308,9 +308,9 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 		if(!Detector_Exposure_Expose(exposure_length_ms,fits_filename))
 		{
 			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 611;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Multrun:Failed to take exposure %d of %d ms with filename '%s'.",
+			Liric_General_Error_Number = 611;
+			sprintf(Liric_General_Error_String,
+				"Liric_Multrun:Failed to take exposure %d of %d ms with filename '%s'.",
 				Multrun_Data.Image_Index,exposure_length_ms,fits_filename);
 			return FALSE;
 		}
@@ -318,8 +318,8 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 		if(!Detector_Fits_Filename_List_Add(fits_filename,filename_list,filename_count))
 		{
 			Multrun_In_Progress = FALSE;
-			Raptor_General_Error_Number = 612;
-			sprintf(Raptor_General_Error_String,"Raptor_Multrun:Failed to add filename '%s' to list of length %d.",
+			Liric_General_Error_Number = 612;
+			sprintf(Liric_General_Error_String,"Liric_Multrun:Failed to add filename '%s' to list of length %d.",
 				fits_filename,(*filename_count));
 			return FALSE;
 		}
@@ -330,8 +330,8 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
 	}/* end for on Multrun_Data.Image_Index */
 	/* we have finished the multrun */
 	Multrun_In_Progress = FALSE;
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("multrun","raptor_multrun.c","Raptor_Multrun",LOG_VERBOSITY_TERSE,"MULTRUN",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("multrun","liric_multrun.c","Liric_Multrun",LOG_VERBOSITY_TERSE,"MULTRUN",
 			   "Finished.");
 #endif		
 	return TRUE;
@@ -343,7 +343,7 @@ int Raptor_Multrun(int exposure_length_ms,int exposure_count,int do_standard,
  *         However, it currently always succeeds (returns TRUE).
  * @see #Moptop_Abort
  */
-int Raptor_Multrun_Abort(void)
+int Liric_Multrun_Abort(void)
 {
 	Moptop_Abort = TRUE;
 	return TRUE;
@@ -354,7 +354,7 @@ int Raptor_Multrun_Abort(void)
  * @return A boolean, TRUE if a multrun is in progress and FALSE if it is not in progress..
  * @see #Multrun_In_Progress
  */
-int Raptor_Multrun_In_Progress(void)
+int Liric_Multrun_In_Progress(void)
 {
 	return Multrun_In_Progress;
 }
@@ -364,7 +364,7 @@ int Raptor_Multrun_In_Progress(void)
  * @return The number of images/frames expected.
  * @see #Multrun_Data
  */
-int Raptor_Multrun_Count_Get(void)
+int Liric_Multrun_Count_Get(void)
 {
 	return Multrun_Data.Image_Count;
 }
@@ -374,7 +374,7 @@ int Raptor_Multrun_Count_Get(void)
  * @return The exposure index in the multrun.
  * @see #Multrun_Data
  */
-int Raptor_Multrun_Exposure_Index_Get(void)
+int Liric_Multrun_Exposure_Index_Get(void)
 {
 	return Multrun_Data.Image_Index;
 }
@@ -387,19 +387,19 @@ int Raptor_Multrun_Exposure_Index_Get(void)
  * Routine to collect and insert FITS headers pertaining to the whole multrun.
  * @param exposure_count The number of exposure to perform in the multrun.
  * @param do_standard A boolean, TRUE if the multrun is a standard, and FALSE if it is not. 
- * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
- *         Raptor_General_Error_String should be set.
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Liric_General_Error_Number and
+ *         Liric_General_Error_String should be set.
  * @see #CENTIGRADE_TO_KELVIN
  * @see #Multrun_Data
- * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
- * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
- * @see raptor_fits_header.html#Raptor_Fits_Header_Logical_Add
- * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
- * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @see liric_config.html#Liric_Config_Filter_Wheel_Is_Enabled
+ * @see liric_fits_header.html#Liric_Fits_Header_Integer_Add
+ * @see liric_fits_header.html#Liric_Fits_Header_Logical_Add
+ * @see liric_fits_header.html#Liric_Fits_Header_String_Add
+ * @see liric_general.html#LIRIC_GENERAL_IS_BOOLEAN
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
  * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_X
  * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_Y
@@ -415,32 +415,32 @@ static int Multrun_Fits_Headers_Set(int exposure_count,int do_standard)
 		
 	if(exposure_count < 1)
 	{
-		Raptor_General_Error_Number = 613;
-		sprintf(Raptor_General_Error_String,
+		Liric_General_Error_Number = 613;
+		sprintf(Liric_General_Error_String,
 			"Multrun_Fits_Headers_Set:exposure count was too small (%d).",exposure_count);
 		return FALSE;
 	}
-	if(!RAPTOR_GENERAL_IS_BOOLEAN(do_standard))
+	if(!LIRIC_GENERAL_IS_BOOLEAN(do_standard))
 	{
-		Raptor_General_Error_Number = 614;
-		sprintf(Raptor_General_Error_String,
+		Liric_General_Error_Number = 614;
+		sprintf(Liric_General_Error_String,
 			"Multrun_Fits_Headers_Set:do_standard was not a valid boolean (%d).",do_standard);
 		return FALSE;
 	}
 	/* OBSTYPE */
 	if(do_standard)
-		retval = Raptor_Fits_Header_String_Add("OBSTYPE","STANDARD",NULL);
+		retval = Liric_Fits_Header_String_Add("OBSTYPE","STANDARD",NULL);
 	else
-		retval = Raptor_Fits_Header_String_Add("OBSTYPE","EXPOSE",NULL);
+		retval = Liric_Fits_Header_String_Add("OBSTYPE","EXPOSE",NULL);
 	if(retval == FALSE)
 		return FALSE;
 	/* filter wheel position keywords */
-	if(Raptor_Config_Filter_Wheel_Is_Enabled())
+	if(Liric_Config_Filter_Wheel_Is_Enabled())
 	{
 		if(!Filter_Wheel_Command_Get_Position(&filter_wheel_position))
 		{
-			Raptor_General_Error_Number = 615;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
+			Liric_General_Error_Number = 615;
+			sprintf(Liric_General_Error_String,"Multrun_Fits_Headers_Set:"
 					"Failed to get filter wheel position.");
 			return FALSE;
 			
@@ -448,38 +448,38 @@ static int Multrun_Fits_Headers_Set(int exposure_count,int do_standard)
 		/* FILTER1 */
 		if(!Filter_Wheel_Config_Position_To_Name(filter_wheel_position,filter_name_string))
 		{
-			Raptor_General_Error_Number = 616;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
+			Liric_General_Error_Number = 616;
+			sprintf(Liric_General_Error_String,"Multrun_Fits_Headers_Set:"
 				"Failed to get filter wheel name from position %d.",filter_wheel_position);
 			return FALSE;
 		}
-		if(!Raptor_Fits_Header_String_Add("FILTER1",filter_name_string,NULL))
+		if(!Liric_Fits_Header_String_Add("FILTER1",filter_name_string,NULL))
 			return FALSE;
 		/* FILTERI1 */
 		if(!Filter_Wheel_Config_Position_To_Id(filter_wheel_position,filter_name_string))
 		{
-			Raptor_General_Error_Number = 617;
-			sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:"
+			Liric_General_Error_Number = 617;
+			sprintf(Liric_General_Error_String,"Multrun_Fits_Headers_Set:"
 				"Failed to get filter wheel Id from position %d.",filter_wheel_position);
 			return FALSE;
 		}
-		if(!Raptor_Fits_Header_String_Add("FILTERI1",filter_name_string,NULL))
+		if(!Liric_Fits_Header_String_Add("FILTERI1",filter_name_string,NULL))
 			return FALSE;
 	}
 	else
 	{
 		/* FILTER1 */
-		if(!Raptor_Fits_Header_String_Add("FILTER1","UNKNOWN",NULL))
+		if(!Liric_Fits_Header_String_Add("FILTER1","UNKNOWN",NULL))
 			return FALSE;
 		/* FILTERI1 */
-		if(!Raptor_Fits_Header_String_Add("FILTERI1","UNKNOWN",NULL))
+		if(!Liric_Fits_Header_String_Add("FILTERI1","UNKNOWN",NULL))
 			return FALSE;
 	}
 	/* RUNNUM */
-	if(!Raptor_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
+	if(!Liric_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
 		return FALSE;
 	/* EXPTOTAL */
-	if(!Raptor_Fits_Header_Integer_Add("EXPTOTAL",Multrun_Data.Image_Count,
+	if(!Liric_Fits_Header_Integer_Add("EXPTOTAL",Multrun_Data.Image_Count,
 					   "Total number of exposures within Multrun"))
 		return FALSE;
 	/* CONFIGID diddly TODO in Java layer */
@@ -487,68 +487,68 @@ static int Multrun_Fits_Headers_Set(int exposure_count,int do_standard)
 	/* CCDSTEMP */
 	if(!Detector_Temperature_Get_TEC_Setpoint(&temperature))
 	{
-		Raptor_General_Error_Number = 618;
-		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get TEC set-point.");
+		Liric_General_Error_Number = 618;
+		sprintf(Liric_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get TEC set-point.");
 		return FALSE;
 	}
-	if(!Raptor_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"[Kelvin] Required temperature."))
+	if(!Liric_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"[Kelvin] Required temperature."))
 		return FALSE;	
 	/* CCDATEMP */
 	if(!Detector_Temperature_Get(&(Multrun_Data.CCD_Temperature)))
 	{
-		Raptor_General_Error_Number = 619;
-		sprintf(Raptor_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get detector temperature.");
+		Liric_General_Error_Number = 619;
+		sprintf(Liric_General_Error_String,"Multrun_Fits_Headers_Set:Failed to get detector temperature.");
 		return FALSE;
 	}
-	if(!Raptor_Fits_Header_Float_Add("CCDATEMP",Multrun_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
+	if(!Liric_Fits_Header_Float_Add("CCDATEMP",Multrun_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
 					 "[Kelvin] Actual temperature."))
 		return FALSE;	
 	/* DETECTOR diddly TODO in Java layer */
 	/* CCDXBIN */
-	if(!Raptor_Fits_Header_Integer_Add("CCDXBIN",1,"X binning factor"))
+	if(!Liric_Fits_Header_Integer_Add("CCDXBIN",1,"X binning factor"))
 		return FALSE;
 	/* CCDYBIN */
-	if(!Raptor_Fits_Header_Integer_Add("CCDYBIN",1,"Y binning factor"))
+	if(!Liric_Fits_Header_Integer_Add("CCDYBIN",1,"Y binning factor"))
 		return FALSE;
 	/* CCDWMODE */
-	if(!Raptor_Fits_Header_Logical_Add("CCDWMODE",FALSE,"Using a Window (always false for Raptor)"))
+	if(!Liric_Fits_Header_Logical_Add("CCDWMODE",FALSE,"Using a Window (always false for Liric)"))
 		return FALSE;
 	/* CCDXIMSI */
-	if(!Raptor_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X image size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X image size"))
 		return FALSE;
 	/* CCDYIMSI */
-	if(!Raptor_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y image size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y image size"))
 		return FALSE;
 	/* CCDWXOFF */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWXOFF",0,"[pixels] X window offset"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWXOFF",0,"[pixels] X window offset"))
 		return FALSE;
 	/* CCDWYOFF */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWYOFF",0,"[pixels] Y window offset"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWYOFF",0,"[pixels] Y window offset"))
 		return FALSE;
 	/* CCDWXSIZ */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X window size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X window size"))
 		return FALSE;
 	/* CCDWYSIZ */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y window size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y window size"))
 		return FALSE;
 	return TRUE;
 }
 
 /**
  * Routine to collect and insert FITS headers pertaining to the current exposure in the multrun.
- * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
- *         Raptor_General_Error_String should be set.
- * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Liric_General_Error_Number and
+ *         Liric_General_Error_String should be set.
+ * @see liric_fits_header.html#Liric_Fits_Header_Integer_Add
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Run_Get
  */
 static int Multrun_Exposure_Fits_Headers_Set(void)
 {
 	/* EXPNUM */
-	if(!Raptor_Fits_Header_Integer_Add("EXPNUM",Detector_Fits_Filename_Run_Get(),"Number of exposure within Multrun"))
+	if(!Liric_Fits_Header_Integer_Add("EXPNUM",Detector_Fits_Filename_Run_Get(),"Number of exposure within Multrun"))
 		return FALSE;
 	return TRUE;
 }

@@ -4,11 +4,11 @@ include ../detector/Makefile.common
 include ../filter_wheel/Makefile.common
 include ../nudgematic/Makefile.common
 
-BINDIR			= $(RAPTOR_BIN_HOME)/c/$(HOSTTYPE)
-INCDIR 			= $(RAPTOR_SRC_HOME)/include
-DOCSDIR 		= $(RAPTOR_DOC_HOME)/cdocs
+BINDIR			= $(LIRIC_BIN_HOME)/c/$(HOSTTYPE)
+INCDIR 			= $(LIRIC_SRC_HOME)/include
+DOCSDIR 		= $(LIRIC_DOC_HOME)/cdocs
 
-DEBUG_CFLAGS		= -DRAPTOR_DEBUG=10
+DEBUG_CFLAGS		= -DLIRIC_DEBUG=10
 
 # log_udp library
 LOG_UDP_CFLAGS		= -I$(LOG_UDP_SRC_HOME)/include
@@ -52,9 +52,9 @@ CFLAGS 			= -g -I$(INCDIR) $(DEBUG_CFLAGS) $(LOG_UDP_CFLAGS) \
 # $(USB_PIO_CFLAGS) 
 DOCFLAGS 		= -static
 
-EXE_SRCS		= raptor_main.c
-OBJ_SRCS		= raptor_general.c raptor_config.c raptor_server.c raptor_fits_header.c raptor_command.c \
-			  raptor_multrun.c raptor_bias_dark.c
+EXE_SRCS		= liric_main.c
+OBJ_SRCS		= liric_general.c liric_config.c liric_server.c liric_fits_header.c liric_command.c \
+			  liric_multrun.c liric_bias_dark.c
 
 
 
@@ -62,15 +62,15 @@ SRCS			= $(EXE_SRCS) $(OBJ_SRCS)
 HEADERS			= $(OBJ_SRCS:%.c=$(INCDIR)/%.h)
 EXE_OBJS		= $(EXE_SRCS:%.c=$(BINDIR)/%.o)
 OBJS			= $(SRCS:%.c=$(BINDIR)/%.o)
-EXES			= $(BINDIR)/raptor
+EXES			= $(BINDIR)/liric
 DOCS 			= $(SRCS:%.c=$(DOCSDIR)/%.html)
-CONFIG_SRCS		= raptor.raptor.c.properties
+CONFIG_SRCS		= liric1.liric.c.properties
 CONFIG_BINS		= $(CONFIG_SRCS:%.properties=$(BINDIR)/%.properties)
 
 
 top: $(EXES) $(CONFIG_BINS) docs
 
-$(BINDIR)/raptor: $(OBJS)
+$(BINDIR)/liric: $(OBJS)
 	$(CC) $^ -o $@  -L$(LT_LIB_HOME) $(COMMAND_SERVER_LDFLAGS) \
 		$(DETECTOR_LDFLAGS) $(FILTER_WHEEL_LDFLAGS) $(NUDGEMATIC_LDFLAGS) \
 		$(LOG_UDP_LDFLAGS)  $(CFITSIO_LDFLAGS)  $(MJD_LDFLAGS) \

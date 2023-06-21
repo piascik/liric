@@ -1,8 +1,8 @@
-/* raptor_bias_dark.c
-** Raptor bias and dark routines
+/* liric_bias_dark.c
+** Liric bias and dark routines
 */
 /**
- * Bias and Dark routines for the raptor program.
+ * Bias and Dark routines for the liric program.
  * @author Chris Mottram
  * @version $Revision$
  */
@@ -36,11 +36,11 @@
 #include "filter_wheel_config.h"
 
 
-#include "raptor_command.h"
-#include "raptor_config.h"
-#include "raptor_fits_header.h"
-#include "raptor_general.h"
-#include "raptor_bias_dark.h"
+#include "liric_command.h"
+#include "liric_config.h"
+#include "liric_fits_header.h"
+#include "liric_general.h"
+#include "liric_bias_dark.h"
 
 /* hash defines */
 /**
@@ -54,7 +54,7 @@
 
 /* data types */
 /**
- * Data type holding local data to raptor biases and darks.
+ * Data type holding local data to liric biases and darks.
  * <dl>
  * <dt>CCD_Temperature</dt> <dd>A copy of the current CCD temperature, taken at the start of the bias/dark. 
  *                              Used to populate FITS headers. In degrees centigrade.</dd>
@@ -79,7 +79,7 @@ struct Bias_Dark_Struct
  */
 static char rcsid[] = "$Id$";
 /**
- * Bias/Dark Data holding local data to raptor multbias/multdarks.
+ * Bias/Dark Data holding local data to liric multbias/multdarks.
  * <dl>
  * <dt>CCD_Temperature</dt>               <dd>0.0</dd>
  * <dt>Image_Index</dt>                   <dd>0</dd>
@@ -114,11 +114,11 @@ static int Bias_Dark_Exposure_Fits_Headers_Set(void);
  * <ul>
  * <li>We check the input arguments are valid.
  * <li>We initialise the internal variables.
- * <li>We retrieve the multrun flipping configuration fron config ("raptor.multrun.image.flip.[x|y]" and configure
+ * <li>We retrieve the multrun flipping configuration fron config ("liric.multrun.image.flip.[x|y]" and configure
  *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We move the filter wheel (if configured) to the mirror position.
  * <li>We re-configure the detector to use coadds of a minimum per-coadd exposure length, 
- *     by calling Raptor_Command_Initialise_Detector with coadd exposure length string "bias".
+ *     by calling Liric_Command_Initialise_Detector with coadd exposure length string "bias".
  * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new Multbias.
  * <li>We call Bias_Dark_Fits_Headers_Set to make any per-multbias FITS header changes here.
  * <li>We take a multbias start timestamp.
@@ -140,21 +140,21 @@ static int Bias_Dark_Exposure_Fits_Headers_Set(void);
  *        of one frame/exposure in the multbias. This list will need freeing.
  * @param filename_count The address of an integer, on a successful return from this routine contains the
  *        number of filenames in filename_list.
- * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
- *         Raptor_General_Error_String should be set.
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Liric_General_Error_Number and
+ *         Liric_General_Error_String should be set.
  * @see #Moptop_Abort
  * @see #Bias_Dark_In_Progress
  * @see #Bias_Dark_Data
  * @see #Bias_Dark_Fits_Headers_Set
  * @see #Bias_Dark_Exposure_Fits_Headers_Set
- * @see raptor_command.html#Raptor_Command_Initialise_Detector
- * @see raptor_config.html#Raptor_Config_Get_Boolean
- * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
- * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @see liric_command.html#Liric_Command_Initialise_Detector
+ * @see liric_config.html#Liric_Config_Get_Boolean
+ * @see liric_config.html#Liric_Config_Filter_Wheel_Is_Enabled
+ * @see liric_general.html#LIRIC_GENERAL_IS_BOOLEAN
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Flip_Set
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Bias
  * @see ../detector/cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_PIPELINE_FLAG
@@ -166,7 +166,7 @@ static int Bias_Dark_Exposure_Fits_Headers_Set(void);
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Name_To_Position
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#ilter_Wheel_Command_Move
  */
-int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *filename_count)
+int Liric_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *filename_count)
 {
 	char fits_filename[256];
 	int flip_x,flip_y,mirror_filter_wheel_position;
@@ -174,25 +174,25 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 	/* check arguments */
 	if(exposure_count < 1)
 	{
-		Raptor_General_Error_Number = 711;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Bias_Dark_MultBias:exposure count was too small (%d).",exposure_count);
+		Liric_General_Error_Number = 711;
+		sprintf(Liric_General_Error_String,
+			"Liric_Bias_Dark_MultBias:exposure count was too small (%d).",exposure_count);
 		return FALSE;
 	}
 	if(filename_list == NULL)	
 	{
-		Raptor_General_Error_Number = 712;
-		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:filename_list was NULL.");
+		Liric_General_Error_Number = 712;
+		sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultBias:filename_list was NULL.");
 		return FALSE;
 	}
 	if(filename_count == NULL)	
 	{
-		Raptor_General_Error_Number = 713;
-		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:filename_count was NULL.");
+		Liric_General_Error_Number = 713;
+		sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultBias:filename_count was NULL.");
 		return FALSE;
 	}
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log_Format("multbias","raptor_bias_dark.c","Raptor_Bias_Dark_MultBias",LOG_VERBOSITY_TERSE,
+#if LIRIC_DEBUG > 1
+	Liric_General_Log_Format("multbias","liric_bias_dark.c","Liric_Bias_Dark_MultBias",LOG_VERBOSITY_TERSE,
 				  "MULTBIAS","Started with exposure count %d.",exposure_count);
 #endif
 	/* initialise internal variables */
@@ -202,34 +202,34 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 	(*filename_list) = NULL;
 	(*filename_count) = 0;
 	/* configure flipping of output image */
-	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.x",&flip_x))
+	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.x",&flip_x))
 		return FALSE;		
-	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.y",&flip_y))
+	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.y",&flip_y))
 		return FALSE;		
 	Detector_Exposure_Flip_Set(flip_x,flip_y);
 	/* move filter wheel to mirror position */
-	if(Raptor_Config_Filter_Wheel_Is_Enabled())
+	if(Liric_Config_Filter_Wheel_Is_Enabled())
 	{
 		/* which filter position contains the Mirror filter */
 		if(!Filter_Wheel_Config_Name_To_Position("Mirror",&mirror_filter_wheel_position))
 		{
-			Raptor_General_Error_Number = 714;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultBias:Failed to find Mirror filter wheel position.");
+			Liric_General_Error_Number = 714;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultBias:Failed to find Mirror filter wheel position.");
 			return FALSE;
 		}
 		/* move filter wheel */
 		if(!Filter_Wheel_Command_Move(mirror_filter_wheel_position))
 		{
-			Raptor_General_Error_Number = 715;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultBias:Failed to move filter wheel to  Mirror position %d.",
+			Liric_General_Error_Number = 715;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultBias:Failed to move filter wheel to  Mirror position %d.",
 				mirror_filter_wheel_position);
 			return FALSE;
 		}
 	}
 	/* setup detector to do minimum coadd exposure lengths for a bias */
-	if(!Raptor_Command_Initialise_Detector("bias"))
+	if(!Liric_Command_Initialise_Detector("bias"))
 	{
 		Bias_Dark_In_Progress = FALSE;
 		return FALSE;
@@ -238,8 +238,8 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 	if(!Detector_Fits_Filename_Next_Multrun())
 	{
 		Bias_Dark_In_Progress = FALSE;
-		Raptor_General_Error_Number = 716;
-		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:Failed to initialise FITS filename multrun.");
+		Liric_General_Error_Number = 716;
+		sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultBias:Failed to initialise FITS filename multrun.");
 		return FALSE;
 	}
 	/* do any per-multbias FITS header changes here */
@@ -258,17 +258,17 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 		if(Moptop_Abort)
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 717;
-			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:Aborted.");
+			Liric_General_Error_Number = 717;
+			sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultBias:Aborted.");
 			return FALSE;
 		}
 		/* generate new FITS image filename */
 		if(!Detector_Fits_Filename_Next_Run())
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 718;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultBias:Failed to generate next FITS filename run number.");
+			Liric_General_Error_Number = 718;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultBias:Failed to generate next FITS filename run number.");
 			return FALSE;
 		}
 		if(!Detector_Fits_Filename_Get_Filename(DETECTOR_FITS_FILENAME_EXPOSURE_TYPE_BIAS,
@@ -276,17 +276,17 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 							fits_filename,256))
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 719;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultBias:Failed to generate next FITS filename.");
+			Liric_General_Error_Number = 719;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultBias:Failed to generate next FITS filename.");
 			return FALSE;
 		}
 		/* check for aborts */
 		if(Moptop_Abort)
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 710;
-			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultBias:Aborted.");
+			Liric_General_Error_Number = 710;
+			sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultBias:Aborted.");
 			return FALSE;
 		}
 		/* do any per-multbias frame FITS header changes here */
@@ -299,9 +299,9 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 		if(!Detector_Exposure_Bias(fits_filename))
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 720;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultBias:Failed to take bias exposure %d with filename '%s'.",
+			Liric_General_Error_Number = 720;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultBias:Failed to take bias exposure %d with filename '%s'.",
 				Bias_Dark_Data.Image_Index,fits_filename);
 			return FALSE;
 		}
@@ -309,17 +309,17 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
 		if(!Detector_Fits_Filename_List_Add(fits_filename,filename_list,filename_count))
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 721;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultBias:Failed to add filename '%s' to list of length %d.",
+			Liric_General_Error_Number = 721;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultBias:Failed to add filename '%s' to list of length %d.",
 				fits_filename,(*filename_count));
 			return FALSE;
 		}
 	}/* end for on Bias_Dark_Data.Image_Index */
 	/* we have finished the multbias */
 	Bias_Dark_In_Progress = FALSE;
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("multbias","raptor_bias_dark.c","Raptor_Bias_Dark_MultBias",LOG_VERBOSITY_TERSE,"MULTBIAS",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("multbias","liric_bias_dark.c","Liric_Bias_Dark_MultBias",LOG_VERBOSITY_TERSE,"MULTBIAS",
 			   "Finished.");
 #endif		
 	return TRUE;
@@ -329,7 +329,7 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
  * Routine to perform a multdark.
  * <ul>
  * <li>We initialise the internal variables.
- * <li>We retrieve the multrun flipping configuration fron config ("raptor.multrun.image.flip.[x|y]" and configure
+ * <li>We retrieve the multrun flipping configuration fron config ("liric.multrun.image.flip.[x|y]" and configure
  *     the detector exposure code appropriately (Detector_Exposure_Flip_Set).
  * <li>We move the filter wheel (if configured) to the mirror position.
  * <li>We call Detector_Fits_Filename_Next_Multrun to generate FITS filenames for a new MultDark.
@@ -355,20 +355,20 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
  *        of one frame/exposure in the multrun. This list will need freeing.
  * @param filename_count The address of an integer, on a successful return from this routine contains the
  *        number of filenames in filename_list.
- * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
- *         Raptor_General_Error_String should be set.
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Liric_General_Error_Number and
+ *         Liric_General_Error_String should be set.
  * @see #Moptop_Abort
  * @see #Bias_Dark_In_Progress
  * @see #Bias_Dark_Data
  * @see #Bias_Dark_Fits_Headers_Set
  * @see #Bias_Dark_Exposure_Fits_Headers_Set
- * @see raptor_config.html#Raptor_Config_Get_Boolean
- * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
- * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @see liric_config.html#Liric_Config_Get_Boolean
+ * @see liric_config.html#Liric_Config_Filter_Wheel_Is_Enabled
+ * @see liric_general.html#LIRIC_GENERAL_IS_BOOLEAN
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Flip_Set
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Expose
  * @see ../detector/cdocs/detector_fits_filename.html#DETECTOR_FITS_FILENAME_PIPELINE_FLAG
@@ -380,7 +380,7 @@ int Raptor_Bias_Dark_MultBias(int exposure_count,char ***filename_list,int *file
  * @see ../filter_wheel/cdocs/filter_wheel_config.html#Filter_Wheel_Config_Name_To_Position
  * @see ../filter_wheel/cdocs/filter_wheel_command.html#ilter_Wheel_Command_Move
  */
-int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***filename_list,int *filename_count)
+int Liric_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***filename_list,int *filename_count)
 {
 	char fits_filename[256];
 	int flip_x,flip_y,mirror_filter_wheel_position;
@@ -388,32 +388,32 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 	/* check arguments */
 	if(exposure_length_ms < 1)
 	{
-		Raptor_General_Error_Number = 700;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Bias_Dark_MultDark:exposure length was too short (%d).",exposure_length_ms);
+		Liric_General_Error_Number = 700;
+		sprintf(Liric_General_Error_String,
+			"Liric_Bias_Dark_MultDark:exposure length was too short (%d).",exposure_length_ms);
 		return FALSE;
 	}
 	if(exposure_count < 1)
 	{
-		Raptor_General_Error_Number = 701;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Bias_Dark_MultDark:exposure count was too small (%d).",exposure_count);
+		Liric_General_Error_Number = 701;
+		sprintf(Liric_General_Error_String,
+			"Liric_Bias_Dark_MultDark:exposure count was too small (%d).",exposure_count);
 		return FALSE;
 	}
 	if(filename_list == NULL)	
 	{
-		Raptor_General_Error_Number = 702;
-		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:filename_list was NULL.");
+		Liric_General_Error_Number = 702;
+		sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultDark:filename_list was NULL.");
 		return FALSE;
 	}
 	if(filename_count == NULL)	
 	{
-		Raptor_General_Error_Number = 703;
-		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:filename_count was NULL.");
+		Liric_General_Error_Number = 703;
+		sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultDark:filename_count was NULL.");
 		return FALSE;
 	}
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log_Format("multdark","raptor_bias_dark.c","Raptor_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,
+#if LIRIC_DEBUG > 1
+	Liric_General_Log_Format("multdark","liric_bias_dark.c","Liric_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,
 				  "MULTDARK","Started with exposure_length %d ms, exposure count %d.",
 				  exposure_length_ms,exposure_count);
 #endif
@@ -424,28 +424,28 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 	(*filename_list) = NULL;
 	(*filename_count) = 0;
 	/* configure flipping of output image */
-	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.x",&flip_x))
+	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.x",&flip_x))
 		return FALSE;		
-	if(!Raptor_Config_Get_Boolean("raptor.multrun.image.flip.y",&flip_y))
+	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.y",&flip_y))
 		return FALSE;		
 	Detector_Exposure_Flip_Set(flip_x,flip_y);
 	/* move filter wheel to mirror position */
-	if(Raptor_Config_Filter_Wheel_Is_Enabled())
+	if(Liric_Config_Filter_Wheel_Is_Enabled())
 	{
 		/* which filter position contains the Mirror filter */
 		if(!Filter_Wheel_Config_Name_To_Position("Mirror",&mirror_filter_wheel_position))
 		{
-			Raptor_General_Error_Number = 722;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultDark:Failed to find Mirror filter wheel position.");
+			Liric_General_Error_Number = 722;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultDark:Failed to find Mirror filter wheel position.");
 			return FALSE;
 		}
 		/* move filter wheel */
 		if(!Filter_Wheel_Command_Move(mirror_filter_wheel_position))
 		{
-			Raptor_General_Error_Number = 723;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultDark:Failed to move filter wheel to  Mirror position %d.",
+			Liric_General_Error_Number = 723;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultDark:Failed to move filter wheel to  Mirror position %d.",
 				mirror_filter_wheel_position);
 			return FALSE;
 		}
@@ -454,8 +454,8 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 	if(!Detector_Fits_Filename_Next_Multrun())
 	{
 		Bias_Dark_In_Progress = FALSE;
-		Raptor_General_Error_Number = 704;
-		sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:Failed to initialise FITS filename multrun.");
+		Liric_General_Error_Number = 704;
+		sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultDark:Failed to initialise FITS filename multrun.");
 		return FALSE;
 	}
 	/* do any per-multdark FITS header changes here */
@@ -474,17 +474,17 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 		if(Moptop_Abort)
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 705;
-			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:Aborted.");
+			Liric_General_Error_Number = 705;
+			sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultDark:Aborted.");
 			return FALSE;
 		}
 		/* generate new FITS image filename */
 		if(!Detector_Fits_Filename_Next_Run())
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 706;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultDark:Failed to generate next FITS filename run number.");
+			Liric_General_Error_Number = 706;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultDark:Failed to generate next FITS filename run number.");
 			return FALSE;
 		}
 		if(!Detector_Fits_Filename_Get_Filename(DETECTOR_FITS_FILENAME_EXPOSURE_TYPE_DARK,
@@ -492,16 +492,16 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 							fits_filename,256))
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 707;
-			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:Failed to generate next FITS filename.");
+			Liric_General_Error_Number = 707;
+			sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultDark:Failed to generate next FITS filename.");
 			return FALSE;
 		}
 		/* check for aborts */
 		if(Moptop_Abort)
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 708;
-			sprintf(Raptor_General_Error_String,"Raptor_Bias_Dark_MultDark:Aborted.");
+			Liric_General_Error_Number = 708;
+			sprintf(Liric_General_Error_String,"Liric_Bias_Dark_MultDark:Aborted.");
 			return FALSE;
 		}
 		/* do any per-multdark frame FITS header changes here */
@@ -514,9 +514,9 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 		if(!Detector_Exposure_Expose(exposure_length_ms,fits_filename))
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 709;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultDark:Failed to take exposure %d of %d ms with filename '%s'.",
+			Liric_General_Error_Number = 709;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultDark:Failed to take exposure %d of %d ms with filename '%s'.",
 				Bias_Dark_Data.Image_Index,exposure_length_ms,fits_filename);
 			return FALSE;
 		}
@@ -524,17 +524,17 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
 		if(!Detector_Fits_Filename_List_Add(fits_filename,filename_list,filename_count))
 		{
 			Bias_Dark_In_Progress = FALSE;
-			Raptor_General_Error_Number = 724;
-			sprintf(Raptor_General_Error_String,
-				"Raptor_Bias_Dark_MultDark:Failed to add filename '%s' to list of length %d.",
+			Liric_General_Error_Number = 724;
+			sprintf(Liric_General_Error_String,
+				"Liric_Bias_Dark_MultDark:Failed to add filename '%s' to list of length %d.",
 				fits_filename,(*filename_count));
 			return FALSE;
 		}
 	}/* end for on Bias_Dark_Data.Image_Index */
 	/* we have finished the multdark */
 	Bias_Dark_In_Progress = FALSE;
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("multdark","raptor_bias_dark.c","Raptor_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,"MULTDARK",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("multdark","liric_bias_dark.c","Liric_Bias_Dark_MultDark",LOG_VERBOSITY_TERSE,"MULTDARK",
 			   "Finished.");
 #endif		
 	return TRUE;
@@ -546,7 +546,7 @@ int Raptor_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***
  *         However, it currently always succeeds (returns TRUE).
  * @see #Moptop_Abort
  */
-int Raptor_Bias_Dark_Abort(void)
+int Liric_Bias_Dark_Abort(void)
 {
 	Moptop_Abort = TRUE;
 	return TRUE;
@@ -557,7 +557,7 @@ int Raptor_Bias_Dark_Abort(void)
  * @return A boolean, TRUE if a multbias/multdark is in progress and FALSE if it is not in progress..
  * @see #Bias_Dark_In_Progress
  */
-int Raptor_Bias_Dark_In_Progress(void)
+int Liric_Bias_Dark_In_Progress(void)
 {
 	return Bias_Dark_In_Progress;
 }
@@ -567,7 +567,7 @@ int Raptor_Bias_Dark_In_Progress(void)
  * @return The number of images/frames expected.
  * @see #Bias_Dark_Data
  */
-int Raptor_Bias_Dark_Count_Get(void)
+int Liric_Bias_Dark_Count_Get(void)
 {
 	return Bias_Dark_Data.Image_Count;
 }
@@ -577,7 +577,7 @@ int Raptor_Bias_Dark_Count_Get(void)
  * @return The exposure index in the multbias/multdark.
  * @see #Bias_Dark_Data
  */
-int Raptor_Bias_Dark_Exposure_Index_Get(void)
+int Liric_Bias_Dark_Exposure_Index_Get(void)
 {
 	return Bias_Dark_Data.Image_Index;
 }
@@ -588,15 +588,15 @@ int Raptor_Bias_Dark_Exposure_Index_Get(void)
  * @param exposure_count An integer, the number of individual exposures/darks in the bias/dark multrun.
  * @see #CENTIGRADE_TO_KELVIN
  * @see #Bias_Dark_Data
- * @see raptor_config.html#Raptor_Config_Filter_Wheel_Is_Enabled
- * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
- * @see raptor_fits_header.html#Raptor_Fits_Header_Logical_Add
- * @see raptor_fits_header.html#Raptor_Fits_Header_String_Add
- * @see raptor_general.html#RAPTOR_GENERAL_IS_BOOLEAN
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @see liric_config.html#Liric_Config_Filter_Wheel_Is_Enabled
+ * @see liric_fits_header.html#Liric_Fits_Header_Integer_Add
+ * @see liric_fits_header.html#Liric_Fits_Header_Logical_Add
+ * @see liric_fits_header.html#Liric_Fits_Header_String_Add
+ * @see liric_general.html#LIRIC_GENERAL_IS_BOOLEAN
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
  * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_X
  * @see ../detector/cdocs/detector_setup.html#Detector_Setup_Get_Sensor_Size_Y
@@ -610,38 +610,38 @@ static int Bias_Dark_Fits_Headers_Set(int is_bias,int exposure_count)
 	double temperature;
 	int filter_wheel_position,retval;
 
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("biasdark","raptor_bias_dark.c","Bias_Dark_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("biasdark","liric_bias_dark.c","Bias_Dark_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
 			   "Bias_Dark_Fits_Headers_Set started.");
 #endif
 	if(exposure_count < 1)
 	{
-		Raptor_General_Error_Number = 725;
-		sprintf(Raptor_General_Error_String,
+		Liric_General_Error_Number = 725;
+		sprintf(Liric_General_Error_String,
 			"Bias_Dark_Fits_Headers_Set:exposure count was too small (%d).",exposure_count);
 		return FALSE;
 	}
-	if(!RAPTOR_GENERAL_IS_BOOLEAN(is_bias))
+	if(!LIRIC_GENERAL_IS_BOOLEAN(is_bias))
 	{
-		Raptor_General_Error_Number = 726;
-		sprintf(Raptor_General_Error_String,
+		Liric_General_Error_Number = 726;
+		sprintf(Liric_General_Error_String,
 			"Bias_Dark_Fits_Headers_Set:is_bias was not a valid boolean (%d).",is_bias);
 		return FALSE;
 	}
 	/* OBSTYPE */
 	if(is_bias)
-		retval = Raptor_Fits_Header_String_Add("OBSTYPE","BIAS",NULL);
+		retval = Liric_Fits_Header_String_Add("OBSTYPE","BIAS",NULL);
 	else
-		retval = Raptor_Fits_Header_String_Add("OBSTYPE","DARK",NULL);
+		retval = Liric_Fits_Header_String_Add("OBSTYPE","DARK",NULL);
 	if(retval == FALSE)
 		return FALSE;
 	/* filter wheel position keywords */
-	if(Raptor_Config_Filter_Wheel_Is_Enabled())
+	if(Liric_Config_Filter_Wheel_Is_Enabled())
 	{
 		if(!Filter_Wheel_Command_Get_Position(&filter_wheel_position))
 		{
-			Raptor_General_Error_Number = 727;
-			sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
+			Liric_General_Error_Number = 727;
+			sprintf(Liric_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
 					"Failed to get filter wheel position.");
 			return FALSE;
 			
@@ -649,38 +649,38 @@ static int Bias_Dark_Fits_Headers_Set(int is_bias,int exposure_count)
 		/* FILTER1 */
 		if(!Filter_Wheel_Config_Position_To_Name(filter_wheel_position,filter_name_string))
 		{
-			Raptor_General_Error_Number = 731;
-			sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
+			Liric_General_Error_Number = 731;
+			sprintf(Liric_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
 				"Failed to get filter wheel name from position %d.",filter_wheel_position);
 			return FALSE;
 		}
-		if(!Raptor_Fits_Header_String_Add("FILTER1",filter_name_string,NULL))
+		if(!Liric_Fits_Header_String_Add("FILTER1",filter_name_string,NULL))
 			return FALSE;
 		/* FILTERI1 */
 		if(!Filter_Wheel_Config_Position_To_Id(filter_wheel_position,filter_name_string))
 		{
-			Raptor_General_Error_Number = 728;
-			sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
+			Liric_General_Error_Number = 728;
+			sprintf(Liric_General_Error_String,"Bias_Dark_Fits_Headers_Set:"
 				"Failed to get filter wheel Id from position %d.",filter_wheel_position);
 			return FALSE;
 		}
-		if(!Raptor_Fits_Header_String_Add("FILTERI1",filter_name_string,NULL))
+		if(!Liric_Fits_Header_String_Add("FILTERI1",filter_name_string,NULL))
 			return FALSE;
 	}
 	else
 	{
 		/* FILTER1 */
-		if(!Raptor_Fits_Header_String_Add("FILTER1","UNKNOWN",NULL))
+		if(!Liric_Fits_Header_String_Add("FILTER1","UNKNOWN",NULL))
 			return FALSE;
 		/* FILTERI1 */
-		if(!Raptor_Fits_Header_String_Add("FILTERI1","UNKNOWN",NULL))
+		if(!Liric_Fits_Header_String_Add("FILTERI1","UNKNOWN",NULL))
 			return FALSE;
 	}
 	/* RUNNUM */
-	if(!Raptor_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
+	if(!Liric_Fits_Header_Integer_Add("RUNNUM",Detector_Fits_Filename_Multrun_Get(),"Number of Multrun"))
 		return FALSE;
 	/* EXPTOTAL */
-	if(!Raptor_Fits_Header_Integer_Add("EXPTOTAL",Bias_Dark_Data.Image_Count,
+	if(!Liric_Fits_Header_Integer_Add("EXPTOTAL",Bias_Dark_Data.Image_Count,
 					   "Total number of exposures within Multrun"))
 		return FALSE;
 	/* CONFIGID diddly TODO in Java layer */
@@ -688,52 +688,52 @@ static int Bias_Dark_Fits_Headers_Set(int is_bias,int exposure_count)
 	/* CCDSTEMP */
 	if(!Detector_Temperature_Get_TEC_Setpoint(&temperature))
 	{
-		Raptor_General_Error_Number = 729;
-		sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:Failed to get TEC set-point.");
+		Liric_General_Error_Number = 729;
+		sprintf(Liric_General_Error_String,"Bias_Dark_Fits_Headers_Set:Failed to get TEC set-point.");
 		return FALSE;
 	}
-	if(!Raptor_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"[Kelvin] Required temperature."))
+	if(!Liric_Fits_Header_Float_Add("CCDSTEMP",temperature+CENTIGRADE_TO_KELVIN,"[Kelvin] Required temperature."))
 		return FALSE;	
 	/* CCDATEMP */
 	if(!Detector_Temperature_Get(&(Bias_Dark_Data.CCD_Temperature)))
 	{
-		Raptor_General_Error_Number = 730;
-		sprintf(Raptor_General_Error_String,"Bias_Dark_Fits_Headers_Set:Failed to get detector temperature.");
+		Liric_General_Error_Number = 730;
+		sprintf(Liric_General_Error_String,"Bias_Dark_Fits_Headers_Set:Failed to get detector temperature.");
 		return FALSE;
 	}
-	if(!Raptor_Fits_Header_Float_Add("CCDATEMP",Bias_Dark_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
+	if(!Liric_Fits_Header_Float_Add("CCDATEMP",Bias_Dark_Data.CCD_Temperature+CENTIGRADE_TO_KELVIN,
 					 "[Kelvin] Actual temperature."))
 		return FALSE;	
 	/* DETECTOR diddly TODO in Java layer */
 	/* CCDXBIN */
-	if(!Raptor_Fits_Header_Integer_Add("CCDXBIN",1,"X binning factor"))
+	if(!Liric_Fits_Header_Integer_Add("CCDXBIN",1,"X binning factor"))
 		return FALSE;
 	/* CCDYBIN */
-	if(!Raptor_Fits_Header_Integer_Add("CCDYBIN",1,"Y binning factor"))
+	if(!Liric_Fits_Header_Integer_Add("CCDYBIN",1,"Y binning factor"))
 		return FALSE;
 	/* CCDWMODE */
-	if(!Raptor_Fits_Header_Logical_Add("CCDWMODE",FALSE,"Using a Window (always false for Raptor)"))
+	if(!Liric_Fits_Header_Logical_Add("CCDWMODE",FALSE,"Using a Window (always false for Liric)"))
 		return FALSE;
 	/* CCDXIMSI */
-	if(!Raptor_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X image size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDXIMSI",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X image size"))
 		return FALSE;
 	/* CCDYIMSI */
-	if(!Raptor_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y image size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDYIMSI",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y image size"))
 		return FALSE;
 	/* CCDWXOFF */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWXOFF",0,"[pixels] X window offset"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWXOFF",0,"[pixels] X window offset"))
 		return FALSE;
 	/* CCDWYOFF */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWYOFF",0,"[pixels] Y window offset"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWYOFF",0,"[pixels] Y window offset"))
 		return FALSE;
 	/* CCDWXSIZ */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X window size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWXSIZ",Detector_Setup_Get_Sensor_Size_X(),"[pixels] X window size"))
 		return FALSE;
 	/* CCDWYSIZ */
-	if(!Raptor_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y window size"))
+	if(!Liric_Fits_Header_Integer_Add("CCDWYSIZ",Detector_Setup_Get_Sensor_Size_Y(),"[pixels] Y window size"))
 		return FALSE;
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("biasdark","raptor_bias_dark.c","Bias_Dark_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("biasdark","liric_bias_dark.c","Bias_Dark_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
 			   "Bias_Dark_Fits_Headers_Set finished.");
 #endif		
 	return TRUE;
@@ -741,27 +741,27 @@ static int Bias_Dark_Fits_Headers_Set(int is_bias,int exposure_count)
 
 /**
  * Routine to collect and insert FITS headers pertaining to the current exposure in the multrun.
- * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Raptor_General_Error_Number and
- *         Raptor_General_Error_String should be set.
- * @see raptor_fits_header.html#Raptor_Fits_Header_Integer_Add
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
- * @see raptor_general.html#Raptor_General_Log
- * @see raptor_general.html#Raptor_General_Log_Format
+ * @return The routine returns TRUE on sucess and FALSE on failure. On failure, Liric_General_Error_Number and
+ *         Liric_General_Error_String should be set.
+ * @see liric_fits_header.html#Liric_Fits_Header_Integer_Add
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Log_Format
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Run_Get
  */
 static int Bias_Dark_Exposure_Fits_Headers_Set(void)
 {
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("biasdark","raptor_bias_dark.c","Bias_Dark_Exposure_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("biasdark","liric_bias_dark.c","Bias_Dark_Exposure_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
 			   "Bias_Dark_Exposure_Fits_Headers_Set started.");
 #endif
 	/* EXPNUM */
-	if(!Raptor_Fits_Header_Integer_Add("EXPNUM",Detector_Fits_Filename_Run_Get(),
+	if(!Liric_Fits_Header_Integer_Add("EXPNUM",Detector_Fits_Filename_Run_Get(),
 					   "Number of exposure within MultBias/MultDark"))
 		return FALSE;
-#if RAPTOR_DEBUG > 1
-	Raptor_General_Log("biasdark","raptor_bias_dark.c","Bias_Dark_Exposure_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("biasdark","liric_bias_dark.c","Bias_Dark_Exposure_Fits_Headers_Set",LOG_VERBOSITY_TERSE,"BIASDARK",
 			   "Bias_Dark_Exposure_Fits_Headers_Set finished.");
 #endif		
 	return TRUE;

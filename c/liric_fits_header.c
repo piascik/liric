@@ -1,6 +1,6 @@
-/* raptor_fits_header.c */
+/* liric_fits_header.c */
 /**
- * Raptor FITS header handling.
+ * Liric FITS header handling.
  * @author $Author$
  * @version $Revision$
  */
@@ -13,8 +13,8 @@
 #include "detector_general.h"
 #include "detector_fits_header.h"
 
-#include "raptor_fits_header.h"
-#include "raptor_general.h"
+#include "liric_fits_header.h"
+#include "liric_general.h"
 #include "ngat_astro.h"
 #include "ngat_astro_mjd.h"
 
@@ -31,15 +31,15 @@ static char rcsid[] = "$Id$";
  * Initialise the FITS header data.
  * @return The routine returns TRUE on success, and FALSE on failure. 
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Initialise
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Initialise(void)
+int Liric_Fits_Header_Initialise(void)
 {
 	if(!Detector_Fits_Header_Initialise())
 	{
-		Raptor_General_Error_Number = 400;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Initialise:"
+		Liric_General_Error_Number = 400;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Initialise:"
 			"Failed to Initialise FITS headers.");
 		return FALSE;
 	}
@@ -53,15 +53,15 @@ int Raptor_Fits_Header_Initialise(void)
  * @param comment The comment string. This parameter can also be NULL.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_String
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_String_Add(char *keyword,char *value, char *comment)
+int Liric_Fits_Header_String_Add(char *keyword,char *value, char *comment)
 {
 	if(!Detector_Fits_Header_Add_String(keyword,value,comment))
 	{
-		Raptor_General_Error_Number = 401;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_String_Add:"
+		Liric_General_Error_Number = 401;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_String_Add:"
 			"Failed to add string to FITS headers.");
 		return FALSE;
 	}
@@ -75,15 +75,15 @@ int Raptor_Fits_Header_String_Add(char *keyword,char *value, char *comment)
  * @param comment The comment string. This parameter can also be NULL.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Int
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Integer_Add(char *keyword,int value, char *comment)
+int Liric_Fits_Header_Integer_Add(char *keyword,int value, char *comment)
 {
 	if(!Detector_Fits_Header_Add_Int(keyword,value,comment))
 	{
-		Raptor_General_Error_Number = 402;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Integer_Add:"
+		Liric_General_Error_Number = 402;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Integer_Add:"
 			"Failed to add integer to FITS headers.");
 		return FALSE;
 	}
@@ -97,15 +97,15 @@ int Raptor_Fits_Header_Integer_Add(char *keyword,int value, char *comment)
  * @param comment The comment string. This parameter can also be NULL.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Long_Long_Int
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Long_Long_Integer_Add(char *keyword,long long int value, char *comment)
+int Liric_Fits_Header_Long_Long_Integer_Add(char *keyword,long long int value, char *comment)
 {
 	if(!Detector_Fits_Header_Add_Long_Long_Int(keyword,value,comment))
 	{
-		Raptor_General_Error_Number = 408;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Long_Long_Integer_Add:"
+		Liric_General_Error_Number = 408;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Long_Long_Integer_Add:"
 			"Failed to add long long integer to FITS headers.");
 		return FALSE;
 	}
@@ -119,15 +119,15 @@ int Raptor_Fits_Header_Long_Long_Integer_Add(char *keyword,long long int value, 
  * @param comment The comment string. This parameter can also be NULL.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Float
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Float_Add(char *keyword,double value, char *comment)
+int Liric_Fits_Header_Float_Add(char *keyword,double value, char *comment)
 {
 	if(!Detector_Fits_Header_Add_Float(keyword,value,comment))
 	{
-		Raptor_General_Error_Number = 403;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Float_Add:"
+		Liric_General_Error_Number = 403;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Float_Add:"
 			"Failed to add float to FITS headers.");
 		return FALSE;
 	}
@@ -141,15 +141,15 @@ int Raptor_Fits_Header_Float_Add(char *keyword,double value, char *comment)
  * @param comment The comment string. This parameter can also be NULL.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Logical
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Logical_Add(char *keyword,int value, char *comment)
+int Liric_Fits_Header_Logical_Add(char *keyword,int value, char *comment)
 {
 	if(!Detector_Fits_Header_Add_Logical(keyword,value,comment))
 	{
-		Raptor_General_Error_Number = 404;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Logical_Float_Add:"
+		Liric_General_Error_Number = 404;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Logical_Float_Add:"
 			"Failed to add logical to FITS headers.");
 		return FALSE;
 	}
@@ -162,15 +162,15 @@ int Raptor_Fits_Header_Logical_Add(char *keyword,int value, char *comment)
  * @param comment A string to use as a comment.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Comment
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Add_Comment(char *keyword,char *comment)
+int Liric_Fits_Header_Add_Comment(char *keyword,char *comment)
 {
 	if(!Detector_Fits_Header_Add_Comment(keyword,comment))
 	{
-		Raptor_General_Error_Number = 409;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Add_Comment:"
+		Liric_General_Error_Number = 409;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Add_Comment:"
 			"Failed to add comment to FITS headers.");
 		return FALSE;
 	}
@@ -183,15 +183,15 @@ int Raptor_Fits_Header_Add_Comment(char *keyword,char *comment)
  * @param units A string to use for units.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Add_Units
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Add_Units(char *keyword,char *units)
+int Liric_Fits_Header_Add_Units(char *keyword,char *units)
 {
 	if(!Detector_Fits_Header_Add_Units(keyword,units))
 	{
-		Raptor_General_Error_Number = 410;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Add_Units:"
+		Liric_General_Error_Number = 410;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Add_Units:"
 			"Failed to add units to FITS headers.");
 		return FALSE;
 	}
@@ -203,15 +203,15 @@ int Raptor_Fits_Header_Add_Units(char *keyword,char *units)
  * @param keyword The keyword string.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Delete
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Delete(char *keyword)
+int Liric_Fits_Header_Delete(char *keyword)
 {
 	if(!Detector_Fits_Header_Delete(keyword))
 	{
-		Raptor_General_Error_Number = 405;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Delete:"
+		Liric_General_Error_Number = 405;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Delete:"
 			"Failed to delete FITS header with keyword %s.",keyword);
 		return FALSE;
 	}
@@ -222,15 +222,15 @@ int Raptor_Fits_Header_Delete(char *keyword)
  * Routine to clear the FITS headers from the fits header data structure.
  * @return The routine returns TRUE on success, and FALSE on failure.
  * @see ../detector/cdocs/detector_fits_header.html#Detector_Fits_Header_Clear
- * @see raptor_general.html#Raptor_General_Error_Number
- * @see raptor_general.html#Raptor_General_Error_String
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
  */
-int Raptor_Fits_Header_Clear(void)
+int Liric_Fits_Header_Clear(void)
 {
 	if(!Detector_Fits_Header_Clear())
 	{
-		Raptor_General_Error_Number = 406;
-		sprintf(Raptor_General_Error_String,"Raptor_Fits_Header_Clear:Failed to clear FITS headers.");
+		Liric_General_Error_Number = 406;
+		sprintf(Liric_General_Error_String,"Liric_Fits_Header_Clear:Failed to clear FITS headers.");
 		return FALSE;
 	}
 	return TRUE;
@@ -246,7 +246,7 @@ int Raptor_Fits_Header_Clear(void)
  * @param time_string The string to put the time representation in. The string must be at least
  * 	12 characters long.
  */
-void Raptor_Fits_Header_TimeSpec_To_Date_String(struct timespec time,char *time_string)
+void Liric_Fits_Header_TimeSpec_To_Date_String(struct timespec time,char *time_string)
 {
 	struct tm tm_time;
 
@@ -263,9 +263,9 @@ void Raptor_Fits_Header_TimeSpec_To_Date_String(struct timespec time,char *time_
  * @param time The time to convert.
  * @param time_string The string to put the time representation in. The string must be at least
  * 	24 characters long.
- * @see raptor_general.html#RAPTOR_GENERAL_ONE_MILLISECOND_NS
+ * @see liric_general.html#LIRIC_GENERAL_ONE_MILLISECOND_NS
  */
-void Raptor_Fits_Header_TimeSpec_To_Date_Obs_String(struct timespec time,char *time_string)
+void Liric_Fits_Header_TimeSpec_To_Date_Obs_String(struct timespec time,char *time_string)
 {
 	struct tm tm_time;
 	char buff[32];
@@ -273,7 +273,7 @@ void Raptor_Fits_Header_TimeSpec_To_Date_Obs_String(struct timespec time,char *t
 
 	gmtime_r(&(time.tv_sec),&tm_time);
 	strftime(buff,32,"%Y-%m-%dT%H:%M:%S.",&tm_time);
-	milliseconds = (((double)time.tv_nsec)/((double)RAPTOR_GENERAL_ONE_MILLISECOND_NS));
+	milliseconds = (((double)time.tv_nsec)/((double)LIRIC_GENERAL_ONE_MILLISECOND_NS));
 	sprintf(time_string,"%s%03d",buff,milliseconds);
 }
 
@@ -285,9 +285,9 @@ void Raptor_Fits_Header_TimeSpec_To_Date_Obs_String(struct timespec time,char *t
  * @param time The time to convert.
  * @param time_string The string to put the time representation in. The string must be at least
  * 	14 characters long.
- * @see raptor_general.html#RAPTOR_GENERAL_ONE_MILLISECOND_NS
+ * @see liric_general.html#LIRIC_GENERAL_ONE_MILLISECOND_NS
  */
-void Raptor_Fits_Header_TimeSpec_To_UtStart_String(struct timespec time,char *time_string)
+void Liric_Fits_Header_TimeSpec_To_UtStart_String(struct timespec time,char *time_string)
 {
 	struct tm tm_time;
 	char buff[16];
@@ -295,7 +295,7 @@ void Raptor_Fits_Header_TimeSpec_To_UtStart_String(struct timespec time,char *ti
 
 	gmtime_r(&(time.tv_sec),&tm_time);
 	strftime(buff,16,"%H:%M:%S.",&tm_time);
-	milliseconds = (((double)time.tv_nsec)/((double)RAPTOR_GENERAL_ONE_MILLISECOND_NS));
+	milliseconds = (((double)time.tv_nsec)/((double)LIRIC_GENERAL_ONE_MILLISECOND_NS));
 	sprintf(time_string,"%s%03d",buff,milliseconds);
 }
 
@@ -315,18 +315,18 @@ void Raptor_Fits_Header_TimeSpec_To_UtStart_String(struct timespec time,char *ti
  * @param mjd The address of a double to store the calculated MJD.
  * @return The routine returns TRUE if it succeeded, FALSE if it fails. 
  */
-int Raptor_Fits_Header_TimeSpec_To_Mjd(struct timespec time,int leap_second_correction,double *mjd)
+int Liric_Fits_Header_TimeSpec_To_Mjd(struct timespec time,int leap_second_correction,double *mjd)
 {
 	int retval;
 
 	retval = NGAT_Astro_Timespec_To_MJD(time,leap_second_correction,mjd);
 	if(retval == FALSE)
 	{
-		Raptor_General_Error_Number = 407;
-		sprintf(Raptor_General_Error_String,
-			"Raptor_Fits_Header_TimeSpec_To_Mjd:NGAT_Astro_Timespec_To_MJD failed.\n");
-		/* concatenate NGAT Astro library error onto Raptor_General_Error_String */
-		NGAT_Astro_Error_String(Raptor_General_Error_String+strlen(Raptor_General_Error_String));
+		Liric_General_Error_Number = 407;
+		sprintf(Liric_General_Error_String,
+			"Liric_Fits_Header_TimeSpec_To_Mjd:NGAT_Astro_Timespec_To_MJD failed.\n");
+		/* concatenate NGAT Astro library error onto Liric_General_Error_String */
+		NGAT_Astro_Error_String(Liric_General_Error_String+strlen(Liric_General_Error_String));
 		return FALSE;
 	}
 	return TRUE;
