@@ -1,9 +1,9 @@
 #!/bin/csh
-# Version: $Revision$
-# By $Author$
+# Version: $Revision: 523fc61b24145d8fa7153af474a6954e396041ae $
+# By $Author: Chris Mottram <C.Mottram@ljmu.ac.uk> $
 # Change the icc into engineering mode - kill all robotic control processes
 # Usage:
-#	raptor_engineering_mode
+#	liric_engineering_mode
 # To return to robotic control, reboot the icc.
 echo "Switching to engineering mode."
 echo "This will only succeed if you are root."
@@ -27,23 +27,23 @@ foreach directory ( /icc/bin/lib/x86_64-linux )
 	setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}":"${directory}
     endif
 end
-# Send a shutdown command to raptor C layer, after killing the autobooter
+# Send a shutdown command to liric C layer, after killing the autobooter
 if ( -x /icc/bin/commandserver/test/x86_64-linux/send_command  ) then
-    echo "Sending shutdown to raptor C layer."
-    /icc/bin/commandserver/test/x86_64-linux/send_command -h raptor -p 8284 -c "shutdown"
+    echo "Sending shutdown to liric C layer."
+    /icc/bin/commandserver/test/x86_64-linux/send_command -h liric1 -p 8284 -c "shutdown"
     echo "Waiting to see if that worked..."
     /bin/sleep 5
 else
-    echo "send_command not found:FAILED to stop running raptor."
+    echo "send_command not found:FAILED to stop running liric."
 endif
 if ( -x /icc/bin/scripts/killhup.csh ) then
-    echo "Trying to kill Raptor."
-    /icc/bin/scripts/killhup.csh Raptor
+    echo "Trying to kill Liric."
+    /icc/bin/scripts/killhup.csh Liric
     echo "Trying to kill icsd_inet."
     /icc/bin/scripts/killhup.csh icsd_inet
-# kill this last, as it probably kills the raptor_engineering_mode script as well.
-    echo "Trying to kill raptor (if shutdown didn't already kill it)."
-    /icc/bin/scripts/killhup.csh raptor
+# kill this last, as it probably kills the liric_engineering_mode script as well.
+    echo "Trying to kill liric (if shutdown didn't already kill it)."
+    /icc/bin/scripts/killhup.csh liric
 else
     echo "killhup not found:ENGINEERING mode FAILED."
 endif

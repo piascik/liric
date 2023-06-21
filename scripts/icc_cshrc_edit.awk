@@ -3,8 +3,8 @@ BEGIN{
   copy = 1
   nextcopy = 0
 } 
-/.*\<raptor_install\:start\>.*/ { copy = 0 }
-/.*\<raptor_install\:end\>.*/ { nextcopy = 1 }
+/.*\<liric_install\:start\>.*/ { copy = 0 }
+/.*\<liric_install\:end\>.*/ { nextcopy = 1 }
  { 
    if(copy == 1) {
      print $0

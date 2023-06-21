@@ -1,9 +1,9 @@
 #!/bin/csh
-# Version: $Revision: e5740f1adc9d9cb62816482f61bdfd7ff91f304d $
+# Version: $Revision: c8a5b86d78a4fc7b83dd5b00ba81ef714d951839 $
 # By $Author: Chris Mottram <C.Mottram@ljmu.ac.uk> $
-# Install a deployment tar created by raptor_make_deployment
+# Install a deployment tar created by liric_make_deployment
 # Usage:
-#	raptor_tar_install <machine>
+#	liric_tar_install <machine>
 set delbin = 1
 set machine_name = ""
 foreach arg ( $argv )
@@ -29,14 +29,14 @@ if ( "${machine_name}" == "") then
 endif
 set current_dir         = `pwd`
 set icc                 = icc
-set deployment_tar 	= "raptor_deployment_${machine_name}.tar"
+set deployment_tar 	= "liric_deployment_${machine_name}.tar"
 #
 # Ensure new installation files are not under /icc (which gets deleted)
 #
 echo "${current_dir}" | /bin/grep -q '/icc'
 set grep_status = $status
 if( ${grep_status} == 0 ) then
-    echo "Installation files under /icc. Move ALL file to ~eng/Downloads/raptor/<date> and try again."
+    echo "Installation files under /icc. Move ALL file to ~eng/Downloads/liric/<date> and try again."
     exit 1
 endif
 #
@@ -50,11 +50,11 @@ foreach file ( ${file_list} )
     endif
 end
 #
-# Ensure LD_LIBRARY_PATH includes raptor libraries dir so send_command below works.
+# Ensure LD_LIBRARY_PATH includes liric libraries dir so send_command below works.
 #
-if ( -d /icc/bin/raptor/lib/${HOSTTYPE} ) then
-    echo "Adding /icc/bin/raptor/lib/${HOSTTYPE} to LD_LIBRARY_PATH."
-    setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:/icc/bin/raptor/lib/${HOSTTYPE}"
+if ( -d /icc/bin/liric/lib/${HOSTTYPE} ) then
+    echo "Adding /icc/bin/liric/lib/${HOSTTYPE} to LD_LIBRARY_PATH."
+    setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:/icc/bin/liric/lib/${HOSTTYPE}"
 endif
 #
 # Kill any running processes
@@ -66,10 +66,10 @@ else
     echo "killhup not found:FAILED to stop running processess."
 endif
 if ( -x /icc/bin/commandserver/test/${HOSTTYPE}/send_command  ) then
-    echo "Trying to shutdown raptor c layer."
+    echo "Trying to shutdown liric c layer."
     /icc/bin/commandserver/test/${HOSTTYPE}/send_command  -h ${machine_name} -p 8284 -c "shutdown"
 else
-    echo "send_command not found:FAILED to stop running raptor."
+    echo "send_command not found:FAILED to stop running liric."
 endif
 #
 # Kill nfs server - /icc/tmp is usually mounted for the rcs machine

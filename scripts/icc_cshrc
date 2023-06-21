@@ -1,6 +1,6 @@
-# <raptor_install:start>
+# <liric_install:start>
 # $Revision$
-# Do not delete the above comment, it delimits the cshrc updated by the raptor_tar_install script.
+# Do not delete the above comment, it delimits the cshrc updated by the liric_tar_install script.
 # part of lt_environment, so we can call scripts
 setenv LT_HOME /icc
 setenv LT_BIN_HOME ${LT_HOME}/bin
@@ -25,8 +25,8 @@ end
 
 # Useful command aliass
 alias icsgui                            '/icc/bin/ics_gui/java/icsgui'
-alias raptor_engineering_mode   	'/icc/bin/scripts/raptor_engineering_mode'
+alias liric_engineering_mode   		'/icc/bin/scripts/liric_engineering_mode'
 alias myps             			'ps -e -o pid,pcpu,vsz,ruser,args'
 alias send_command			'/icc/bin/commandserver/test/${HOSTTYPE}/send_command'
-# Do not delete the next comment, it delimits the cshrc updated by the raptor_install script.
-# <raptor_install:end>
+# Do not delete the next comment, it delimits the cshrc updated by the liric_install script.
+# <liric_install:end>
