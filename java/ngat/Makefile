@@ -2,7 +2,7 @@
 # $Header$
 
 MAKE 	= make
-DIRS 	= raptor
+DIRS 	= liric
 
 top: dirs
 
@@ -12,7 +12,7 @@ dirs:
 		(echo making in $$i...; cd $$i; $(MAKE) ); \
 	done;
 depend:
-	echo no depend in raptor/java/ngat directory.
+	echo no depend in liric/java/ngat directory.
 
 clean:
 	@for i in $(DIRS); \
