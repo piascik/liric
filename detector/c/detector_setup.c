@@ -83,7 +83,7 @@ static int Setup_Get_Dimensions(int *x_size,int *y_size);
 ** External Functions
 ** -------------------------------------------------------- */
 /**
- * Routine to initialise the Raptor detector.
+ * Routine to initialise the Raptor Ninox-640 detector.
  * <ul>
  * <li>Initialise turn_fan_on to TRUE.
  * <li>If the connection to the library has been previously opened (Setup_Data.Is_Open): 
@@ -237,7 +237,7 @@ int Detector_Setup_Startup(char *format_filename)
 }
 
 /**
- * Routine to close the connection to the Raptor detector.
+ * Routine to close the connection to the Raptor Ninox-640 detector.
  * <ul>
  * <li>Detector_Setup_Close is called.
  * <li>Setup_Data.Is_Open is set to FALSE as the connection to the detector is closed.

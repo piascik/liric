@@ -41,7 +41,7 @@
 
 /* structure declarations */
 /**
- * Data type holding local data about fits filenames associated with the Raptor detector. 
+ * Data type holding local data about fits filenames associated with the LIRIC detector. 
  * This consists of the following:
  * <dl>
  * <dt>Data_Dir</dt> <dd>Directory containing FITS images.</dd>
