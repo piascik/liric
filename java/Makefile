@@ -5,13 +5,13 @@ include ../../Makefile.common
 
 MAKE 		= make
 DIRS 		= ngat
-JAR_FILE       	= ngat_raptor.jar
+JAR_FILE       	= ngat_liric.jar
 JARLIBDIR	= $(LT_JAVALIB_HOME)
-LIBDIR		= $(RAPTOR_BIN_HOME)/java/
-DOCSDIR 	= $(RAPTOR_DOC_HOME)/javadocs/
+LIBDIR		= $(LIRIC_BIN_HOME)/java/
+DOCSDIR 	= $(LIRIC_DOC_HOME)/javadocs/
 DOCFLAGS 	= -version -author -private
-JAVASRCS 	= ngat/raptor/*.java ngat/raptor/command/*.java
-JAVAPKGS	= ngat.raptor ngat.raptor.command
+JAVASRCS 	= ngat/liric/*.java ngat/liric/command/*.java
+JAVAPKGS	= ngat.liric ngat.liric.command
 
 JAVADOCS 	= $(JAVASRCS:%.java=$(DOCSDIR)/%.html)
 OBJS 		= $(JAVASRCS:%.java=$(LIBDIR)/%.class)
@@ -35,11 +35,11 @@ $(OBJS): $(JAVASRCS)
 javadocs: $(JAVADOCS)
 
 $(JAVADOCS): $(JAVASRCS)
-	$(JAVADOC) -sourcepath $(LT_SRC_HOME):$(RAPTOR_SRC_HOME)/java -d $(DOCSDIR) $(DOCFLAGS) \
+	$(JAVADOC) -sourcepath $(LT_SRC_HOME):$(LIRIC_SRC_HOME)/java -d $(DOCSDIR) $(DOCFLAGS) \
 		-link http://java.sun.com/j2se/1.4.2/docs/api/ $(JAVAPKGS)
 
 depend:
-	echo no depend in raptor/java directory.
+	echo no depend in liric/java directory.
 
 clean:
 	-$(RM) $(RM_OPTIONS) $(TIDY_OPTIONS)
