@@ -5,14 +5,14 @@ include ../../../Makefile.common
 include ../../../../Makefile.common
 
 MAKE 		= make
-PACKAGEDIR	= ngat/raptor/
-BINDIR 		= $(RAPTOR_BIN_HOME)/java/$(PACKAGEDIR)
-CONFIG_BINDIR 	= $(RAPTOR_BIN_HOME)/java
-SCRIPT_BINDIR 	= $(RAPTOR_BIN_HOME)/java
+PACKAGEDIR	= ngat/liric/
+BINDIR 		= $(LIRIC_BIN_HOME)/java/$(PACKAGEDIR)
+CONFIG_BINDIR 	= $(LIRIC_BIN_HOME)/java
+SCRIPT_BINDIR 	= $(LIRIC_BIN_HOME)/java
 SRCS 		= $(MAIN_SRCS) $(IMPL_SRCS)
-MAIN_SRCS 	= RaptorConstants.java \
-		Raptor.java RaptorStatus.java RaptorTCPClientConnectionThread.java \
-		RaptorTCPServerConnectionThread.java RaptorTCPServer.java RaptorREBOOTQuitThread.java
+MAIN_SRCS 	= LiricConstants.java \
+		Liric.java LiricStatus.java LiricTCPClientConnectionThread.java \
+		LiricTCPServerConnectionThread.java LiricTCPServer.java LiricREBOOTQuitThread.java
 IMPL_SRCS = $(BASE_IMPL_SRCS) $(CALIBRATE_IMPL_SRCS) $(EXPOSE_IMPL_SRCS) $(INTERRUPT_IMPL_SRCS) $(SETUP_IMPL_SRCS)
 BASE_IMPL_SRCS		= CommandImplementation.java JMSCommandImplementation.java UnknownCommandImplementation.java \
 			HardwareImplementation.java
@@ -24,7 +24,7 @@ INTERRUPT_IMPL_SRCS 	= ABORTImplementation.java GET_STATUSImplementation.java RE
 SETUP_IMPL_SRCS		= CONFIGImplementation.java
 OBJS 		= $(SRCS:%.java=$(BINDIR)/%.class)
 
-CONFIG_SRCS	= raptor.raptor.net.properties raptor.raptor.properties raptor.fits.properties
+CONFIG_SRCS	= liric1.liric.net.properties liric1.liric.properties liric1.fits.properties
 
 
 CONFIG_OBJS	= $(CONFIG_SRCS:%.properties=$(CONFIG_BINDIR)/%.properties)
@@ -38,8 +38,8 @@ top: dirs $(OBJS) config scripts dirs
 # Java classes
 #
 $(BINDIR)/%.class:%.java
-	$(JAVAC) -sourcepath .:$(RAPTOR_SRC_HOME)/java \
-		-classpath $(RAPTOR_BIN_HOME)/java:$(CLASSPATH) $(JAVAC_OPTIONS) $(JAVAC_VERSION_OPTIONS) -d $(RAPTOR_BIN_HOME)/java $<
+	$(JAVAC) -sourcepath .:$(LIRIC_SRC_HOME)/java \
+		-classpath $(LIRIC_BIN_HOME)/java:$(CLASSPATH) $(JAVAC_OPTIONS) $(JAVAC_VERSION_OPTIONS) -d $(LIRIC_BIN_HOME)/java $<
 #
 # configuration files
 #
@@ -63,7 +63,7 @@ dirs:
 	done;
 
 depend:
-	echo no depend in ngat/raptor directory.
+	echo no depend in ngat/liric directory.
 
 clean: tidy
 	-$(RM) $(RM_OPTIONS) $(OBJS)

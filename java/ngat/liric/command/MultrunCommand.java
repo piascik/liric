@@ -1,6 +1,6 @@
 // MultrunCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
@@ -32,7 +32,7 @@ public class MultrunCommand extends Command implements Runnable
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @see Command
@@ -73,7 +73,7 @@ public class MultrunCommand extends Command implements Runnable
 
 		if(args.length != 5)
 		{
-			System.out.println("java ngat.raptor.command.MultrunCommand <hostname> <port number> <exposure length> <exposure count> <standard>");
+			System.out.println("java ngat.liric.command.MultrunCommand <hostname> <port number> <exposure length> <exposure count> <standard>");
 			System.exit(1);
 		}
 		try

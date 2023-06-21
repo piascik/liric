@@ -1,12 +1,12 @@
 // ABORTImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.text.*;
 import java.util.*;
 
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.message.base.*;
 import ngat.message.base.*;
 import ngat.message.ISS_INST.*;
@@ -48,7 +48,7 @@ public class ABORTImplementation extends CommandImplementation implements JMSCom
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set.
 	 * @see ngat.message.base.ACK#setTimeToComplete
-	 * @see RaptorTCPServerConnectionThread#getDefaultAcknowledgeTime
+	 * @see LiricTCPServerConnectionThread#getDefaultAcknowledgeTime
 	 */
 	public ACK calculateAcknowledgeTime(COMMAND command)
 	{
@@ -72,39 +72,39 @@ public class ABORTImplementation extends CommandImplementation implements JMSCom
 	 * @return An object of class ABORT_DONE is returned.
 	 * @see #sendAbortCommand
 	 * @see #status
-	 * @see RaptorStatus#getCurrentThread
-	 * @see RaptorTCPServerConnectionThread
-	 * @see RaptorTCPServerConnectionThread#setAbortProcessCommand
+	 * @see LiricStatus#getCurrentThread
+	 * @see LiricTCPServerConnectionThread
+	 * @see LiricTCPServerConnectionThread#setAbortProcessCommand
 	 */
 	public COMMAND_DONE processCommand(COMMAND command)
 	{
 		ABORT_DONE abortDone = new ABORT_DONE(command.getId());
-		RaptorTCPServerConnectionThread thread = null;
+		LiricTCPServerConnectionThread thread = null;
 		String cLayerHostname = null;
 		int cLayerPortNumber;
 
-		raptor.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Started.");
+		liric.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Started.");
 		try
 		{
 			sendAbortCommand();
 		}
 		catch(Exception e)
 		{
-			raptor.error(this.getClass().getName()+":Aborting exposure failed:",e);
-			abortDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+2400);
+			liric.error(this.getClass().getName()+":Aborting exposure failed:",e);
+			abortDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+2400);
 			abortDone.setErrorString(e.toString());
 			abortDone.setSuccessful(false);
 			return abortDone;
 		}
 	// tell the thread itself to abort at a suitable point
-		raptor.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Tell thread to abort.");
-		thread = (RaptorTCPServerConnectionThread)status.getCurrentThread();
+		liric.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Tell thread to abort.");
+		thread = (LiricTCPServerConnectionThread)status.getCurrentThread();
 		if(thread != null)
 			thread.setAbortProcessCommand();
 	// return done object.
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+command.getClass().getName()+
+		liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+command.getClass().getName()+
 			  ":Abort command completed.");
-		abortDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_NO_ERROR);
+		abortDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		abortDone.setErrorString("");
 		abortDone.setSuccessful(true);
 		return abortDone;
@@ -114,14 +114,14 @@ public class ABORTImplementation extends CommandImplementation implements JMSCom
 	 * Send an "abort" command to the C layer.
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #status
-	 * @see ngat.raptor.command.AbortCommand
-	 * @see ngat.raptor.command.AbortCommand#setAddress
-	 * @see ngat.raptor.command.AbortCommand#setPortNumber
-	 * @see ngat.raptor.command.AbortCommand#setCommand
-	 * @see ngat.raptor.command.AbortCommand#sendCommand
-	 * @see ngat.raptor.command.AbortCommand#getParsedReplyOK
-	 * @see ngat.raptor.command.AbortCommand#getReturnCode
-	 * @see ngat.raptor.command.AbortCommand#getParsedReply
+	 * @see ngat.liric.command.AbortCommand
+	 * @see ngat.liric.command.AbortCommand#setAddress
+	 * @see ngat.liric.command.AbortCommand#setPortNumber
+	 * @see ngat.liric.command.AbortCommand#setCommand
+	 * @see ngat.liric.command.AbortCommand#sendCommand
+	 * @see ngat.liric.command.AbortCommand#getParsedReplyOK
+	 * @see ngat.liric.command.AbortCommand#getReturnCode
+	 * @see ngat.liric.command.AbortCommand#getParsedReply
 	 */
 	protected void sendAbortCommand() throws Exception
 	{
@@ -130,14 +130,14 @@ public class ABORTImplementation extends CommandImplementation implements JMSCom
 		String hostname = null;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendAbortCommand:Started.");
-		hostname = status.getProperty("raptor.c.hostname");
-		portNumber = status.getPropertyInteger("raptor.c.port_number");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendAbortCommand:Started.");
+		hostname = status.getProperty("liric.c.hostname");
+		portNumber = status.getPropertyInteger("liric.c.port_number");
 		command = new AbortCommand();
 		// configure C comms
 		command.setAddress(hostname);
 		command.setPortNumber(portNumber);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendAbortCommand:hostname = "+hostname+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendAbortCommand:hostname = "+hostname+
 			  " :port number = "+portNumber+".");
 		// actually send the command to the C layer
 		command.sendCommand();
@@ -146,13 +146,13 @@ public class ABORTImplementation extends CommandImplementation implements JMSCom
 		{
 			returnCode = command.getReturnCode();
 			errorString = command.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "sendAbortCommand:abort command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
 					    ":sendAbortCommand:Command failed with return code "+returnCode+
 					    " and error string:"+errorString);
 		}
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendAbortCommand:Finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendAbortCommand:Finished.");
 	}
 }

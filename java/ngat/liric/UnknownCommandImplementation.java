@@ -1,6 +1,6 @@
 // UnknownCommandImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import ngat.message.base.*;
 
@@ -23,7 +23,7 @@ public class UnknownCommandImplementation extends CommandImplementation implemen
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set.
 	 * @see ngat.message.base.ACK#setTimeToComplete
-	 * @see RaptorTCPServerConnectionThread#getMinAcknowledgeTime
+	 * @see LiricTCPServerConnectionThread#getMinAcknowledgeTime
 	 */
 	public ACK calculateAcknowledgeTime(COMMAND command)
 	{
@@ -45,8 +45,8 @@ public class UnknownCommandImplementation extends CommandImplementation implemen
 		COMMAND_DONE done = null;
 
 		done = new COMMAND_DONE(command.getId());
-		raptor.error("Unknown Commmand:"+command.getClass().getName());
-		done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+400);
+		liric.error("Unknown Commmand:"+command.getClass().getName());
+		done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+400);
 		done.setErrorString("Unknown Commmand:"+command.getClass().getName());
 		done.setSuccessful(false);
 		return done;

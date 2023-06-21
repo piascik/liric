@@ -1,6 +1,6 @@
 // StatusNudgematicStatusCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
@@ -53,7 +53,7 @@ public class StatusNudgematicStatusCommand extends Command implements Runnable
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost", "192.168.1.34"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @see Command
@@ -138,7 +138,7 @@ public class StatusNudgematicStatusCommand extends Command implements Runnable
 
 		if(args.length != 2)
 		{
-			System.out.println("java ngat.raptor.command.StatusNudgematicStatusCommand <hostname> <port number>");
+			System.out.println("java ngat.liric.command.StatusNudgematicStatusCommand <hostname> <port number>");
 			System.exit(1);
 		}
 		try

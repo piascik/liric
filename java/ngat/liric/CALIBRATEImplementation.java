@@ -1,6 +1,6 @@
 // CALIBRATEImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.text.*;
@@ -9,14 +9,14 @@ import java.util.*;
 import ngat.fits.*;
 import ngat.message.base.*;
 import ngat.message.ISS_INST.*;
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.util.logging.*;
 
 /**
  * This class provides common methods to send bias and dark commands to the C layer,
  * as need by several Bias and Dark calibration implementations.
  * @version $Revision$
- * @see ngat.raptor.HardwareImplementation
+ * @see ngat.liric.HardwareImplementation
  */
 public class CALIBRATEImplementation extends HardwareImplementation implements JMSCommandImplementation
 {
@@ -80,14 +80,14 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 	 * @param exposureCount The number of exposures to do in the multdark.
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #parseSuccessfulReply
-	 * @see ngat.raptor.command.MultdarkCommand
-	 * @see ngat.raptor.command.MultdarkCommand#setAddress
-	 * @see ngat.raptor.command.MultdarkCommand#setPortNumber
-	 * @see ngat.raptor.command.MultdarkCommand#setCommand
-	 * @see ngat.raptor.command.MultdarkCommand#sendCommand
-	 * @see ngat.raptor.command.MultdarkCommand#getParsedReplyOK
-	 * @see ngat.raptor.command.MultdarkCommand#getReturnCode
-	 * @see ngat.raptor.command.MultdarkCommand#getParsedReply
+	 * @see ngat.liric.command.MultdarkCommand
+	 * @see ngat.liric.command.MultdarkCommand#setAddress
+	 * @see ngat.liric.command.MultdarkCommand#setPortNumber
+	 * @see ngat.liric.command.MultdarkCommand#setCommand
+	 * @see ngat.liric.command.MultdarkCommand#sendCommand
+	 * @see ngat.liric.command.MultdarkCommand#getParsedReplyOK
+	 * @see ngat.liric.command.MultdarkCommand#getReturnCode
+	 * @see ngat.liric.command.MultdarkCommand#getParsedReply
 	 */
 	protected void sendMultdarkCommand(int exposureLength,int exposureCount) throws Exception
 	{
@@ -96,15 +96,15 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		String hostname = null;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultdarkCommand:exposure length = "+exposureLength+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultdarkCommand:exposure length = "+exposureLength+
 			   ":exposure count = "+exposureCount+".");
 		command = new MultdarkCommand();
 		// configure C comms
-		hostname = status.getProperty("raptor.c.hostname");
-		portNumber = status.getPropertyInteger("raptor.c.port_number");
+		hostname = status.getProperty("liric.c.hostname");
+		portNumber = status.getPropertyInteger("liric.c.port_number");
 		command.setAddress(hostname);
 		command.setPortNumber(portNumber);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultdarkCommand:hostname = "+hostname+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultdarkCommand:hostname = "+hostname+
 			   " :port number = "+portNumber+".");
 		// set command parameters
 		command.setCommand(exposureLength,exposureCount);
@@ -115,7 +115,7 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		{
 			returnCode = command.getReturnCode();
 			errorString = command.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "sendMultdarkCommand:multdark command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -124,7 +124,7 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		}
 		// extract data from successful reply.
 		parseSuccessfulReply(command.getParsedReply());
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultdarkCommand:finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultdarkCommand:finished.");
 	}
 
 	/**
@@ -133,14 +133,14 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 	 * @param exposureCount The number of bias frames to do in the multbias.
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #parseSuccessfulReply
-	 * @see ngat.raptor.command.MultbiasCommand
-	 * @see ngat.raptor.command.MultbiasCommand#setAddress
-	 * @see ngat.raptor.command.MultbiasCommand#setPortNumber
-	 * @see ngat.raptor.command.MultbiasCommand#setCommand
-	 * @see ngat.raptor.command.MultbiasCommand#sendCommand
-	 * @see ngat.raptor.command.MultbiasCommand#getParsedReplyOK
-	 * @see ngat.raptor.command.MultbiasCommand#getReturnCode
-	 * @see ngat.raptor.command.MultbiasCommand#getParsedReply
+	 * @see ngat.liric.command.MultbiasCommand
+	 * @see ngat.liric.command.MultbiasCommand#setAddress
+	 * @see ngat.liric.command.MultbiasCommand#setPortNumber
+	 * @see ngat.liric.command.MultbiasCommand#setCommand
+	 * @see ngat.liric.command.MultbiasCommand#sendCommand
+	 * @see ngat.liric.command.MultbiasCommand#getParsedReplyOK
+	 * @see ngat.liric.command.MultbiasCommand#getReturnCode
+	 * @see ngat.liric.command.MultbiasCommand#getParsedReply
 	 */
 	protected void sendMultbiasCommand(int exposureCount) throws Exception
 	{
@@ -149,14 +149,14 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		String hostname = null;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultbiasCommand:exposure count = "+exposureCount+".");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultbiasCommand:exposure count = "+exposureCount+".");
 		command = new MultbiasCommand();
 		// configure C comms
-		hostname = status.getProperty("raptor.c.hostname");
-		portNumber = status.getPropertyInteger("raptor.c.port_number");
+		hostname = status.getProperty("liric.c.hostname");
+		portNumber = status.getPropertyInteger("liric.c.port_number");
 		command.setAddress(hostname);
 		command.setPortNumber(portNumber);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultbiasCommand:hostname = "+hostname+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultbiasCommand:hostname = "+hostname+
 			   " :port number = "+portNumber+".");
 		// set command parameters
 		command.setCommand(exposureCount);
@@ -167,7 +167,7 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		{
 			returnCode = command.getReturnCode();
 			errorString = command.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "sendMultbiasCommand:multbias command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -176,7 +176,7 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		}
 		// extract data from successful reply.
 		parseSuccessfulReply(command.getParsedReply());
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultbiasCommand:finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendMultbiasCommand:finished.");
 	}
 
 	/**
@@ -196,13 +196,13 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 		StringTokenizer st = new StringTokenizer(replyString," ");
 		int tokenIndex;
 		
-		raptor.log(Logging.VERBOSITY_VERBOSE,"parseSuccessfulReply:started.");
+		liric.log(Logging.VERBOSITY_VERBOSE,"parseSuccessfulReply:started.");
 		tokenIndex = 0;
 		while(st.hasMoreTokens())
 		{
 			// get next token 
 			token = st.nextToken();
-			raptor.log(Logging.VERBOSITY_VERY_VERBOSE,"parseSuccessfulReply:token "+
+			liric.log(Logging.VERBOSITY_VERY_VERBOSE,"parseSuccessfulReply:token "+
 				   tokenIndex+" = "+token+".");
 			if(tokenIndex == 0)
 			{
@@ -218,14 +218,14 @@ public class CALIBRATEImplementation extends HardwareImplementation implements J
 			}
 			else
 			{
-				raptor.log(Logging.VERBOSITY_VERBOSE,
+				liric.log(Logging.VERBOSITY_VERBOSE,
 					   "parseSuccessfulReply:unknown token index "+
 					   tokenIndex+" = "+token+".");
 			}
 			// increment index
 			tokenIndex++;
 		}
-		raptor.log(Logging.VERBOSITY_VERBOSE,"parseSuccessfulReply:finished.");
+		liric.log(Logging.VERBOSITY_VERBOSE,"parseSuccessfulReply:finished.");
 	}	
 }
 

@@ -1,16 +1,16 @@
-// RaptorConstants.java
+// LiricConstants.java
 // $Header$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.io.*;
 
 /**
- * This class holds some constant values for the Raptor program. 
+ * This class holds some constant values for the Liric program. 
  * @author Chris Mottram
  * @version $Revision$
  */
-public class RaptorConstants
+public class LiricConstants
 {
 	/**
 	 * Revision Control System id string, showing the version of the Class.
@@ -19,37 +19,37 @@ public class RaptorConstants
 	/**
 	 * Error code. No error.
 	 */
-	public final static int RAPTOR_ERROR_CODE_NO_ERROR 			= 0;
+	public final static int LIRIC_ERROR_CODE_NO_ERROR 			= 0;
 	/**
-	 * The base Error number, for all Raptor error codes. 
+	 * The base Error number, for all Liric error codes. 
 	 * See http://ltdevsrv.livjm.ac.uk/~dev/errorcodes.html for details.
 	 */
-	public final static int RAPTOR_ERROR_CODE_BASE 			= 1900000;
+	public final static int LIRIC_ERROR_CODE_BASE 			= 1900000;
 	/**
 	 * Default thread priority level. This is for the server thread. Currently this has the highest priority,
 	 * so that new connections are always immediately accepted.
-	 * This number is the default for the <b>raptor.thread.priority.server</b> property, if it does not exist.
+	 * This number is the default for the <b>liric.thread.priority.server</b> property, if it does not exist.
 	 */
-	public final static int RAPTOR_DEFAULT_THREAD_PRIORITY_SERVER		= Thread.NORM_PRIORITY+2;
+	public final static int LIRIC_DEFAULT_THREAD_PRIORITY_SERVER		= Thread.NORM_PRIORITY+2;
 	/**
 	 * Default thread priority level. 
 	 * This is for server connection threads dealing with sub-classes of the INTERRUPT
 	 * class. Currently these have a higher priority than other server connection threads,
 	 * so that INTERRUPT commands are always responded to even when another command is being dealt with.
-	 * This number is the default for the <b>raptor.thread.priority.interrupt</b> property, if it does not exist.
+	 * This number is the default for the <b>liric.thread.priority.interrupt</b> property, if it does not exist.
 	 */
-	public final static int RAPTOR_DEFAULT_THREAD_PRIORITY_INTERRUPT	= Thread.NORM_PRIORITY+1;
+	public final static int LIRIC_DEFAULT_THREAD_PRIORITY_INTERRUPT	= Thread.NORM_PRIORITY+1;
 	/**
 	 * Default thread priority level. This is for most server connection threads. 
 	 * Currently this has a normal priority.
-	 * This number is the default for the <b>raptor.thread.priority.normal</b> property, if it does not exist.
+	 * This number is the default for the <b>liric.thread.priority.normal</b> property, if it does not exist.
 	 */
-	public final static int RAPTOR_DEFAULT_THREAD_PRIORITY_NORMAL		= Thread.NORM_PRIORITY;
+	public final static int LIRIC_DEFAULT_THREAD_PRIORITY_NORMAL		= Thread.NORM_PRIORITY;
 	/**
 	 * Default thread priority level. This is for the Telescope Image Transfer server/client threads. 
 	 * Currently this has the lowest priority, so that the camera control is not interrupted by image
 	 * transfer requests.
-	 * This number is the default for the <b>raptor.thread.priority.tit</b> property, if it does not exist.
+	 * This number is the default for the <b>liric.thread.priority.tit</b> property, if it does not exist.
 	 */
-	public final static int RAPTOR_DEFAULT_THREAD_PRIORITY_TIT		= Thread.MIN_PRIORITY;
+	public final static int LIRIC_DEFAULT_THREAD_PRIORITY_TIT		= Thread.MIN_PRIORITY;
 }

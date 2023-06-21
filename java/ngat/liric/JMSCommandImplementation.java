@@ -1,6 +1,6 @@
 // JMSCommandImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.String;
 import ngat.message.base.*;

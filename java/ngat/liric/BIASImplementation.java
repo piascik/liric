@@ -1,6 +1,6 @@
 // BIASImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.text.*;
@@ -8,7 +8,7 @@ import java.util.*;
 
 import ngat.fits.*;
 import ngat.phase2.*;
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.message.base.*;
 import ngat.message.base.*;
 import ngat.message.ISS_INST.*;
@@ -19,7 +19,7 @@ import ngat.util.logging.*;
  * Java Message System.
  * @author Chris Mottram
  * @version $Revision$
- * @see ngat.raptor.CALIBRATEImplementation
+ * @see ngat.liric.CALIBRATEImplementation
  */
 public class BIASImplementation extends CALIBRATEImplementation implements JMSCommandImplementation
 {
@@ -52,7 +52,7 @@ public class BIASImplementation extends CALIBRATEImplementation implements JMSCo
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set.
 	 * @see ngat.message.base.ACK#setTimeToComplete
-	 * @see RaptorTCPServerConnectionThread#getDefaultAcknowledgeTime
+	 * @see LiricTCPServerConnectionThread#getDefaultAcknowledgeTime
 	 * @see CALIBRATEImplementation#MILLISECONDS_PER_SECOND
 	 * @see #status
 	 * @see #serverConnectionThread
@@ -63,7 +63,7 @@ public class BIASImplementation extends CALIBRATEImplementation implements JMSCo
 		int ackTime=0;
 
 		ackTime = MILLISECONDS_PER_SECOND;
-		raptor.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
 			   ":calculateAcknowledgeTime:ackTime = "+ackTime);
 		acknowledge = new ACK(command.getId());
 		acknowledge.setTimeToComplete(ackTime+serverConnectionThread.getDefaultAcknowledgeTime());
@@ -81,36 +81,36 @@ public class BIASImplementation extends CALIBRATEImplementation implements JMSCo
 	 * <li>The done object is setup. 
 	 * </ul>
 	 * @see #testAbort
-	 * @see ngat.raptor.CALIBRATEImplementation#sendMultbiasCommand
-	 * @see ngat.raptor.CALIBRATEImplementation#filenameCount
-	 * @see ngat.raptor.CALIBRATEImplementation#multrunNumber
-	 * @see ngat.raptor.CALIBRATEImplementation#lastFilename
-	 * @see ngat.raptor.HardwareImplementation#clearFitsHeaders
-	 * @see ngat.raptor.HardwareImplementation#setFitsHeaders
-	 * @see ngat.raptor.HardwareImplementation#getFitsHeadersFromISS
+	 * @see ngat.liric.CALIBRATEImplementation#sendMultbiasCommand
+	 * @see ngat.liric.CALIBRATEImplementation#filenameCount
+	 * @see ngat.liric.CALIBRATEImplementation#multrunNumber
+	 * @see ngat.liric.CALIBRATEImplementation#lastFilename
+	 * @see ngat.liric.HardwareImplementation#clearFitsHeaders
+	 * @see ngat.liric.HardwareImplementation#setFitsHeaders
+	 * @see ngat.liric.HardwareImplementation#getFitsHeadersFromISS
 	 */
 	public COMMAND_DONE processCommand(COMMAND command)
 	{
 		BIAS biasCommand = (BIAS)command;
 		BIAS_DONE biasDone = new BIAS_DONE(command.getId());
 	
-		raptor.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Started.");
+		liric.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Started.");
 		if(testAbort(biasCommand,biasDone) == true)
 			return biasDone;
 		// get fits headers
 		clearFitsHeaders();
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:getting FITS headers from properties.");
 		if(setFitsHeaders(biasCommand,biasDone) == false)
 			return biasDone;
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:getting FITS headers from ISS.");
 		if(getFitsHeadersFromISS(biasCommand,biasDone) == false)
 			return biasDone;
 		if(testAbort(biasCommand,biasDone) == true)
 			return biasDone;
 		// call multbias command
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:Starting Multbias with exposure count 1.");
 		try
 		{
@@ -118,8 +118,8 @@ public class BIASImplementation extends CALIBRATEImplementation implements JMSCo
 		}
 		catch(Exception e )
 		{
-			raptor.error(this.getClass().getName()+":processCommand:sendMultbiasCommand failed:",e);
-			biasDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+700);
+			liric.error(this.getClass().getName()+":processCommand:sendMultbiasCommand failed:",e);
+			biasDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+700);
 			biasDone.setErrorString(this.getClass().getName()+
 						   ":processCommand:sendMultbiasCommand failed:"+e);
 			biasDone.setSuccessful(false);
@@ -129,11 +129,11 @@ public class BIASImplementation extends CALIBRATEImplementation implements JMSCo
 		// setup multbias done
 		biasDone.setFilename(lastFilename);
 		// standard success values
-		biasDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_NO_ERROR);
+		biasDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		biasDone.setErrorString("");
 		biasDone.setSuccessful(true);
 	// return done object.
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,this.getClass().getName()+":processCommand:finished.");
+		liric.log(Logging.VERBOSITY_VERY_TERSE,this.getClass().getName()+":processCommand:finished.");
 		return biasDone;
 	}
 }

@@ -1,6 +1,6 @@
 // CommandImplementation.java
 // $Header$
-package ngat.raptor;
+package ngat.liric;
 
 import ngat.message.base.*;
 import ngat.message.ISS_INST.INTERRUPT;
@@ -18,18 +18,18 @@ public class CommandImplementation implements JMSCommandImplementation
 	 */
 	public final static String RCSID = new String("$Id$");
 	/**
-	 * The Raptor object.
+	 * The Liric object.
 	 */
-	protected Raptor raptor = null;
+	protected Liric liric = null;
 	/**
-	 * Raptor status reference.
-	 * @see RaptorStatus
+	 * Liric status reference.
+	 * @see LiricStatus
 	 */
-	protected RaptorStatus status = null;
+	protected LiricStatus status = null;
 	/**
-	 * Reference to the Raptor thread running the implementation of this command.
+	 * Reference to the Liric thread running the implementation of this command.
 	 */
-	protected RaptorTCPServerConnectionThread serverConnectionThread = null;
+	protected LiricTCPServerConnectionThread serverConnectionThread = null;
 	
 	/**
 	 * This method allows us to determine which class of command this implementation class implements.
@@ -45,17 +45,17 @@ public class CommandImplementation implements JMSCommandImplementation
 	 * This method is called from the TCPServerConnection's init method, after the command to be 
 	 * implemented has been 
 	 * received. This enables us to do any setup required for the implementation before implementation 
-	 * actually starts. It then tries to fill in the raptor status references.
+	 * actually starts. It then tries to fill in the liric status references.
 	 * @param command The command to be implemented.
-	 * @see #raptor
+	 * @see #liric
 	 * @see #status
-	 * @see Raptor#getStatus
+	 * @see Liric#getStatus
 	 */
 	public void init(COMMAND command)
 	{
-		if(raptor != null)
+		if(liric != null)
 		{
-			status = raptor.getStatus();
+			status = liric.getStatus();
 		}
 		if(command == null)
 			return;
@@ -89,27 +89,27 @@ public class CommandImplementation implements JMSCommandImplementation
 		COMMAND_DONE done = null;
 
 		done = new COMMAND_DONE(command.getId());
-		done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_NO_ERROR);
+		done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		done.setErrorString("Generic Command Implementation.");
 		done.setSuccessful(true);
 		return done;
 	}
 
 	/**
-	 * Routine to set this objects pointer to the raptor object.
-	 * @param o The raptor object.
+	 * Routine to set this objects pointer to the liric object.
+	 * @param o The liric object.
 	 */
-	public void setRaptor(Raptor o)
+	public void setLiric(Liric o)
 	{
-		this.raptor = o;
+		this.liric = o;
 	}
 
 	/**
-	 * Routine to set this objects pointer to the Raptor server connection thread running this commands
+	 * Routine to set this objects pointer to the Liric server connection thread running this commands
 	 * implementation.
 	 * @param s The server connection thread.
 	 */
-	public void setServerConnectionThread(RaptorTCPServerConnectionThread s)
+	public void setServerConnectionThread(LiricTCPServerConnectionThread s)
 	{
 		this.serverConnectionThread = s;
 	}
@@ -122,7 +122,7 @@ public class CommandImplementation implements JMSCommandImplementation
 	 * @param done A COMMAND_DONE subclass specific to the command being implemented. If an
 	 * 	error occurs the relevant fields are filled in with the error.
 	 * @return The routine returns a boolean to indicate whether the operation has been aborted or not.
-	 * @see RaptorTCPServerConnectionThread#getAbortProcessCommand
+	 * @see LiricTCPServerConnectionThread#getAbortProcessCommand
 	 * @see #serverConnectionThread
 	 */
 	public boolean testAbort(COMMAND command,COMMAND_DONE done)
@@ -136,8 +136,8 @@ public class CommandImplementation implements JMSCommandImplementation
 			{
 				String s = new String("Command "+command.getClass().getName()+
 						" Operation Aborted.");
-				raptor.error(s);
-				done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+200);
+				liric.error(s);
+				done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+200);
 				done.setErrorString(s);
 				done.setSuccessful(false);
 			}

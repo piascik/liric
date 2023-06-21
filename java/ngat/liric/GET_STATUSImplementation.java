@@ -1,12 +1,12 @@
 // GET_STATUSImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.text.*;
 import java.util.*;
 
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.message.base.*;
 import ngat.message.base.*;
 import ngat.message.ISS_INST.*;
@@ -80,7 +80,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set.
 	 * @see ngat.message.base.ACK#setTimeToComplete
-	 * @see RaptorTCPServerConnectionThread#getDefaultAcknowledgeTime
+	 * @see LiricTCPServerConnectionThread#getDefaultAcknowledgeTime
 	 */
 	public ACK calculateAcknowledgeTime(COMMAND command)
 	{
@@ -99,7 +99,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * <li>getExposureStatus is called to get the exposure status into the exposureStatus and exposureStatusString
 	 *     variables.
 	 * <li>"Exposure Status" and "Exposure Status String" status properties are added to the hashtable.
-	 * <li>The "Instrument" status property is set to the "raptor.get_status.instrument_name" property value.
+	 * <li>The "Instrument" status property is set to the "liric.get_status.instrument_name" property value.
 	 * <li>The detectorTemperatureInstrumentStatus is initialised.
 	 * <li>The "currentCommand" status hashtable value is set to the currently executing command.
 	 * <li>getStatusExposureIndex / getStatusExposureCount / getStatusExposureMultrun / getStatusExposureRun / 
@@ -111,7 +111,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * An object of class GET_STATUS_DONE is returned, with the information retrieved.
 	 * @param command The GET_STATUS command.
 	 * @return An object of class GET_STATUS_DONE is returned.
-	 * @see #raptor
+	 * @see #liric
 	 * @see #status
 	 * @see #hashTable
 	 * @see #detectorTemperatureInstrumentStatus
@@ -126,8 +126,8 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #getIntermediateStatus
 	 * @see #getFullStatus
 	 * @see #currentMode
-	 * @see RaptorStatus#getProperty
-	 * @see RaptorStatus#getCurrentCommand
+	 * @see LiricStatus#getProperty
+	 * @see LiricStatus#getCurrentCommand
 	 * @see GET_STATUS#getLevel
 	 * @see ngat.message.ISS_INST.GET_STATUS_DONE#KEYWORD_INSTRUMENT_STATUS
 	 * @see ngat.message.ISS_INST.GET_STATUS_DONE#KEYWORD_DETECTOR_TEMPERATURE_INSTRUMENT_STATUS
@@ -150,7 +150,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 			getExposureStatus(); 
 			getStatusDone.setCurrentMode(currentMode); 
 			// What instrument is this?
-			hashTable.put("Instrument",status.getProperty("raptor.get_status.instrument_name"));
+			hashTable.put("Instrument",status.getProperty("liric.get_status.instrument_name"));
 			// Initialise Standard status to UNKNOWN
 			detectorTemperatureInstrumentStatus = GET_STATUS_DONE.VALUE_STATUS_UNKNOWN;
 			hashTable.put(GET_STATUS_DONE.KEYWORD_DETECTOR_TEMPERATURE_INSTRUMENT_STATUS,
@@ -181,10 +181,10 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		catch(Exception e)
 		{
-			raptor.error(this.getClass().getName()+
+			liric.error(this.getClass().getName()+
 				       ":processCommand:Retrieving basic status failed.",e);
 			getStatusDone.setDisplayInfo(hashTable);
-			getStatusDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+2500);
+			getStatusDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+2500);
 			getStatusDone.setErrorString("processCommand:Retrieving basic status failed:"+e);
 			getStatusDone.setSuccessful(false);
 			return getStatusDone;
@@ -201,7 +201,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 	// set hashtable and return values.
 		getStatusDone.setDisplayInfo(hashTable);
-		getStatusDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_NO_ERROR);
+		getStatusDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		getStatusDone.setErrorString("");
 		getStatusDone.setSuccessful(true);
 	// return done object.
@@ -214,13 +214,13 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #status
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see RaptorStatus#getProperty
-	 * @see RaptorStatus#getPropertyInteger
+	 * @see LiricStatus#getProperty
+	 * @see LiricStatus#getPropertyInteger
 	 */
 	protected void getCLayerConfig() throws Exception
 	{
-		cLayerHostname = status.getProperty("raptor.c.hostname");
-		cLayerPortNumber = status.getPropertyInteger("raptor.c.port_number");
+		cLayerHostname = status.getProperty("liric.c.hostname");
+		cLayerPortNumber = status.getPropertyInteger("liric.c.port_number");
 	}
 	
 	/**
@@ -228,9 +228,9 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusFilterWheelFilterCommand
-	 * @see ngat.raptor.command.StatusFilterWheelPositionCommand
-	 * @see ngat.raptor.command.StatusFilterWheelStatusCommand
+	 * @see ngat.liric.command.StatusFilterWheelFilterCommand
+	 * @see ngat.liric.command.StatusFilterWheelPositionCommand
+	 * @see ngat.liric.command.StatusFilterWheelStatusCommand
 	 */
 	protected void getFilterWheelStatus() throws Exception
 	{
@@ -242,7 +242,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		String filterWheelStatus = null;
 		int returnCode,filterWheelPosition;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getFilterWheelStatus:started for C layer :Hostname: "+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getFilterWheelStatus:started for C layer :Hostname: "+
 			   cLayerHostname+" Port Number: "+cLayerPortNumber+".");
 		// Setup StatusFilterWheelFilterCommand
 		statusFilterWheelFilterCommand = new StatusFilterWheelFilterCommand();
@@ -255,7 +255,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusFilterWheelFilterCommand.getReturnCode();
 			errorString = statusFilterWheelFilterCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getFilterWheelStatus:filterwheel filter command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -275,7 +275,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusFilterWheelPositionCommand.getReturnCode();
 			errorString = statusFilterWheelPositionCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getFilterWheelStatus:filterwheel position command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -295,7 +295,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusFilterWheelStatusCommand.getReturnCode();
 			errorString = statusFilterWheelStatusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getFilterWheelStatus:filterwheel status command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -315,8 +315,8 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #currentMode
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusExposureStatusCommand
-	 * @see ngat.raptor.command.StatusExposureStatusCommand#getMultrunInProgress
+	 * @see ngat.liric.command.StatusExposureStatusCommand
+	 * @see ngat.liric.command.StatusExposureStatusCommand#getMultrunInProgress
 	 * @see ngat.message.ISS_INST.GET_STATUS_DONE#MODE_IDLE
 	 * @see ngat.message.ISS_INST.GET_STATUS_DONE#MODE_EXPOSING
 	 * @see ngat.message.ISS_INST.GET_STATUS_DONE#MODE_ERROR
@@ -331,7 +331,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		// initialise currentMode to IDLE
 		currentMode = GET_STATUS_DONE.MODE_IDLE;
 		// Setup StatusExposureStatusCommand
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getExposureStatus:started for C layer :Hostname: "+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getExposureStatus:started for C layer :Hostname: "+
 			   cLayerHostname+" Port Number: "+cLayerPortNumber+".");
 		statusCommand = new StatusExposureStatusCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -343,7 +343,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getExposureStatus:exposure status command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -352,10 +352,10 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		multrunInProgress = statusCommand.getMultrunInProgress();
 		hashTable.put("Multrun In Progress",new Boolean(multrunInProgress));
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getExposureStatus:finished with multrun in progress:"+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getExposureStatus:finished with multrun in progress:"+
 			   multrunInProgress);
 		// change currentMode dependant on what the C layer is doing
-		// We can only detect whether a multrun is in progress in Raptor
+		// We can only detect whether a multrun is in progress in Liric
 		if(multrunInProgress)
 			currentMode = GET_STATUS_DONE.MODE_EXPOSING;
 	}
@@ -368,7 +368,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #hashTable
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusExposureCountCommand
+	 * @see ngat.liric.command.StatusExposureCountCommand
 	 */
 	protected void getStatusExposureCount() throws Exception
 	{
@@ -376,7 +376,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		int returnCode,exposureCount;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCount:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCount:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusExposureCountCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -388,7 +388,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getStatusExposureCount:exposure count command failed ("+
 				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
 				   returnCode+" and error string:"+errorString);
@@ -400,7 +400,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		exposureCount = statusCommand.getExposureCount();
 		hashTable.put("Exposure Count",new Integer(exposureCount));
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCount:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCount:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with count:"+exposureCount);
 	}
 
@@ -412,7 +412,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #hashTable
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusExposureLengthCommand
+	 * @see ngat.liric.command.StatusExposureLengthCommand
 	 */
 	protected void getStatusExposureLength() throws Exception
 	{
@@ -420,7 +420,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		int returnCode,exposureLength;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureLength:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureLength:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusExposureLengthCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -432,7 +432,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getStatusExposureLength:exposure length command failed for C layer ("+
 				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
 				   returnCode+" and error string:"+errorString);
@@ -443,7 +443,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		exposureLength = statusCommand.getExposureLength();
 		hashTable.put("Exposure Length",new Integer(exposureLength));
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureLength:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureLength:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with length:"+exposureLength+ " ms.");
 	}
 	
@@ -455,7 +455,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #hashTable
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusExposureStartTimeCommand
+	 * @see ngat.liric.command.StatusExposureStartTimeCommand
 	 */
 	protected void getStatusExposureStartTime() throws Exception
 	{
@@ -464,8 +464,8 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		int returnCode;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureStartTime:started.");
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureStartTime:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureStartTime:started.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureStartTime:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusExposureStartTimeCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -477,7 +477,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,"getStatusExposureStartTime:"+
+			liric.log(Logging.VERBOSITY_TERSE,"getStatusExposureStartTime:"+
 				   "exposure start time command failed for C layer ("+
 				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
 				   returnCode+" and error string:"+errorString);
@@ -489,7 +489,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		exposureStartTime = statusCommand.getTimestamp();
 		hashTable.put("Exposure Start Time",new Long(exposureStartTime.getTime()));
 		hashTable.put("Exposure Start Time Date",exposureStartTime);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureStartTime:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureStartTime:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with start time:"+exposureStartTime);
 	}
 
@@ -537,7 +537,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
 	 * @see #hashTable
-	 * @see ngat.raptor.command.StatusExposureIndexCommand
+	 * @see ngat.liric.command.StatusExposureIndexCommand
 	 */
 	protected void getStatusExposureIndex() throws Exception
 	{
@@ -545,7 +545,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		int returnCode,exposureIndex;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureIndex:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureIndex:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusExposureIndexCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -557,7 +557,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getStatusExposureIndex:exposure index command failed for C layer ("+
 				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
 				   returnCode+" and error string:"+errorString);
@@ -570,7 +570,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		hashTable.put("Exposure Index",new Integer(exposureIndex));
 		// exposure number is really the same thing, but is used by the IcsGUI.
 		hashTable.put("Exposure Number",new Integer(exposureIndex));
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureIndex:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureIndex:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with index:"+exposureIndex);
 	}
 
@@ -581,7 +581,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #hashTable
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusExposureMultrunCommand
+	 * @see ngat.liric.command.StatusExposureMultrunCommand
 	 */
 	protected void getStatusExposureMultrun() throws Exception
 	{
@@ -589,7 +589,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		int returnCode,exposureMultrun;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureMultrun:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureMultrun:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusExposureMultrunCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -601,7 +601,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getStatusExposureMultrun:exposure multrun command failed for C layer ("+
 				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
 				   returnCode+" and error string:"+errorString);
@@ -612,7 +612,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		exposureMultrun = statusCommand.getExposureMultrun();
 		hashTable.put("Exposure Multrun",new Integer(exposureMultrun));
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureMultrun:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureMultrun:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with multrun number:"+exposureMultrun);
 	}
 
@@ -623,7 +623,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #hashTable
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusExposureRunCommand
+	 * @see ngat.liric.command.StatusExposureRunCommand
 	 */
 	protected void getStatusExposureRun() throws Exception
 	{
@@ -631,8 +631,8 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		int returnCode,exposureRun;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureRun:started.");
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureRun:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureRun:started.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureRun:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusExposureRunCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -644,7 +644,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getStatusExposureRun:exposure run command failed for C layer ("+
 				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
 				   returnCode+" and error string:"+errorString);
@@ -655,7 +655,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		exposureRun = statusCommand.getExposureRun();
 		hashTable.put("Exposure Run",new Integer(exposureRun));
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureRun:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureRun:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with run number:"+exposureRun);
 	}
 	
@@ -678,7 +678,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		catch(Exception e)
 		{
-			raptor.error(this.getClass().getName()+
+			liric.error(this.getClass().getName()+
 				     ":getIntermediateStatus:Retrieving temperature status failed.",e);
 		}
 		try
@@ -687,7 +687,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		catch(Exception e)
 		{
-			raptor.error(this.getClass().getName()+
+			liric.error(this.getClass().getName()+
 				     ":getIntermediateStatus:Retrieving nudgematic status failed.",e);
 		}
 	// Standard status
@@ -708,15 +708,15 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #cLayerPortNumber
 	 * @see #hashTable
 	 * @see #setDetectorTemperatureInstrumentStatus
-	 * @see ngat.raptor.Raptor#CENTIGRADE_TO_KELVIN
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#setAddress
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#setPortNumber
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#sendCommand
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#getReturnCode
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#getParsedReply
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#getTemperature
-	 * @see ngat.raptor.command.StatusTemperatureGetCommand#getTimestamp
+	 * @see ngat.liric.Liric#CENTIGRADE_TO_KELVIN
+	 * @see ngat.liric.command.StatusTemperatureGetCommand
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#setAddress
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#setPortNumber
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#sendCommand
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#getReturnCode
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#getParsedReply
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#getTemperature
+	 * @see ngat.liric.command.StatusTemperatureGetCommand#getTimestamp
 	 */
 	protected void getTemperature() throws Exception
 	{
@@ -726,7 +726,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		double temperature;
 		Date timestamp;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getTemperature:started for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getTemperature:started for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+").");
 		statusCommand = new StatusTemperatureGetCommand();
 		statusCommand.setAddress(cLayerHostname);
@@ -738,7 +738,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusCommand.getReturnCode();
 			errorString = statusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getTemperature:exposure run command failed for C layer ("+
 				   cLayerHostname+":"+cLayerPortNumber+
 				   ") with return code "+returnCode+" and error string:"+errorString);
@@ -749,23 +749,23 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		}
 		temperature = statusCommand.getTemperature();
 		timestamp = statusCommand.getTimestamp();
-		hashTable.put("Temperature",new Double(temperature+Raptor.CENTIGRADE_TO_KELVIN));
+		hashTable.put("Temperature",new Double(temperature+Liric.CENTIGRADE_TO_KELVIN));
 		hashTable.put("Temperature Timestamp",timestamp);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getTemperature:finished for C layer ("+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getTemperature:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with temperature:"+temperature+
 			   " measured at "+timestamp);
 		setDetectorTemperatureInstrumentStatus(temperature);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"getTemperature:finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getTemperature:finished.");
 	}
 
 	/**
 	 * Set the standard entry for detector temperature in the hashtable based upon the current temperature.
 	 * Reads the folowing config:
 	 * <ul>
-	 * <li>raptor.get_status.detector.temperature.warm.warn
-	 * <li>raptor.get_status.detector.temperature.warm.fail
-	 * <li>raptor.get_status.detector.temperature.cold.warn
-	 * <li>raptor.get_status.detector.temperature.cold.fail
+	 * <li>liric.get_status.detector.temperature.warm.warn
+	 * <li>liric.get_status.detector.temperature.warm.fail
+	 * <li>liric.get_status.detector.temperature.cold.warn
+	 * <li>liric.get_status.detector.temperature.cold.fail
 	 * </ul>
 	 * @param temperature The current detector temperature in degrees C.
 	 * @exception NumberFormatException Thrown if the config is not a valid double.
@@ -782,10 +782,10 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		double warmWarnTemperature,warmFailTemperature,coldWarnTemperature,coldFailTemperature;
 
 		// get config for warn and fail temperatures
-		warmWarnTemperature = status.getPropertyDouble("raptor.get_status.detector.temperature.warm.warn");
-		warmFailTemperature = status.getPropertyDouble("raptor.get_status.detector.temperature.warm.fail");
-		coldWarnTemperature = status.getPropertyDouble("raptor.get_status.detector.temperature.cold.warn");
-		coldFailTemperature = status.getPropertyDouble("raptor.get_status.detector.temperature.cold.fail");
+		warmWarnTemperature = status.getPropertyDouble("liric.get_status.detector.temperature.warm.warn");
+		warmFailTemperature = status.getPropertyDouble("liric.get_status.detector.temperature.warm.fail");
+		coldWarnTemperature = status.getPropertyDouble("liric.get_status.detector.temperature.cold.warn");
+		coldFailTemperature = status.getPropertyDouble("liric.get_status.detector.temperature.cold.fail");
 		// initialise status to OK
 		detectorTemperatureInstrumentStatus = GET_STATUS_DONE.VALUE_STATUS_OK;
 		if(temperature > warmFailTemperature)
@@ -850,9 +850,9 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @exception Exception Thrown if an error occurs.
 	 * @see #cLayerHostname
 	 * @see #cLayerPortNumber
-	 * @see ngat.raptor.command.StatusNudgematicPositionCommand
-	 * @see ngat.raptor.command.StatusNudgematicStatusCommand
-	 * @see ngat.raptor.command.StatusNudgematicOffsetSizeCommand
+	 * @see ngat.liric.command.StatusNudgematicPositionCommand
+	 * @see ngat.liric.command.StatusNudgematicStatusCommand
+	 * @see ngat.liric.command.StatusNudgematicOffsetSizeCommand
 	 */
 	protected void getNudgematicStatus() throws Exception
 	{
@@ -877,7 +877,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusNudgematicPositionCommand.getReturnCode();
 			errorString = statusNudgematicPositionCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getNudgematicStatus:nudgematic position command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -897,7 +897,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusNudgematicStatusCommand.getReturnCode();
 			errorString = statusNudgematicStatusCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getNudgematicStatus:nudgematic status command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -917,7 +917,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		{
 			returnCode = statusNudgematicOffsetSizeCommand.getReturnCode();
 			errorString = statusNudgematicOffsetSizeCommand.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "getNudgematicStatus:nudgematic status command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
@@ -932,7 +932,7 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * Method to get misc status, when level FULL has been selected.
 	 * The following data is put into the hashTable:
 	 * <ul>
-	 * <li><b>Log Level</b> The current logging level Raptor is using.
+	 * <li><b>Log Level</b> The current logging level Liric is using.
 	 * <li><b>Disk Usage</b> The results of running a &quot;df -k&quot;, to get the disk usage.
 	 * <li><b>Process List</b> The results of running a &quot;ps -e -o pid,pcpu,vsz,ruser,stime,time,args&quot;, 
 	 * 	to get the processes running on this machine.
@@ -943,12 +943,12 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * 	Java virtual machine version, classpath and type.
 	 * <li><b>os.name, os.arch, os.version</b> The operating system type/version.
 	 * <li><b>user.name, user.home, user.dir</b> Data about the user the process is running as.
-	 * <li><b>thread.list</b> A list of threads the Raptor process is running.
+	 * <li><b>thread.list</b> A list of threads the Liric process is running.
 	 * </ul>
 	 * @see #serverConnectionThread
 	 * @see #hashTable
 	 * @see ExecuteCommand#run
-	 * @see RaptorStatus#getLogLevel
+	 * @see LiricStatus#getLogLevel
 	 */
 	private void getFullStatus()
 	{

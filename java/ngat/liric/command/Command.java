@@ -1,6 +1,6 @@
 // Command.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
@@ -11,7 +11,7 @@ import ngat.net.TelnetConnectionListener;
 
 /**
  * The Command class is the base class for sending a command and getting a reply from the
- * Raptor control system C layer. This is a telnet - type socket interaction.
+ * Liric control system C layer. This is a telnet - type socket interaction.
  * @author Chris Mottram
  * @version $Revision$
  */
@@ -26,7 +26,7 @@ public class Command implements Runnable, TelnetConnectionListener
 	 */
 	protected TelnetConnection telnetConnection = null;
 	/**
-	 * The command to send to Raptor.
+	 * The command to send to Liric.
 	 */
 	protected String commandString = null;
 	/**
@@ -73,7 +73,7 @@ public class Command implements Runnable, TelnetConnectionListener
 	/**
 	 * Constructor. Construct the TelnetConnection and set this object to be the listener.
 	 * Setup the commandString.
-	 * @param address A string representing the address of the C layer, i.e. "raptor",
+	 * @param address A string representing the address of the C layer, i.e. "liric",
 	 *     "localhost".
 	 * @param portNumber An integer representing the port number the C layer is receiving command on.
 	 * @param commandString The string to send to the C layer as a command.
@@ -91,7 +91,7 @@ public class Command implements Runnable, TelnetConnectionListener
 
 	/**
 	 * Set the address.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @exception UnknownHostException Thrown if the address in unknown.
 	 * @see #telnetConnection
@@ -311,7 +311,7 @@ public class Command implements Runnable, TelnetConnectionListener
 
 		if(args.length != 3)
 		{
-			System.out.println("java ngat.raptor.command.Command <hostname> <port number> <command>");
+			System.out.println("java ngat.liric.command.Command <hostname> <port number> <command>");
 			System.exit(1);
 		}
 		try

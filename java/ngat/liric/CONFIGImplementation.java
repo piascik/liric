@@ -1,9 +1,9 @@
 // CONFIGImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.message.base.*;
 import ngat.message.ISS_INST.CONFIG;
 import ngat.message.ISS_INST.CONFIG_DONE;
@@ -17,7 +17,7 @@ import ngat.util.logging.*;
  * This class provides the implementation for the CONFIG command sent to a server using the
  * Java Message System.
  * @author Chris Mottram
- * @version $Revision: 5e5670a0f86ed4750d7e082c4e60f1ed9ae5f697 $
+ * @version $Revision$
  */
 public class CONFIGImplementation extends CommandImplementation implements JMSCommandImplementation
 {
@@ -45,13 +45,13 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 
 	/**
 	 * This method gets the CONFIG command's acknowledge time.
-	 * This method returns an ACK with timeToComplete set to the &quot;raptor.config.acknowledge_time &quot;
-	 * held in the Raptor configuration file. 
+	 * This method returns an ACK with timeToComplete set to the &quot;liric.config.acknowledge_time &quot;
+	 * held in the Liric configuration file. 
 	 * If this cannot be found/is not a valid number the default acknowledge time is used instead.
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set to a time (in milliseconds).
 	 * @see ngat.message.base.ACK#setTimeToComplete
-	 * @see RaptorTCPServerConnectionThread#getDefaultAcknowledgeTime
+	 * @see LiricTCPServerConnectionThread#getDefaultAcknowledgeTime
 	 */
 	public ACK calculateAcknowledgeTime(COMMAND command)
 	{
@@ -61,11 +61,11 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		acknowledge = new ACK(command.getId());
 		try
 		{
-			timeToComplete += raptor.getStatus().getPropertyInteger("raptor.config.acknowledge_time");
+			timeToComplete += liric.getStatus().getPropertyInteger("liric.config.acknowledge_time");
 		}
 		catch(NumberFormatException e)
 		{
-			raptor.error(this.getClass().getName()+":calculateAcknowledgeTime:"+e);
+			liric.error(this.getClass().getName()+":calculateAcknowledgeTime:"+e);
 			timeToComplete += serverConnectionThread.getDefaultAcknowledgeTime();
 		}
 		acknowledge.setTimeToComplete(timeToComplete);
@@ -84,33 +84,33 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	 * <li>sendConfigCoaddExposureLengthCommand is called with the coadd exposure length data to send a 
 	 *     C layer Config command.
 	 * <li>We test for command abort.
-	 * <li>We calculate the focus offset from "raptor.focus.offset", and call setFocusOffset to tell the RCS/TCS
+	 * <li>We calculate the focus offset from "liric.focus.offset", and call setFocusOffset to tell the RCS/TCS
 	 *     the focus offset required.
 	 * <li>We increment the config Id.
-	 * <li>We save the config name in the Raptor status instance for future reference.
+	 * <li>We save the config name in the Liric status instance for future reference.
 	 * <li>We return success.
 	 * </ul>
 	 * @see #testAbort
 	 * @see #setFocusOffset
-	 * @see #raptor
+	 * @see #liric
 	 * @see #status
 	 * @see #sendConfigFilterCommand
 	 * @see #sendConfigNudgematicOffsetSizeCommand
 	 * @see #sendConfigCoaddExposureLengthCommand
-	 * @see ngat.raptor.Raptor#getStatus
-	 * @see ngat.raptor.RaptorStatus#incConfigId
-	 * @see ngat.raptor.RaptorStatus#setConfigName
-	 * @see ngat.phase2.RaptorConfig
+	 * @see ngat.liric.Liric#getStatus
+	 * @see ngat.liric.LiricStatus#incConfigId
+	 * @see ngat.liric.LiricStatus#setConfigName
+	 * @see ngat.phase2.LiricConfig
 	 */
 	public COMMAND_DONE processCommand(COMMAND command)
 	{
 		CONFIG configCommand = null;
-		RaptorConfig config = null;
+		LiricConfig config = null;
 		CONFIG_DONE configDone = null;
 		String configName = null;
 		float focusOffset;
 
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,"CONFIGImplementation:processCommand:Started.");
+		liric.log(Logging.VERBOSITY_VERY_TERSE,"CONFIGImplementation:processCommand:Started.");
 	// test contents of command.
 		configCommand = (CONFIG)command;
 		configDone = new CONFIG_DONE(command.getId());
@@ -118,18 +118,18 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 			return configDone;
 		if(configCommand.getConfig() == null)
 		{
-			raptor.error(this.getClass().getName()+":processCommand:"+command+":Config was null.");
-			configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+800);
+			liric.error(this.getClass().getName()+":processCommand:"+command+":Config was null.");
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+800);
 			configDone.setErrorString(":Config was null.");
 			configDone.setSuccessful(false);
 			return configDone;
 		}
-		if((configCommand.getConfig() instanceof RaptorConfig) == false)
+		if((configCommand.getConfig() instanceof LiricConfig) == false)
 		{
-			raptor.error(this.getClass().getName()+":processCommand:"+
+			liric.error(this.getClass().getName()+":processCommand:"+
 				command+":Config has wrong class:"+
 				configCommand.getConfig().getClass().getName());
-			configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+801);
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+801);
 			configDone.setErrorString(":Config has wrong class:"+
 				configCommand.getConfig().getClass().getName());
 			configDone.setSuccessful(false);
@@ -139,10 +139,10 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		if(testAbort(configCommand,configDone) == true)
 			return configDone;
 	// get config from configCommand.
-		config = (RaptorConfig)configCommand.getConfig();
+		config = (LiricConfig)configCommand.getConfig();
 	// get configuration Id - used later
 		configName = config.getId();
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+
+		liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+
 			   configCommand.getClass().getName()+
 			   "\n\t:id = "+configName+
 			   "\n\t:Filter = "+config.getFilterName()+
@@ -158,8 +158,8 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		}
 		catch(Exception e)
 		{
-			raptor.error(this.getClass().getName()+":processCommand:"+command,e);
-			configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+804);
+			liric.error(this.getClass().getName()+":processCommand:"+command,e);
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+804);
 			configDone.setErrorString(e.toString());
 			configDone.setSuccessful(false);
 			return configDone;
@@ -170,14 +170,14 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	// Issue ISS OFFSET_FOCUS commmand. 
 		try
 		{
-			focusOffset = status.getPropertyFloat("raptor.focus.offset");
-			raptor.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+
+			focusOffset = status.getPropertyFloat("liric.focus.offset");
+			liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+
 				   configCommand.getClass().getName()+":focus offset = "+focusOffset+".");
 		}
 		catch(NumberFormatException e)
 		{
-			raptor.error(this.getClass().getName()+":processCommand:"+command,e);
-			configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+806);
+			liric.error(this.getClass().getName()+":processCommand:"+command,e);
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+806);
 			configDone.setErrorString(e.toString());
 			configDone.setSuccessful(false);
 			return configDone;
@@ -192,9 +192,9 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		}
 		catch(Exception e)
 		{
-			raptor.error(this.getClass().getName()+":processCommand:"+
+			liric.error(this.getClass().getName()+":processCommand:"+
 				command+":Incrementing configuration ID:"+e.toString());
-			configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+809);
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+809);
 			configDone.setErrorString("Incrementing configuration ID:"+e.toString());
 			configDone.setSuccessful(false);
 			return configDone;
@@ -203,10 +203,10 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	// This is queried when saving FITS headers to get the CONFNAME value.
 		status.setConfigName(configName);
 	// setup return object.
-		configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_NO_ERROR);
+		configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		configDone.setErrorString("");
 		configDone.setSuccessful(true);
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,"CONFIGImplementation:processCommand:Finished.");
+		liric.log(Logging.VERBOSITY_VERY_TERSE,"CONFIGImplementation:processCommand:Finished.");
 	// return done object.
 		return configDone;
 	}
@@ -215,14 +215,14 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	 * Send the extracted filter config data onto the C layer.
 	 * @param filterName The name of the filter to be selected (put into the beam).
 	 * @exception Exception Thrown if an error occurs.
-	 * @see ngat.raptor.command.ConfigFilterCommand
-	 * @see ngat.raptor.command.ConfigFilterCommand#setAddress
-	 * @see ngat.raptor.command.ConfigFilterCommand#setPortNumber
-	 * @see ngat.raptor.command.ConfigFilterCommand#setCommand
-	 * @see ngat.raptor.command.ConfigFilterCommand#sendCommand
-	 * @see ngat.raptor.command.ConfigFilterCommand#getParsedReplyOK
-	 * @see ngat.raptor.command.ConfigFilterCommand#getReturnCode
-	 * @see ngat.raptor.command.ConfigFilterCommand#getParsedReply
+	 * @see ngat.liric.command.ConfigFilterCommand
+	 * @see ngat.liric.command.ConfigFilterCommand#setAddress
+	 * @see ngat.liric.command.ConfigFilterCommand#setPortNumber
+	 * @see ngat.liric.command.ConfigFilterCommand#setCommand
+	 * @see ngat.liric.command.ConfigFilterCommand#sendCommand
+	 * @see ngat.liric.command.ConfigFilterCommand#getParsedReplyOK
+	 * @see ngat.liric.command.ConfigFilterCommand#getReturnCode
+	 * @see ngat.liric.command.ConfigFilterCommand#getParsedReply
 	 */
 	protected void sendConfigFilterCommand(String filterName) throws Exception
 	{
@@ -231,14 +231,14 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		String hostname = null;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigFilterCommand:filter name = "+filterName+".");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigFilterCommand:filter name = "+filterName+".");
 		command = new ConfigFilterCommand();
 		// configure C comms
-		hostname = status.getProperty("raptor.c.hostname");
-		portNumber = status.getPropertyInteger("raptor.c.port_number");
+		hostname = status.getProperty("liric.c.hostname");
+		portNumber = status.getPropertyInteger("liric.c.port_number");
 		command.setAddress(hostname);
 		command.setPortNumber(portNumber);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigFilterCommand:hostname = "+hostname+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigFilterCommand:hostname = "+hostname+
 			   " :port number = "+portNumber+".");
 		// set command parameters
 		command.setCommand(filterName);
@@ -249,14 +249,14 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		{
 			returnCode = command.getReturnCode();
 			errorString = command.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "sendConfigFilterCommand:config command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
 					    ":sendConfigFilterCommand:Command failed with return code "+
 					    returnCode+" and error string:"+errorString);
 		}
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigFilterCommand:finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigFilterCommand:finished.");
 	}
 
 	/**
@@ -264,17 +264,17 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	 * @param nudgematicOffsetSize The nudgematic offset size as an integer, one of:
 	 *        NUDGEMATIC_OFFSET_SIZE_NONE / NUDGEMATIC_OFFSET_SIZE_SMALL / NUDGEMATIC_OFFSET_SIZE_LARGE.
 	 * @exception Exception Thrown if an error occurs.
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#setAddress
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#setPortNumber
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#setCommand
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#sendCommand
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#getParsedReplyOK
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#getReturnCode
-	 * @see ngat.raptor.command.ConfigNudgematicOffsetSizeCommand#getParsedReply
-	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_NONE
-	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
-	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#setAddress
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#setPortNumber
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#setCommand
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#sendCommand
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#getParsedReplyOK
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#getReturnCode
+	 * @see ngat.liric.command.ConfigNudgematicOffsetSizeCommand#getParsedReply
+	 * @see ngat.phase2.LiricConfig#NUDGEMATIC_OFFSET_SIZE_NONE
+	 * @see ngat.phase2.LiricConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
+	 * @see ngat.phase2.LiricConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
 	 */
 	protected void sendConfigNudgematicOffsetSizeCommand(int nudgematicOffsetSize) throws Exception
 	{
@@ -283,16 +283,16 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		String hostname = null;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,
 			   "sendConfigNudgematicOffsetSizeCommand:nudgematic offset size = "+
 			   nudgematicOffsetSize+".");
 		command = new ConfigNudgematicOffsetSizeCommand();
 		// configure C comms
-		hostname = status.getProperty("raptor.c.hostname");
-		portNumber = status.getPropertyInteger("raptor.c.port_number");
+		hostname = status.getProperty("liric.c.hostname");
+		portNumber = status.getPropertyInteger("liric.c.port_number");
 		command.setAddress(hostname);
 		command.setPortNumber(portNumber);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigNudgematicOffsetSizeCommand:hostname = "+hostname+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigNudgematicOffsetSizeCommand:hostname = "+hostname+
 			   " :port number = "+portNumber+".");
 		// set command parameters
 		command.setCommand(nudgematicOffsetSize);
@@ -303,28 +303,28 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		{
 			returnCode = command.getReturnCode();
 			errorString = command.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "sendConfigNudgematicOffsetSizeCommand:config command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
 					    ":sendConfigNudgematicOffsetSizeCommand:Command failed with return code "+
 					    returnCode+" and error string:"+errorString);
 		}
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigNudgematicOffsetSizeCommand:finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigNudgematicOffsetSizeCommand:finished.");
 	}
 
 	/**
 	 * Send the extracted coadd exposure length config data onto the C layer.
 	 * @param coaddExposureLength The coadd exposure length as an integer in milliseconds.
 	 * @exception Exception Thrown if an error occurs.
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#setAddress
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#setPortNumber
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#setCommand
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#sendCommand
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#getParsedReplyOK
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#getReturnCode
-	 * @see ngat.raptor.command.ConfigCoaddExposureLengthCommand#getParsedReply
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#setAddress
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#setPortNumber
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#setCommand
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#sendCommand
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#getParsedReplyOK
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#getReturnCode
+	 * @see ngat.liric.command.ConfigCoaddExposureLengthCommand#getParsedReply
 	 */
 	protected void sendConfigCoaddExposureLengthCommand(int coaddExposureLength) throws Exception
 	{
@@ -333,16 +333,16 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		String hostname = null;
 		String errorString = null;
 
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,
 			   "sendConfigCoaddExposureLengthCommand:coadd exposure length = "+
 			   coaddExposureLength+".");
 		command = new ConfigCoaddExposureLengthCommand();
 		// configure C comms
-		hostname = status.getProperty("raptor.c.hostname");
-		portNumber = status.getPropertyInteger("raptor.c.port_number");
+		hostname = status.getProperty("liric.c.hostname");
+		portNumber = status.getPropertyInteger("liric.c.port_number");
 		command.setAddress(hostname);
 		command.setPortNumber(portNumber);
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigCoaddExposureLengthCommand:hostname = "+hostname+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigCoaddExposureLengthCommand:hostname = "+hostname+
 			   " :port number = "+portNumber+".");
 		// set command parameters
 		command.setCommand(coaddExposureLength);
@@ -353,19 +353,19 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		{
 			returnCode = command.getReturnCode();
 			errorString = command.getParsedReply();
-			raptor.log(Logging.VERBOSITY_TERSE,
+			liric.log(Logging.VERBOSITY_TERSE,
 				   "sendConfigCoaddExposureLengthCommand:config command failed with return code "+
 				   returnCode+" and error string:"+errorString);
 			throw new Exception(this.getClass().getName()+
 					    ":sendConfigCoaddExposureLengthCommand:Command failed with return code "+
 					    returnCode+" and error string:"+errorString);
 		}
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigCoaddExposureLengthCommand:finished.");
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"sendConfigCoaddExposureLengthCommand:finished.");
 	}
 
 	/**
 	 * Routine to set the telescope focus offset, due to the filters selected. Sends a OFFSET_FOCUS command to
-	 * the ISS. The OFFSET_FOCUS sent is the offset of Raptor's focus from the nominal telescope focus.
+	 * the ISS. The OFFSET_FOCUS sent is the offset of Liric's focus from the nominal telescope focus.
 	 * @param id The Id is used as the OFFSET_FOCUS command's id.
 	 * @param focusOffset The focus offset needed.
 	 * @param configDone The instance of CONFIG_DONE. This is filled in with an error message if the
@@ -383,12 +383,12 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		focusOffsetCommand = new OFFSET_FOCUS(id);
 	// set the commands focus offset
 		focusOffsetCommand.setFocusOffset(focusOffset);
-		instToISSDone = raptor.sendISSCommand(focusOffsetCommand,serverConnectionThread);
+		instToISSDone = liric.sendISSCommand(focusOffsetCommand,serverConnectionThread);
 		if(instToISSDone.getSuccessful() == false)
 		{
-			raptor.error(this.getClass().getName()+":focusOffset failed:"+focusOffset+":"+
+			liric.error(this.getClass().getName()+":focusOffset failed:"+focusOffset+":"+
 				     instToISSDone.getErrorString());
-			configDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+805);
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+805);
 			configDone.setErrorString(instToISSDone.getErrorString());
 			configDone.setSuccessful(false);
 			return false;

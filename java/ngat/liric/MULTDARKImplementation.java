@@ -1,6 +1,6 @@
 // MULTDARKImplementation.java
 // $Id$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.text.*;
@@ -8,7 +8,7 @@ import java.util.*;
 
 import ngat.fits.*;
 import ngat.phase2.*;
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.message.base.*;
 import ngat.message.base.*;
 import ngat.message.ISS_INST.*;
@@ -19,7 +19,7 @@ import ngat.util.logging.*;
  * Java Message System.
  * @author Chris Mottram
  * @version $Revision$
- * @see ngat.raptor.CALIBRATEImplementation
+ * @see ngat.liric.CALIBRATEImplementation
  */
 public class MULTDARKImplementation extends CALIBRATEImplementation implements JMSCommandImplementation
 {
@@ -52,7 +52,7 @@ public class MULTDARKImplementation extends CALIBRATEImplementation implements J
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set.
 	 * @see ngat.message.base.ACK#setTimeToComplete
-	 * @see RaptorTCPServerConnectionThread#getDefaultAcknowledgeTime
+	 * @see LiricTCPServerConnectionThread#getDefaultAcknowledgeTime
 	 * @see #status
 	 * @see #serverConnectionThread
 	 * @see MULTDARK#getExposureTime
@@ -66,11 +66,11 @@ public class MULTDARKImplementation extends CALIBRATEImplementation implements J
 
 		exposureLength = multDarkCommand.getExposureTime();
 		exposureCount = multDarkCommand.getNumberExposures();
-		raptor.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
 			   ":calculateAcknowledgeTime:exposureLength = "+exposureLength+
 			   " :exposureCount = "+exposureCount);
 		ackTime = exposureLength*exposureCount;
-		raptor.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
 			   ":calculateAcknowledgeTime:ackTime = "+ackTime);
 		acknowledge = new ACK(command.getId());
 		acknowledge.setTimeToComplete(ackTime+serverConnectionThread.getDefaultAcknowledgeTime());
@@ -88,13 +88,13 @@ public class MULTDARKImplementation extends CALIBRATEImplementation implements J
 	 * <li>The done object is setup. 
 	 * </ul>
 	 * @see #testAbort
-	 * @see ngat.raptor.CALIBRATEImplementation#sendMultdarkCommand
-	 * @see ngat.raptor.CALIBRATEImplementation#filenameCount
-	 * @see ngat.raptor.CALIBRATEImplementation#multrunNumber
-	 * @see ngat.raptor.CALIBRATEImplementation#lastFilename
-	 * @see ngat.raptor.HardwareImplementation#clearFitsHeaders
-	 * @see ngat.raptor.HardwareImplementation#setFitsHeaders
-	 * @see ngat.raptor.HardwareImplementation#getFitsHeadersFromISS
+	 * @see ngat.liric.CALIBRATEImplementation#sendMultdarkCommand
+	 * @see ngat.liric.CALIBRATEImplementation#filenameCount
+	 * @see ngat.liric.CALIBRATEImplementation#multrunNumber
+	 * @see ngat.liric.CALIBRATEImplementation#lastFilename
+	 * @see ngat.liric.HardwareImplementation#clearFitsHeaders
+	 * @see ngat.liric.HardwareImplementation#setFitsHeaders
+	 * @see ngat.liric.HardwareImplementation#getFitsHeadersFromISS
 	 */
 	public COMMAND_DONE processCommand(COMMAND command)
 	{
@@ -102,29 +102,29 @@ public class MULTDARKImplementation extends CALIBRATEImplementation implements J
 		MULTDARK_DONE multDarkDone = new MULTDARK_DONE(command.getId());
 		int exposureLength,exposureCount;
 	
-		raptor.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Started.");
+		liric.log(Logging.VERBOSITY_TERSE,this.getClass().getName()+":processCommand:Started.");
 		if(testAbort(multDarkCommand,multDarkDone) == true)
 			return multDarkDone;
 		// get multdark data
 		exposureLength = multDarkCommand.getExposureTime();
 		exposureCount = multDarkCommand.getNumberExposures();
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:exposureLength = "+exposureLength+
 			   " :exposureCount = "+exposureCount+".");
 		// get fits headers
 		clearFitsHeaders();
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:getting FITS headers from properties.");
 		if(setFitsHeaders(multDarkCommand,multDarkDone) == false)
 			return multDarkDone;
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:getting FITS headers from ISS.");
 		if(getFitsHeadersFromISS(multDarkCommand,multDarkDone) == false)
 			return multDarkDone;
 		if(testAbort(multDarkCommand,multDarkDone) == true)
 			return multDarkDone;
 		// call multdark command
-		raptor.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,this.getClass().getName()+
 			   ":processCommand:Starting Multdark.");
 		try
 		{
@@ -132,8 +132,8 @@ public class MULTDARKImplementation extends CALIBRATEImplementation implements J
 		}
 		catch(Exception e )
 		{
-			raptor.error(this.getClass().getName()+":processCommand:sendMultdarkCommand failed:",e);
-			multDarkDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+2700);
+			liric.error(this.getClass().getName()+":processCommand:sendMultdarkCommand failed:",e);
+			multDarkDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+2700);
 			multDarkDone.setErrorString(this.getClass().getName()+
 						   ":processCommand:sendMultdarkCommand failed:"+e);
 			multDarkDone.setSuccessful(false);
@@ -143,11 +143,11 @@ public class MULTDARKImplementation extends CALIBRATEImplementation implements J
 		// setup multdark done
 		multDarkDone.setFilename(lastFilename);
 		// standard success values
-		multDarkDone.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_NO_ERROR);
+		multDarkDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		multDarkDone.setErrorString("");
 		multDarkDone.setSuccessful(true);
 	// return done object.
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,this.getClass().getName()+":processCommand:finished.");
+		liric.log(Logging.VERBOSITY_VERY_TERSE,this.getClass().getName()+":processCommand:finished.");
 		return multDarkDone;
 	}
 }

@@ -1,6 +1,6 @@
-// RaptorTCPServerConnectionThread.java
+// LiricTCPServerConnectionThread.java
 // $Header$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.io.*;
@@ -14,11 +14,11 @@ import ngat.phase2.*;
 import ngat.util.logging.*;
 
 /**
- * This class extends the TCPServerConnectionThread class for the Raptor application.
+ * This class extends the TCPServerConnectionThread class for the Liric application.
  * @author Chris Mottram
  * @version $Revision$
  */
-public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
+public class LiricTCPServerConnectionThread extends TCPServerConnectionThread
 {
 	/**
 	 * Revision Control System id string, showing the version of the Class.
@@ -33,15 +33,15 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 	 */
 	private static int minAcknowledgeTime = 30*1000;
 	/**
-	 * The Raptor object.
+	 * The Liric object.
 	 */
-	private Raptor raptor = null;
+	private Liric liric = null;
 	/**
 	 * This reference stores the instance of the class that implements the command passed to this thread.
-	 * This can be retrieved from the raptor main object, which has a Hashtable with mappings between
+	 * This can be retrieved from the liric main object, which has a Hashtable with mappings between
 	 * ngat.message class names and implementations of these commands.
 	 * @see JMSCommandImplementation
-	 * @see Raptor#getImplementation
+	 * @see Liric#getImplementation
 	 */
 	JMSCommandImplementation commandImplementation = null;
 	/**
@@ -67,7 +67,7 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 	 * Constructor of the thread. This just calls the superclass constructors.
 	 * @param connectionSocket The socket the thread is to communicate with.
 	 */
-	public RaptorTCPServerConnectionThread(Socket connectionSocket)
+	public LiricTCPServerConnectionThread(Socket connectionSocket)
 	{
 		super(connectionSocket);
 	}
@@ -113,12 +113,12 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 	}
 
 	/**
-	 * Routine to set this objects pointer to the raptor object.
-	 * @param o The raptor object.
+	 * Routine to set this objects pointer to the liric object.
+	 * @param o The liric object.
 	 */
-	public void setRaptor(Raptor o)
+	public void setLiric(Liric o)
 	{
-		this.raptor = o;
+		this.liric = o;
 	}
 
 	/**
@@ -151,14 +151,14 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 	 * initialise this threads response to a command. This method changes the threads priority now 
 	 * that the command's class is known, if it is a sub-class of INTERRUPT the priority is higher.<br>
 	 * It also finds the command implementation used to run this command, got from the mapping
-	 * stored in the Raptor object. It sets up the implementation objects references to the Raptor main
+	 * stored in the Liric object. It sets up the implementation objects references to the Liric main
 	 * object and this connection thread. It then runs the command implementation's init routine, to
 	 * initialise the implementation.
-	 * @see #raptor
+	 * @see #liric
 	 * @see INTERRUPT
 	 * @see Thread#setPriority
-	 * @see Raptor#getImplementation
-	 * @see CommandImplementation#setRaptor
+	 * @see Liric#getImplementation
+	 * @see CommandImplementation#setLiric
 	 * @see CommandImplementation#setServerConnectionThread
 	 * @see JMSCommandImplementation#init
 	 * @see #commandImplementation
@@ -167,13 +167,13 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 	{
 	// set the threads priority
 		if(command instanceof INTERRUPT)
-			this.setPriority(raptor.getStatus().getThreadPriorityInterrupt());
+			this.setPriority(liric.getStatus().getThreadPriorityInterrupt());
 		else
-			this.setPriority(raptor.getStatus().getThreadPriorityNormal());
+			this.setPriority(liric.getStatus().getThreadPriorityNormal());
 	// get the implementation - this never returns null.
-		commandImplementation = raptor.getImplementation(command.getClass().getName());
+		commandImplementation = liric.getImplementation(command.getClass().getName());
 	// initialises the command implementations response
-		((CommandImplementation)commandImplementation).setRaptor(raptor);
+		((CommandImplementation)commandImplementation).setLiric(liric);
 		((CommandImplementation)commandImplementation).setServerConnectionThread(this);
 		commandImplementation.init(command);
 	}
@@ -211,19 +211,19 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 	 * <li>This method checks whether the command in null and returns a generic done error message if this is the 
 	 * case.
 	 * <li>If suitable logging is enabled the command is logged.
-	 * <li>If the command is not an interrupt command sub-class it calls the RaptorStatus 
+	 * <li>If the command is not an interrupt command sub-class it calls the LiricStatus 
 	 *     setCurrentCommand / setCurrentThread methods to reflect
 	 *     the command/thread(this one) currently doing the processing.
 	 * <li>This method delagates the command processing to the command implementation found for the command
 	 * message class.
-	 * <li>The RaptorStatus setCurrentCommand / setCurrentThread methods are again called to reflect this 
+	 * <li>The LiricStatus setCurrentCommand / setCurrentThread methods are again called to reflect this 
 	 *     command/thread has finished processing. (If it's not a sub-class of INTERRUPT again).
 	 * <li>If suitable logging is enabled the command is logged as completed.
 	 * </ul>
-	 * @see RaptorStatus#getLogLevel
-	 * @see Raptor#log
-	 * @see RaptorStatus#setCurrentCommand
-	 * @see RaptorStatus#setCurrentThread
+	 * @see LiricStatus#getLogLevel
+	 * @see Liric#log
+	 * @see LiricStatus#setCurrentCommand
+	 * @see LiricStatus#setCurrentThread
 	 * @see #commandImplementation
 	 * @see JMSCommandImplementation#processCommand
 	 */
@@ -235,19 +235,19 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 
 		if(command == null)
 		{
-			raptor.error("processCommand:command was null.");
-			done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+100);
+			liric.error("processCommand:command was null.");
+			done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+100);
 			done.setErrorString("processCommand:command was null.");
 			done.setSuccessful(false);
 			return;
 		}
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+command.getClass().getName()+" Started.");
+		liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+command.getClass().getName()+" Started.");
 	// This test says interupt class commands should not become current command.
 	// This class of commands probably want to see what the current command is anyway.
 		if(!(command instanceof INTERRUPT))
 		{
-			raptor.getStatus().setCurrentCommand((ISS_TO_INST)command);
-			raptor.getStatus().setCurrentThread((Thread)this);
+			liric.getStatus().setCurrentCommand((ISS_TO_INST)command);
+			liric.getStatus().setCurrentThread((Thread)this);
 		}
 	// setup return object.
 		try
@@ -259,21 +259,21 @@ public class RaptorTCPServerConnectionThread extends TCPServerConnectionThread
 		catch(Exception e)
 		{
 			String s = new String(this.getClass().getName()+":processCommand failed:");
-			raptor.error(s,e);
-			done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+102);
+			liric.error(s,e);
+			done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+102);
 			done.setErrorString(s+e);
 			done.setSuccessful(false);
 		}
-	// change Raptor status once command has been done
+	// change Liric status once command has been done
 		if(!(command instanceof INTERRUPT))
 		{
-			raptor.getStatus().setCurrentCommand(null);
-			raptor.getStatus().setCurrentThread(null);
+			liric.getStatus().setCurrentCommand(null);
+			liric.getStatus().setCurrentThread(null);
 		}
 	// log command/done
-		raptor.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+command.getClass().getName()+
+		liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+command.getClass().getName()+
 			" Completed.");
-		raptor.log(Logging.VERBOSITY_TERSE,"Done:"+done.getClass().getName()+
+		liric.log(Logging.VERBOSITY_TERSE,"Done:"+done.getClass().getName()+
 			":successful:"+done.getSuccessful()+
 			":error number:"+done.getErrorNum()+":error string:"+done.getErrorString());
 	}

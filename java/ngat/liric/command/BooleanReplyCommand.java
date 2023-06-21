@@ -1,6 +1,6 @@
 // BooleanReplyCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
@@ -11,7 +11,7 @@ import ngat.net.TelnetConnectionListener;
 
 /**
  * The BooleanReplyCommand class is an extension of the base Command class for sending a command and getting a 
- * reply from a Raptor C layer. This is a telnet - type socket interaction. BooleanReplyCommand expects the reply
+ * reply from a Liric C layer. This is a telnet - type socket interaction. BooleanReplyCommand expects the reply
  * to be '&lt;n&gt; &lt;m&gt;' where &lt;n&gt; is the reply status and &lt;m&gt; is an boolean value. 
  * @author Chris Mottram
  * @version $Revision$
@@ -38,7 +38,7 @@ public class BooleanReplyCommand extends Command implements Runnable, TelnetConn
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @param commandString The string to send to the server as a command.

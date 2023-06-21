@@ -1,19 +1,19 @@
-// RaptorREBOOTQuitThread.java
+// LiricREBOOTQuitThread.java
 // $Header$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.io.*;
 
 /**
- * This class is a thread that is started when the Raptor is to terminate.
+ * This class is a thread that is started when the Liric is to terminate.
  * A thread is passed in, which must terminate before System.exit is called.
  * This is used in, for instance, the REBOOTImplementation, so that the 
- * REBOOT's DONE mesage is returned to the client before the Raptor is terminated.
+ * REBOOT's DONE mesage is returned to the client before the Liric is terminated.
  * @author Chris Mottram
  * @version $Revision$
  */
-public class RaptorREBOOTQuitThread extends Thread
+public class LiricREBOOTQuitThread extends Thread
 {
 	/**
 	 * Revision Control System id string, showing the version of the Class.
@@ -24,9 +24,9 @@ public class RaptorREBOOTQuitThread extends Thread
 	 */
 	private Thread waitThread = null;
 	/**
-	 * Field holding the instance of the raptor currently executing, used to access error handling routines etc.
+	 * Field holding the instance of the liric currently executing, used to access error handling routines etc.
 	 */
-	private Raptor raptor = null;
+	private Liric liric = null;
 	/**
 	 * The exit value to exit the JVM with. Normally (and by default) 0.
 	 */
@@ -36,18 +36,18 @@ public class RaptorREBOOTQuitThread extends Thread
 	 * The constructor.
 	 * @param name The name of the thread.
 	 */
-	public RaptorREBOOTQuitThread(String name)
+	public LiricREBOOTQuitThread(String name)
 	{
 		super(name);
 	}
 
 	/**
-	 * Routine to set this objects pointer to the raptor object.
-	 * @param o The raptor object.
+	 * Routine to set this objects pointer to the liric object.
+	 * @param o The liric object.
 	 */
-	public void setRaptor(Raptor o)
+	public void setLiric(Liric o)
 	{
-		this.raptor = o;
+		this.liric = o;
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class RaptorREBOOTQuitThread extends Thread
 			}
 			catch (InterruptedException e)
 			{
-				raptor.error(this.getClass().getName()+":run:",e);
+				liric.error(this.getClass().getName()+":run:",e);
 			}
 		}
 		System.exit(exitValue);

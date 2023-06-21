@@ -1,13 +1,13 @@
 // ConfigNudgematicOffsetSizeCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
 import java.net.*;
 import java.util.*;
 
-import ngat.phase2.RaptorConfig;
+import ngat.phase2.LiricConfig;
 
 /**
  * The "config nudgematic" command is an extension of the Command, and configures the size of the offsets 
@@ -35,7 +35,7 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @see Command
@@ -68,19 +68,19 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 	 *        NUDGEMATIC_OFFSET_SIZE_LARGE.
 	 * @exception IllegalArgumentException Thrown if nudgematicOffetSize is not valid.
 	 * @see #commandString
-	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_NONE
-	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
-	 * @see ngat.phase2.RaptorConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
+	 * @see ngat.phase2.LiricConfig#NUDGEMATIC_OFFSET_SIZE_NONE
+	 * @see ngat.phase2.LiricConfig#NUDGEMATIC_OFFSET_SIZE_SMALL
+	 * @see ngat.phase2.LiricConfig#NUDGEMATIC_OFFSET_SIZE_LARGE
 	 */
 	public void setCommand(int nudgematicOffsetSize) throws IllegalArgumentException
 	{
 		String nudgematicOffsetSizeString = null;
 		
-		if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_NONE)
+		if(nudgematicOffsetSize == LiricConfig.NUDGEMATIC_OFFSET_SIZE_NONE)
 			nudgematicOffsetSizeString  = "none";
-		else if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_SMALL)
+		else if(nudgematicOffsetSize == LiricConfig.NUDGEMATIC_OFFSET_SIZE_SMALL)
 			nudgematicOffsetSizeString  = "small";
-		else if(nudgematicOffsetSize == RaptorConfig.NUDGEMATIC_OFFSET_SIZE_LARGE)
+		else if(nudgematicOffsetSize == LiricConfig.NUDGEMATIC_OFFSET_SIZE_LARGE)
 			nudgematicOffsetSizeString  = "large";
 		else
 			throw new IllegalArgumentException(this.getClass().getName()+":setCommand:"+
@@ -101,7 +101,7 @@ public class ConfigNudgematicOffsetSizeCommand extends Command implements Runnab
 
 		if(args.length != 3)
 		{
-			System.out.println("java ngat.raptor.command.ConfigNudgematicOffsetSizeCommand <hostname> <port number> <none|small|large>");
+			System.out.println("java ngat.liric.command.ConfigNudgematicOffsetSizeCommand <hostname> <port number> <none|small|large>");
 			System.exit(1);
 		}
 		try

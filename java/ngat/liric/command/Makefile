@@ -3,8 +3,8 @@ include ../Makefile.common
 include ../../../../../Makefile.common
 include	../../../../Makefile.common
 
-PACKAGEDIR	= ngat/raptor/command
-BINDIR 		= $(RAPTOR_BIN_HOME)/java/$(PACKAGEDIR)
+PACKAGEDIR	= ngat/liric/command
+BINDIR 		= $(LIRIC_BIN_HOME)/java/$(PACKAGEDIR)
 SRCS 		= Command.java BooleanReplyCommand.java DoubleReplyCommand.java IntegerReplyCommand.java \
 		AbortCommand.java \
 		ConfigFilterCommand.java ConfigNudgematicOffsetSizeCommand.java ConfigCoaddExposureLengthCommand.java \
@@ -26,8 +26,8 @@ OBJS 		= $(SRCS:%.java=$(BINDIR)/%.class)
 top: $(OBJS)
 
 $(BINDIR)/%.class:%.java
-	$(JAVAC) -sourcepath .:$(RAPTOR_SRC_HOME)/java \
-		-classpath $(RAPTOR_BIN_HOME)/java:$(CLASSPATH) $(JAVAC_OPTIONS) $(JAVAC_VERSION_OPTIONS) -d $(RAPTOR_BIN_HOME)/java $<
+	$(JAVAC) -sourcepath .:$(LIRIC_SRC_HOME)/java \
+		-classpath $(LIRIC_BIN_HOME)/java:$(CLASSPATH) $(JAVAC_OPTIONS) $(JAVAC_VERSION_OPTIONS) -d $(LIRIC_BIN_HOME)/java $<
 
 clean: tidy
 	-$(RM) $(RM_OPTIONS) $(OBJS)

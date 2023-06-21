@@ -1,6 +1,6 @@
 // StatusExposureStatusCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
@@ -38,7 +38,7 @@ public class StatusExposureStatusCommand extends BooleanReplyCommand implements 
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @see Command
@@ -81,7 +81,7 @@ public class StatusExposureStatusCommand extends BooleanReplyCommand implements 
 
 		if(args.length != 2)
 		{
-			System.out.println("java ngat.raptor.command.StatusExposureStatusCommand <hostname> <port number>");
+			System.out.println("java ngat.liric.command.StatusExposureStatusCommand <hostname> <port number>");
 			System.exit(1);
 		}
 		try

@@ -1,6 +1,6 @@
-// RaptorStatus.java
+// LiricStatus.java
 // $Header$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.io.*;
@@ -13,26 +13,26 @@ import ngat.util.FileUtilitiesNativeException;
 import ngat.util.logging.FileLogHandler;
 
 /**
- * This class holds status information for the Raptor program.
+ * This class holds status information for the Liric program.
  * @author Chris Mottram
  * @version $Revision$
  */
-public class RaptorStatus
+public class LiricStatus
 {
 	/**
 	 * Revision Control System id string, showing the version of the Class.
 	 */
 	public final static String RCSID = new String("$Id$");
 	/**
-	 * Default filename containing network properties for raptor.
+	 * Default filename containing network properties for liric.
 	 */
-	private final static String DEFAULT_NET_PROPERTY_FILE_NAME = "./raptor.net.properties";
+	private final static String DEFAULT_NET_PROPERTY_FILE_NAME = "./liric.net.properties";
 	/**
-	 * Default filename containing properties for raptor.
+	 * Default filename containing properties for liric.
 	 */
-	private final static String DEFAULT_PROPERTY_FILE_NAME = "./raptor.properties";
+	private final static String DEFAULT_PROPERTY_FILE_NAME = "./liric.properties";
 	/**
-	 * Default filename containing FITS properties for raptor.
+	 * Default filename containing FITS properties for liric.
 	 */
 	private final static String DEFAULT_FITS_PROPERTY_FILE_NAME = "./fits.properties";
 	/**
@@ -48,20 +48,20 @@ public class RaptorStatus
 	 */
 	private int logLevel = 0;
 	/**
-	 * The current thread that the Raptor Control System is using to process the
+	 * The current thread that the Liric Control System is using to process the
 	 * <a href="#currentCommand">currentCommand</a>. This does not get set for
 	 * commands that can be sent while others are in operation, such as Abort and get status comamnds.
 	 * This can be null when no command is currently being processed.
 	 */
 	private Thread currentThread = null;
 	/**
-	 * The current command that the Raptor Control System is working on. This does not get set for
+	 * The current command that the Liric Control System is working on. This does not get set for
 	 * commands that can be sent while others are in operation, such as Abort and get status comamnds.
 	 * This can be null when no command is currently being processed.
 	 */
 	private ISS_TO_INST currentCommand = null;
 	/**
-	 * A list of properties held in the properties file. This contains configuration information in raptor
+	 * A list of properties held in the properties file. This contains configuration information in liric
 	 * that needs to be changed irregularily.
 	 */
 	private Properties properties = null;
@@ -72,10 +72,10 @@ public class RaptorStatus
 	 */
 	private PersistentUniqueInteger configId = null;
 	/**
-	 * The name of the ngat.phase2.RaptorConfig object instance that was last used	
+	 * The name of the ngat.phase2.LiricConfig object instance that was last used	
 	 * to configure the instrument (via an ngat.message.ISS_INST.CONFIG message).
 	 * Used for the CONFNAME FITS keyword value.
-	 * Initialised to 'UNKNOWN', so that if we try to take a frame before configuring Raptor
+	 * Initialised to 'UNKNOWN', so that if we try to take a frame before configuring Liric
 	 * we get an error about setup not being complete, rather than an error about NULL FITS values.
 	 */
 	private String configName = "UNKNOWN";
@@ -84,7 +84,7 @@ public class RaptorStatus
 	 * Default constructor. Initialises the properties.
 	 * @see #properties
 	 */
-	public RaptorStatus()
+	public LiricStatus()
 	{
 		properties = new Properties();
 	}
@@ -164,7 +164,7 @@ public class RaptorStatus
 	}
 
 	/**
-	 * Set the logging level for Raptor.
+	 * Set the logging level for Liric.
 	 * @param level The level of logging.
 	 */
 	public synchronized void setLogLevel(int level)
@@ -173,7 +173,7 @@ public class RaptorStatus
 	}
 
 	/**
-	 * Get the logging level for Raptor.
+	 * Get the logging level for Liric.
 	 * @return The current log level.
 	 */	
 	public synchronized int getLogLevel()
@@ -191,7 +191,7 @@ public class RaptorStatus
 	}
 
 	/**
-	 * Get the the command Raptor is currently processing.
+	 * Get the the command Liric is currently processing.
 	 * @return The command currently being processed.
 	 */
 	public synchronized ISS_TO_INST getCurrentCommand()
@@ -220,8 +220,8 @@ public class RaptorStatus
 	}
 
 	/**
-	 * Method to change (increment) the unique ID number of the last ngat.phase2.RaptorConfig instance to 
-	 * successfully configure the Raptor camera.
+	 * Method to change (increment) the unique ID number of the last ngat.phase2.LiricConfig instance to 
+	 * successfully configure the Liric camera.
 	 * This is done by calling <i>configId.increment()</i>.
 	 * @see #configId
 	 * @see ngat.util.PersistentUniqueInteger#increment
@@ -237,7 +237,7 @@ public class RaptorStatus
 
 	/**
 	 * Method to get the unique config ID number of the last
-	 * ngat.phase2.RaptorConfig instance to successfully configure the Raptor camera.
+	 * ngat.phase2.LiricConfig instance to successfully configure the Liric camera.
 	 * @return The unique config ID number.
 	 * This is done by calling <i>configId.get()</i>.
 	 * @see #configId
@@ -254,7 +254,7 @@ public class RaptorStatus
 
 	/**
 	 * Method to set our reference to the string identifier of the last
-	 * ngat.phase2.RaptorConfig instance to successfully configure the Raptor camera.
+	 * ngat.phase2.LiricConfig instance to successfully configure the Liric camera.
 	 * @param s The string from the configuration object instance.
 	 * @see #configName
 	 */
@@ -265,9 +265,9 @@ public class RaptorStatus
 
 	/**
 	 * Method to get the string identifier of the last
-	 * ngat.phase2.RaptorConfig instance to successfully configure the Raptor camera.
-	 * @return The string identifier, or null if the Raptor camera has not been configured
-	 * 	since Raptor started.
+	 * ngat.phase2.LiricConfig instance to successfully configure the Liric camera.
+	 * @return The string identifier, or null if the Liric camera has not been configured
+	 * 	since Liric started.
 	 * @see #configName
 	 */
 	public synchronized String getConfigName()
@@ -534,10 +534,10 @@ public class RaptorStatus
 
 	/**
 	 * Method to get the thread priority to run the server thread at.
-	 * The value is retrieved from the <b>raptor.thread.priority.server</b> property.
-	 * If this fails the default RAPTOR_DEFAULT_THREAD_PRIORITY_SERVER is returned.
+	 * The value is retrieved from the <b>liric.thread.priority.server</b> property.
+	 * If this fails the default LIRIC_DEFAULT_THREAD_PRIORITY_SERVER is returned.
 	 * @return A valid thread priority between threads MIN_PRIORITY and MAX_PRIORITY.
-	 * @see RaptorConstants#RAPTOR_DEFAULT_THREAD_PRIORITY_SERVER
+	 * @see LiricConstants#LIRIC_DEFAULT_THREAD_PRIORITY_SERVER
 	 */
 	public int getThreadPriorityServer()
 	{
@@ -545,7 +545,7 @@ public class RaptorStatus
 
 		try
 		{
-			retval = getPropertyInteger("raptor.thread.priority.server");
+			retval = getPropertyInteger("liric.thread.priority.server");
 			if(retval < Thread.MIN_PRIORITY)
 				retval = Thread.MIN_PRIORITY;
 			if(retval > Thread.MAX_PRIORITY)
@@ -553,17 +553,17 @@ public class RaptorStatus
 		}
 		catch(NumberFormatException e)
 		{
-			retval = RaptorConstants.RAPTOR_DEFAULT_THREAD_PRIORITY_SERVER;
+			retval = LiricConstants.LIRIC_DEFAULT_THREAD_PRIORITY_SERVER;
 		}
 		return retval;
 	}
 
 	/**
 	 * Method to get the thread priority to run interrupt threads at.
-	 * The value is retrieved from the <b>raptor.thread.priority.interrupt</b> property.
-	 * If this fails the default RAPTOR_DEFAULT_THREAD_PRIORITY_INTERRUPT is returned.
+	 * The value is retrieved from the <b>liric.thread.priority.interrupt</b> property.
+	 * If this fails the default LIRIC_DEFAULT_THREAD_PRIORITY_INTERRUPT is returned.
 	 * @return A valid thread priority between threads MIN_PRIORITY and MAX_PRIORITY.
-	 * @see RaptorConstants#RAPTOR_DEFAULT_THREAD_PRIORITY_INTERRUPT
+	 * @see LiricConstants#LIRIC_DEFAULT_THREAD_PRIORITY_INTERRUPT
 	 */
 	public int getThreadPriorityInterrupt()
 	{
@@ -571,7 +571,7 @@ public class RaptorStatus
 
 		try
 		{
-			retval = getPropertyInteger("raptor.thread.priority.interrupt");
+			retval = getPropertyInteger("liric.thread.priority.interrupt");
 			if(retval < Thread.MIN_PRIORITY)
 				retval = Thread.MIN_PRIORITY;
 			if(retval > Thread.MAX_PRIORITY)
@@ -579,17 +579,17 @@ public class RaptorStatus
 		}
 		catch(NumberFormatException e)
 		{
-			retval = RaptorConstants.RAPTOR_DEFAULT_THREAD_PRIORITY_INTERRUPT;
+			retval = LiricConstants.LIRIC_DEFAULT_THREAD_PRIORITY_INTERRUPT;
 		}
 		return retval;
 	}
 
 	/**
 	 * Method to get the thread priority to run normal threads at.
-	 * The value is retrieved from the <b>raptor.thread.priority.normal</b> property.
-	 * If this fails the default RAPTOR_DEFAULT_THREAD_PRIORITY_NORMAL is returned.
+	 * The value is retrieved from the <b>liric.thread.priority.normal</b> property.
+	 * If this fails the default LIRIC_DEFAULT_THREAD_PRIORITY_NORMAL is returned.
 	 * @return A valid thread priority between threads MIN_PRIORITY and MAX_PRIORITY.
-	 * @see RaptorConstants#RAPTOR_DEFAULT_THREAD_PRIORITY_NORMAL
+	 * @see LiricConstants#LIRIC_DEFAULT_THREAD_PRIORITY_NORMAL
 	 */
 	public int getThreadPriorityNormal()
 	{
@@ -597,7 +597,7 @@ public class RaptorStatus
 
 		try
 		{
-			retval = getPropertyInteger("raptor.thread.priority.normal");
+			retval = getPropertyInteger("liric.thread.priority.normal");
 			if(retval < Thread.MIN_PRIORITY)
 				retval = Thread.MIN_PRIORITY;
 			if(retval > Thread.MAX_PRIORITY)
@@ -605,7 +605,7 @@ public class RaptorStatus
 		}
 		catch(NumberFormatException e)
 		{
-			retval = RaptorConstants.RAPTOR_DEFAULT_THREAD_PRIORITY_NORMAL;
+			retval = LiricConstants.LIRIC_DEFAULT_THREAD_PRIORITY_NORMAL;
 		}
 		return retval;
 	}
@@ -613,10 +613,10 @@ public class RaptorStatus
 	/**
 	 * Method to get the thread priority to run the Telescope Image Transfer server and client 
 	 * connection threads at.
-	 * The value is retrieved from the <b>raptor.thread.priority.tit</b> property.
-	 * If this fails the default RAPTOR_DEFAULT_THREAD_PRIORITY_TIT is returned.
+	 * The value is retrieved from the <b>liric.thread.priority.tit</b> property.
+	 * If this fails the default LIRIC_DEFAULT_THREAD_PRIORITY_TIT is returned.
 	 * @return A valid thread priority between threads MIN_PRIORITY and MAX_PRIORITY.
-	 * @see RaptorConstants#RAPTOR_DEFAULT_THREAD_PRIORITY_TIT
+	 * @see LiricConstants#LIRIC_DEFAULT_THREAD_PRIORITY_TIT
 	 */
 	public int getThreadPriorityTIT()
 	{
@@ -624,7 +624,7 @@ public class RaptorStatus
 
 		try
 		{
-			retval = getPropertyInteger("raptor.thread.priority.tit");
+			retval = getPropertyInteger("liric.thread.priority.tit");
 			if(retval < Thread.MIN_PRIORITY)
 				retval = Thread.MIN_PRIORITY;
 			if(retval > Thread.MAX_PRIORITY)
@@ -632,7 +632,7 @@ public class RaptorStatus
 		}
 		catch(NumberFormatException e)
 		{
-			retval = RaptorConstants.RAPTOR_DEFAULT_THREAD_PRIORITY_TIT;
+			retval = LiricConstants.LIRIC_DEFAULT_THREAD_PRIORITY_TIT;
 		}
 		return retval;
 	}
@@ -640,7 +640,7 @@ public class RaptorStatus
 	/**
 	 * Internal method to initialise the configId field. This is not done during construction
 	 * as the property files need to be loaded to determine the filename to use.
-	 * This is got from the <i>raptor.config.unique_id_filename</i> property.
+	 * This is got from the <i>liric.config.unique_id_filename</i> property.
 	 * The configId field is then constructed.
 	 * @see #configId
 	 */
@@ -648,7 +648,7 @@ public class RaptorStatus
 	{
 		String fileName = null;
 
-		fileName = getProperty("raptor.config.unique_id_filename");
+		fileName = getProperty("liric.config.unique_id_filename");
 		configId = new PersistentUniqueInteger(fileName);
 	}
 }

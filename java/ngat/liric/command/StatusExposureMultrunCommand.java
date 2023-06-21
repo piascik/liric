@@ -1,6 +1,6 @@
 // StatusExposureMultrunCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
@@ -37,7 +37,7 @@ public class StatusExposureMultrunCommand extends IntegerReplyCommand implements
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @see IntegerReplyCommand
@@ -80,7 +80,7 @@ public class StatusExposureMultrunCommand extends IntegerReplyCommand implements
 
 		if(args.length != 2)
 		{
-			System.out.println("java ngat.raptor.command.StatusExposureMultrunCommand <hostname> <port number>");
+			System.out.println("java ngat.liric.command.StatusExposureMultrunCommand <hostname> <port number>");
 			System.exit(1);
 		}
 		try

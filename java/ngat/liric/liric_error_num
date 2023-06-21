@@ -1,0 +1,13 @@
+#!/bin/csh
+# Script for printing out error numbers set in Java source files.
+# Searches for lines such as:
+#     object.setErrorNum(123);
+# and prints:
+#     123
+# Syntax:
+#     liric_error_num <java source filenames>
+if($#argv < 1) then
+    echo "liric_error_num <java source filenames>"
+    exit
+endif
+~dev/bin/scripts/java_error_num.csh $argv |  grep -v Processing | grep -v NO_ERROR | sed "s/LiricConstants.LIRIC_ERROR_CODE_BASE+//g" | sort -n

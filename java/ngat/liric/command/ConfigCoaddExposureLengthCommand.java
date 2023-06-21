@@ -1,13 +1,13 @@
 // ConfigCoaddExposureLengthCommand.java
 // $Id$
-package ngat.raptor.command;
+package ngat.liric.command;
 
 import java.io.*;
 import java.lang.*;
 import java.net.*;
 import java.util.*;
 
-import ngat.phase2.RaptorConfig;
+import ngat.phase2.LiricConfig;
 
 /**
  * The "config coadd_exp_len" command is an extension of the Command, and configures the coadd exposure length
@@ -35,7 +35,7 @@ public class ConfigCoaddExposureLengthCommand extends Command implements Runnabl
 
 	/**
 	 * Constructor.
-	 * @param address A string representing the address of the server, i.e. "raptor",
+	 * @param address A string representing the address of the server, i.e. "liric",
 	 *     "localhost"
 	 * @param portNumber An integer representing the port number the server is receiving command on.
 	 * @see Command
@@ -95,7 +95,7 @@ public class ConfigCoaddExposureLengthCommand extends Command implements Runnabl
 
 		if(args.length != 3)
 		{
-			System.out.println("java ngat.raptor.command.ConfigCoaddExposureLengthCommand <hostname> <port number> <short|long>");
+			System.out.println("java ngat.liric.command.ConfigCoaddExposureLengthCommand <hostname> <port number> <short|long>");
 			System.exit(1);
 		}
 		try

@@ -1,6 +1,6 @@
-// Raptor.java
+// Liric.java
 // $Header$
-package ngat.raptor;
+package ngat.liric;
 
 import java.lang.*;
 import java.lang.reflect.*;
@@ -12,16 +12,16 @@ import java.util.*;
 import ngat.net.*;
 import ngat.util.*;
 import ngat.util.logging.*;
-import ngat.raptor.command.*;
+import ngat.liric.command.*;
 import ngat.message.ISS_INST.*;
 import ngat.message.INST_DP.*;
 
 /**
- * This class is the entry point for the Raptor Control System.
+ * This class is the entry point for the Liric Control System.
  * @author Chris Mottram
  * @version $Revision$
  */
-public class Raptor
+public class Liric
 {
 	/**
 	 * Revision Control System id string, showing the version of the Class.
@@ -30,7 +30,7 @@ public class Raptor
 	/**
 	 * Logger channel id.
 	 */
-	public final static String LOGGER_CHANNEL_ID = new String("RAPTOR");
+	public final static String LOGGER_CHANNEL_ID = new String("LIRIC");
 	/**
 	 * Internal constant used when converting temperatures in centigrade to Kelvin.
 	 */
@@ -46,7 +46,7 @@ public class Raptor
 	/**
 	 * The server class that listens for connections.
 	 */
-	private RaptorTCPServer server = null;
+	private LiricTCPServer server = null;
 	/**
 	 * The server class that listens for Telescope Image Transfer request connections.
 	 */
@@ -54,21 +54,21 @@ public class Raptor
 	/**
 	 * Status object.
 	 */
-	private RaptorStatus status = null;
+	private LiricStatus status = null;
 	/**
 	 * This hashtable holds the map between COMMAND sub-class names and their implementations, which
 	 * are stored as the Hashtable data values as class objects of sub-classes of CommandImplementation.
-	 * When Raptorgets a COMMAND from a client it can query this Hashtable to find it's implementation class.
+	 * When Liricgets a COMMAND from a client it can query this Hashtable to find it's implementation class.
 	 */
 	private Hashtable implementationList = null;
 	/**
-	 * Command line argument. The level of logging to perform in Raptor.
+	 * Command line argument. The level of logging to perform in Liric.
 	 */
 	private int logLevel = 0;
 	/**
 	 * The port number to listen for connections from clients on.
 	 */
-	private int raptorPortNumber = 0;
+	private int liricPortNumber = 0;
 	/**
 	 * The ip address of the machine the ISS is running on, to send ISS commands to.
 	 */
@@ -91,10 +91,10 @@ public class Raptor
 	protected Logger errorLogger = null;
 
 	/**
-	 * Method to initialise Raptor.
+	 * Method to initialise Liric.
 	 * <ul>
 	 * <li>Create an instance of the status object.
-	 * <li>Load the Raptor properties file into it.
+	 * <li>Load the Liric properties file into it.
 	 * <li>We initialise the loggers (initLoggers).
 	 * <li>We set the log level (setLogLevel).
 	 * <li>We initialise the list of commands and their implementation classes (initImplementationList)
@@ -108,15 +108,15 @@ public class Raptor
 	 * @see #setLogLevel
 	 * @see #initImplementationList
 	 * @see #status
-	 * @see #raptorPortNumber
+	 * @see #liricPortNumber
 	 * @see #issPortNumber
 	 * @see #titPortNumber
 	 * @see #issAddress
-	 * @see ngat.raptor.RaptorStatus
-	 * @see ngat.raptor.RaptorTCPServerConnectionThread#setDefaultAcknowledgeTime
-	 * @see ngat.raptor.RaptorTCPServerConnectionThread#setMinAcknowledgeTime
-	 * @throws FileNotFoundException Thrown if the RaptorStatus.load method fails.
-	 * @throws IOException Thrown if the RaptorStatus.load method fails.
+	 * @see ngat.liric.LiricStatus
+	 * @see ngat.liric.LiricTCPServerConnectionThread#setDefaultAcknowledgeTime
+	 * @see ngat.liric.LiricTCPServerConnectionThread#setMinAcknowledgeTime
+	 * @throws FileNotFoundException Thrown if the LiricStatus.load method fails.
+	 * @throws IOException Thrown if the LiricStatus.load method fails.
 	 * @throws NumberFormatException Thrown if various port numbers cannot be parsed from the config file.
 	 * @throws Exception Thrown if an error occurs.
 	 */
@@ -125,8 +125,8 @@ public class Raptor
 	{
 		int time;
 
-	// create status object and load raptor properties into it
-		status = new RaptorStatus();
+	// create status object and load liric properties into it
+		status = new LiricStatus();
 		try
 		{
 			status.load();
@@ -150,9 +150,9 @@ public class Raptor
 	// initialise port numbers from properties file/ command line arguments
 		try
 		{
-			raptorPortNumber = status.getPropertyInteger("raptor.net.default.raptor.port_number");
-			issPortNumber = status.getPropertyInteger("raptor.net.default.iss.port_number");
-			titPortNumber = status.getPropertyInteger("raptor.net.default.tit.port_number");
+			liricPortNumber = status.getPropertyInteger("liric.net.default.liric.port_number");
+			issPortNumber = status.getPropertyInteger("liric.net.default.iss.port_number");
+			titPortNumber = status.getPropertyInteger("liric.net.default.tit.port_number");
 		}
 		catch(NumberFormatException e)
 		{
@@ -162,7 +162,7 @@ public class Raptor
 	// initialise address's from properties file
 		try
 		{
-			issAddress = InetAddress.getByName(status.getProperty("raptor.net.default.iss.address"));
+			issAddress = InetAddress.getByName(status.getProperty("liric.net.default.iss.address"));
 		}
 		catch(UnknownHostException e)
 		{
@@ -172,15 +172,15 @@ public class Raptor
 	// initialise default connection response times from properties file
 		try
 		{
-			time = status.getPropertyInteger("raptor.server_connection.default.acknowledge_time");
-			RaptorTCPServerConnectionThread.setDefaultAcknowledgeTime(time);
-			time = status.getPropertyInteger("raptor.server_connection.min.acknowledge_time");
-			RaptorTCPServerConnectionThread.setMinAcknowledgeTime(time);
+			time = status.getPropertyInteger("liric.server_connection.default.acknowledge_time");
+			LiricTCPServerConnectionThread.setDefaultAcknowledgeTime(time);
+			time = status.getPropertyInteger("liric.server_connection.min.acknowledge_time");
+			LiricTCPServerConnectionThread.setMinAcknowledgeTime(time);
 		}
 		catch(NumberFormatException e)
 		{
 			error(this.getClass().getName()+":init:initialsing server connection thread times:",e);
-			// don't throw the error - failing to get this property is not 'vital' to Raptor.
+			// don't throw the error - failing to get this property is not 'vital' to Liric.
 		}		
 	}
 
@@ -220,7 +220,7 @@ public class Raptor
 	/**
 	 * Method to create and add all the handlers for the specified logger.
 	 * These handlers are in the status properties:
-	 * "raptor.log."+l.getName()+".handler."+index+".name" retrieves the relevant class name
+	 * "liric.log."+l.getName()+".handler."+index+".name" retrieves the relevant class name
 	 * for each handler.
 	 * @param l The logger.
 	 * @see #initFileLogHandler
@@ -235,7 +235,7 @@ public class Raptor
 
 		do
 		{
-			handlerName = status.getProperty("raptor.log."+l.getName()+".handler."+index+".name");
+			handlerName = status.getProperty("liric.log."+l.getName()+".handler."+index+".name");
 			if(handlerName != null)
 			{
 				try
@@ -307,11 +307,11 @@ public class Raptor
 	 * @exception FileNotFoundException Thrown if the specified filename is not valid in some way.
 	 * @see #status
 	 * @see #initLogFormatter
-	 * @see RaptorStatus#getProperty
-	 * @see RaptorStatus#getPropertyInteger
-	 * @see RaptorStatus#getPropertyBoolean
-	 * @see RaptorStatus#propertyContainsKey
-	 * @see RaptorStatus#getPropertyLogHandlerTimePeriod
+	 * @see LiricStatus#getProperty
+	 * @see LiricStatus#getPropertyInteger
+	 * @see LiricStatus#getPropertyBoolean
+	 * @see LiricStatus#propertyContainsKey
+	 * @see LiricStatus#getPropertyLogHandlerTimePeriod
 	 */
 	protected LogHandler initFileLogHandler(Logger l,int index) throws NumberFormatException,
 		FileNotFoundException
@@ -322,23 +322,23 @@ public class Raptor
 		int recordLimit,fileStart,fileLimit,timePeriod;
 		boolean append;
 
-		fileName = status.getProperty("raptor.log."+l.getName()+".handler."+index+".param.0");
-		formatter = initLogFormatter("raptor.log."+l.getName()+".handler."+index+".param.1");
+		fileName = status.getProperty("liric.log."+l.getName()+".handler."+index+".param.0");
+		formatter = initLogFormatter("liric.log."+l.getName()+".handler."+index+".param.1");
 		// if we have more then 3 parameters, we are using a recordLimit FileLogHandler
 		// rather than a time period log handler.
-		if(status.propertyContainsKey("raptor.log."+l.getName()+".handler."+index+".param.3"))
+		if(status.propertyContainsKey("liric.log."+l.getName()+".handler."+index+".param.3"))
 		{
-			recordLimit = status.getPropertyInteger("raptor.log."+l.getName()+".handler."+index+
+			recordLimit = status.getPropertyInteger("liric.log."+l.getName()+".handler."+index+
 								".param.2");
-			fileStart = status.getPropertyInteger("raptor.log."+l.getName()+".handler."+index+".param.3");
-			fileLimit = status.getPropertyInteger("raptor.log."+l.getName()+".handler."+index+".param.4");
-			append = status.getPropertyBoolean("raptor.log."+l.getName()+".handler."+index+".param.5");
+			fileStart = status.getPropertyInteger("liric.log."+l.getName()+".handler."+index+".param.3");
+			fileLimit = status.getPropertyInteger("liric.log."+l.getName()+".handler."+index+".param.4");
+			append = status.getPropertyBoolean("liric.log."+l.getName()+".handler."+index+".param.5");
 			handler = new FileLogHandler(fileName,formatter,recordLimit,fileStart,fileLimit,append);
 		}
 		else
 		{
 			// This is a time period log handler.
-			timePeriod = status.getPropertyLogHandlerTimePeriod("raptor.log."+l.getName()+".handler."+
+			timePeriod = status.getPropertyLogHandlerTimePeriod("liric.log."+l.getName()+".handler."+
 									    index+".param.2");
 			handler = new FileLogHandler(fileName,formatter,timePeriod);
 		}
@@ -365,9 +365,9 @@ public class Raptor
 		String groupName = null;
 		int portNumber;
 
-		groupName = status.getProperty("raptor.log."+l.getName()+".handler."+index+".param.0");
-		portNumber = status.getPropertyInteger("raptor.log."+l.getName()+".handler."+index+".param.1");
-		formatter = initLogFormatter("raptor.log."+l.getName()+".handler."+index+".param.2");
+		groupName = status.getProperty("liric.log."+l.getName()+".handler."+index+".param.0");
+		portNumber = status.getPropertyInteger("liric.log."+l.getName()+".handler."+index+".param.1");
+		formatter = initLogFormatter("liric.log."+l.getName()+".handler."+index+".param.2");
 		handler = new MulticastLogHandler(groupName,portNumber,formatter);
 		return handler;
 	}
@@ -390,8 +390,8 @@ public class Raptor
 		String groupName = null;
 		int portNumber;
 
-		groupName = status.getProperty("raptor.log."+l.getName()+".handler."+index+".param.0");
-		portNumber = status.getPropertyInteger("raptor.log."+l.getName()+".handler."+index+".param.1");
+		groupName = status.getProperty("liric.log."+l.getName()+".handler."+index+".param.0");
+		portNumber = status.getPropertyInteger("liric.log."+l.getName()+".handler."+index+".param.1");
 		handler = new MulticastLogRelay(groupName,portNumber);
 		return handler;
 	}
@@ -414,8 +414,8 @@ public class Raptor
 		String hostname = null;
 		int portNumber;
 
-		hostname = status.getProperty("raptor.log."+l.getName()+".handler."+index+".param.0");
-		portNumber = status.getPropertyInteger("raptor.log."+l.getName()+".handler."+index+".param.1");
+		hostname = status.getProperty("liric.log."+l.getName()+".handler."+index+".param.0");
+		portNumber = status.getPropertyInteger("liric.log."+l.getName()+".handler."+index+".param.1");
 		handler = new DatagramLogHandler(hostname,portNumber);
 		return handler;
 	}
@@ -435,7 +435,7 @@ public class Raptor
 		LogFormatter formatter = null;
 		LogHandler handler = null;
 
-		formatter = initLogFormatter("raptor.log."+l.getName()+".handler."+index+".param.0");
+		formatter = initLogFormatter("liric.log."+l.getName()+".handler."+index+".param.0");
 		handler = new ConsoleLogHandler(formatter);
 		return handler;
 	}
@@ -446,7 +446,7 @@ public class Raptor
 	 * or an instance cannot be instansiated we try to return a ngat.util.logging.BogstanLogFormatter.
 	 * @param propertyName A property name, present in the status's properties, 
 	 * 	which has a value of a valid LogFormatter sub-class name. i.e.
-	 * 	<pre>raptor.log.log.handler.0.param.1 =ngat.util.logging.BogstanLogFormatter</pre>
+	 * 	<pre>liric.log.log.handler.0.param.1 =ngat.util.logging.BogstanLogFormatter</pre>
 	 * @return An instance of LogFormatter is returned.
 	 */
 	protected LogFormatter initLogFormatter(String propertyName)
@@ -526,7 +526,7 @@ public class Raptor
 
 	/**
 	 * This is the re-initialisation routine. This is called on a REDATUM level reboot, and
-	 * does some of the operations in the init routine. It re-loads the Raptor configuration
+	 * does some of the operations in the init routine. It re-loads the Liric configuration
 	 * files, but NOT the network one. 
 	 * It re-initialises default connection response times from properties file.
 	 * The init method must be kept up to date with respect to this method.
@@ -564,22 +564,22 @@ public class Raptor
 	// initialise default connection response times from properties file
 		try
 		{
-			time = status.getPropertyInteger("raptor.server_connection.default_acknowledge_time");
-			RaptorTCPServerConnectionThread.setDefaultAcknowledgeTime(time);
-			time = status.getPropertyInteger("raptor.server_connection.min_acknowledge_time");
-			RaptorTCPServerConnectionThread.setMinAcknowledgeTime(time);
+			time = status.getPropertyInteger("liric.server_connection.default_acknowledge_time");
+			LiricTCPServerConnectionThread.setDefaultAcknowledgeTime(time);
+			time = status.getPropertyInteger("liric.server_connection.min_acknowledge_time");
+			LiricTCPServerConnectionThread.setMinAcknowledgeTime(time);
 		}
 		catch(NumberFormatException e)
 		{
 			error(this.getClass().getName()+":reinit:initialsing server connection thread times:",e);
-			// don't throw the error - failing to get this property is not 'vital' to Raptor.
+			// don't throw the error - failing to get this property is not 'vital' to Liric.
 		}
 	}
 
 	/**
 	 * This method creates the implementationList, and fills it with Class objects of sub-classes
-	 * of CommandImplementation. The command implementation namess are retrieved from the Raptor property files,
-	 * using keys of the form <b>raptor.command.implementation.&lt;<i>N</i>&gt;</b>, where <i>N</i> is
+	 * of CommandImplementation. The command implementation namess are retrieved from the Liric property files,
+	 * using keys of the form <b>liric.command.implementation.&lt;<i>N</i>&gt;</b>, where <i>N</i> is
 	 * an integer is incremented. It puts the class object reference in the Hashtable with the 
 	 * results of it's getImplementString static method
 	 * as the key. If an implementation object class fails to be put in the hashtable for some reason
@@ -604,7 +604,7 @@ public class Raptor
 		done = false;
 		while(done == false)
 		{
-			className = status.getProperty("raptor.command.implementation."+index);
+			className = status.getProperty("liric.command.implementation."+index);
 			if(className != null)
 			{
 				log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
@@ -685,7 +685,7 @@ public class Raptor
 	 * This is the run routine. It starts a new server to handle incoming requests, and waits for the
 	 * server to terminate.
 	 * @see #server
-	 * @see #raptorPortNumber
+	 * @see #liricPortNumber
 	 * @see #titServer
 	 * @see #titPortNumber
 	 */
@@ -693,8 +693,8 @@ public class Raptor
 	{
 		Date nowDate = null;
 
-		server = new RaptorTCPServer("Raptor",raptorPortNumber);
-		server.setRaptor(this);
+		server = new LiricTCPServer("Liric",liricPortNumber);
+		server.setLiric(this);
 		server.setPriority(status.getThreadPriorityServer());
 		titServer = new TitServer("TitServer on port "+titPortNumber,titPortNumber);
 		titServer.setPriority(status.getThreadPriorityTIT());
@@ -702,9 +702,9 @@ public class Raptor
 		log(Logging.VERBOSITY_VERY_TERSE,
 			this.getClass().getName()+":run:server started at:"+nowDate.toString());
 		log(Logging.VERBOSITY_VERY_TERSE,
-			this.getClass().getName()+":run:server started on port:"+raptorPortNumber);
+			this.getClass().getName()+":run:server started on port:"+liricPortNumber);
 		error(this.getClass().getName()+":run:server started at:"+nowDate.toString());
-		error(this.getClass().getName()+":run:server started on port:"+raptorPortNumber);
+		error(this.getClass().getName()+":run:server started on port:"+liricPortNumber);
 		server.start();
 		titServer.start();
 		try
@@ -722,16 +722,16 @@ public class Raptor
 	}
 
 	/**
-	 * Routine to be called at the end of execution of Raptor to close down communications.
-	 * Currently closes RaptorTCPServer and TitServer.
-	 * @param serverConnectionThread An object of class RaptorTCPServerConnectionThread. The connection thread
+	 * Routine to be called at the end of execution of Liric to close down communications.
+	 * Currently closes LiricTCPServer and TitServer.
+	 * @param serverConnectionThread An object of class LiricTCPServerConnectionThread. The connection thread
 	 *        of the command being implemented should be passed in. 
-	 * @see RaptorTCPServer#close
+	 * @see LiricTCPServer#close
 	 * @see #server
 	 * @see TitServer#close
 	 * @see #titServer
 	 */
-	public void close(RaptorTCPServerConnectionThread serverConnectionThread)
+	public void close(LiricTCPServerConnectionThread serverConnectionThread)
 	{
 		server.close();
 		titServer.close();
@@ -742,7 +742,7 @@ public class Raptor
 	 * @return The server instance.
 	 * @see #server
 	 */
-	public RaptorTCPServer getServer()
+	public LiricTCPServer getServer()
 	{
 		return server;
 	}
@@ -752,7 +752,7 @@ public class Raptor
 	 * @return The status instance.
 	 * @see #status
 	 */
-	public RaptorStatus getStatus()
+	public LiricStatus getStatus()
 	{
 		return status;
 	}
@@ -805,7 +805,7 @@ public class Raptor
 	 * @see #status
 	 * @see #logLogger
 	 * @see #errorLogger
-	 * @see ngat.raptor.RaptorStatus#setLogLevel
+	 * @see ngat.liric.LiricStatus#setLogLevel
 	 */
 	public void setLogLevel(int level)
 	{
@@ -815,7 +815,7 @@ public class Raptor
 	}
 
 	/**
-	 * Routine to send a command from the instrument (this application/Raptor) to the ISS. The routine
+	 * Routine to send a command from the instrument (this application/Liric) to the ISS. The routine
 	 * waits until the command's done message has been returned from the ISS and returns this.
 	 * If the commandThread is aborted this also stops waiting for the done message to be returned.
 	 * @param command The command to send to the ISS.
@@ -824,17 +824,17 @@ public class Raptor
 	 * 	if the done was null.
 	 * @see #issAddress
 	 * @see #issPortNumber
-	 * @see #sendISSCommand(INST_TO_ISS,RaptorTCPServerConnectionThread,boolean)
-	 * @see RaptorTCPClientConnectionThread
-	 * @see RaptorTCPServerConnectionThread#getAbortProcessCommand
+	 * @see #sendISSCommand(INST_TO_ISS,LiricTCPServerConnectionThread,boolean)
+	 * @see LiricTCPClientConnectionThread
+	 * @see LiricTCPServerConnectionThread#getAbortProcessCommand
 	 */
-	public INST_TO_ISS_DONE sendISSCommand(INST_TO_ISS command,RaptorTCPServerConnectionThread commandThread)
+	public INST_TO_ISS_DONE sendISSCommand(INST_TO_ISS command,LiricTCPServerConnectionThread commandThread)
 	{
 		return sendISSCommand(command,commandThread,true);
 	}
 
 	/**
-	 * Routine to send a command from the instrument (this application/Raptor) to the ISS. The routine
+	 * Routine to send a command from the instrument (this application/Liric) to the ISS. The routine
 	 * waits until the command's done message has been returned from the ISS and returns this.
 	 * If checkAbort is set and the commandThread is aborted this also stops waiting for the 
 	 * done message to be returned.
@@ -847,20 +847,20 @@ public class Raptor
 	 * 	if the done was null.
 	 * @see #issAddress
 	 * @see #issPortNumber
-	 * @see RaptorTCPClientConnectionThread
-	 * @see RaptorTCPServerConnectionThread#getAbortProcessCommand
+	 * @see LiricTCPClientConnectionThread
+	 * @see LiricTCPServerConnectionThread#getAbortProcessCommand
 	 */
-	public INST_TO_ISS_DONE sendISSCommand(INST_TO_ISS command,RaptorTCPServerConnectionThread commandThread,
+	public INST_TO_ISS_DONE sendISSCommand(INST_TO_ISS command,LiricTCPServerConnectionThread commandThread,
 					       boolean checkAbort)
 	{
-		RaptorTCPClientConnectionThread thread = null;
+		LiricTCPClientConnectionThread thread = null;
 		INST_TO_ISS_DONE done = null;
 		boolean finished = false;
 
 		log(Logging.VERBOSITY_VERY_TERSE,
 		    this.getClass().getName()+":sendISSCommand:"+command.getClass().getName());
-		thread = new RaptorTCPClientConnectionThread(issAddress,issPortNumber,command,commandThread);
-		thread.setRaptor(this);
+		thread = new LiricTCPClientConnectionThread(issAddress,issPortNumber,command,commandThread);
+		thread.setLiric(this);
 		thread.start();
 		finished = false;
 		while(finished == false)
@@ -887,13 +887,13 @@ public class Raptor
 		if(done == null)
 		{
 			// one reason the done is null is if we escaped from the loop
-			// because the Raptor server thread was aborted.
+			// because the Liric server thread was aborted.
 			if(commandThread.getAbortProcessCommand())
 			{
 				done = new INST_TO_ISS_DONE(command.getId());
 				error(this.getClass().getName()+":sendISSCommand:"+
 					command.getClass().getName()+":Server thread Aborted");
-				done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+1);
+				done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+1);
 				done.setErrorString("sendISSCommand:Server thread Aborted:"+
 					command.getClass().getName());
 				done.setSuccessful(false);		
@@ -903,7 +903,7 @@ public class Raptor
 				done = new INST_TO_ISS_DONE(command.getId());
 				error(this.getClass().getName()+":sendISSCommand:"+
 					command.getClass().getName()+":Getting Done failed");
-				done.setErrorNum(RaptorConstants.RAPTOR_ERROR_CODE_BASE+2);
+				done.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+2);
 				done.setErrorString("sendISSCommand:Getting Done failed:"+
 					command.getClass().getName());
 				done.setSuccessful(false);
@@ -973,7 +973,7 @@ public class Raptor
 	 */
 	public void help()
 	{
-		System.out.println("Raptor Help:");
+		System.out.println("Liric Help:");
 		System.out.println("Arguments are:");
 		System.out.println("\t-l[og] <log level> - log level.");
 	}
@@ -1003,12 +1003,12 @@ public class Raptor
 				System.exit(0);
 			}
 			else
-				System.err.println("Raptor '"+args[i]+"' not a recognised option");
+				System.err.println("Liric '"+args[i]+"' not a recognised option");
 		}// end for
 	}
 
 	/**
-	 * The main routine, called when Raptor is executed. This creates a new instance of the Raptor class.
+	 * The main routine, called when Liric is executed. This creates a new instance of the Liric class.
 	 * It calls the following methods:
 	 * <ul>
 	 * <li>Calls parseArguments.
@@ -1022,23 +1022,23 @@ public class Raptor
 	 */
 	public static void main(String[] args)
 	{
-		Raptor raptor = new Raptor();
+		Liric liric = new Liric();
 
 		try
 		{
-			raptor.parseArguments(args);
-			raptor.init();
+			liric.parseArguments(args);
+			liric.init();
 		}
 		catch(Exception e)
 		{
- 			raptor.error("main:init failed:",e);
+ 			liric.error("main:init failed:",e);
 			System.exit(1);
 		}
-		raptor.run();
+		liric.run();
 	// We get here if the server thread has terminated. If it has been quit
 	// this is a successfull termination, otherwise an error has occured.
 	// Note the program can also be terminated from within a REBOOT call.
-		if(raptor.server.getQuit() == false)
+		if(liric.server.getQuit() == false)
 			System.exit(1);
 	}
 }
