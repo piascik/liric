@@ -25,7 +25,7 @@ end
 
 # Useful command aliass
 alias icsgui                            '/icc/bin/ics_gui/java/icsgui'
-alias liric_engineering_mode   		'/icc/bin/scripts/liric_engineering_mode'
+alias liric_engineering_mode   		'/icc/bin/liric/scripts/liric_engineering_mode'
 alias myps             			'ps -e -o pid,pcpu,vsz,ruser,args'
 alias send_command			'/icc/bin/commandserver/test/${HOSTTYPE}/send_command'
 # Do not delete the next comment, it delimits the cshrc updated by the liric_install script.
