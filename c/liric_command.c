@@ -1509,6 +1509,10 @@ int Liric_Command_Status(char *command_string,char **reply_string)
 			{
 				strcat(return_string,"stopped"); 
 			}
+			else if(strncmp(command_string+command_string_index,"offsetsize",10)==0)
+			{
+				strcat(return_string,"UNKNOWN"); 
+			}
 			else
 			{
 				Liric_General_Error_Number = 542;
