@@ -88,6 +88,7 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	 *     the focus offset required.
 	 * <li>We increment the config Id.
 	 * <li>We save the config name in the Liric status instance for future reference.
+	 * <li>We save the coadd exposure length in the Liric status instance for future reference.
 	 * <li>We return success.
 	 * </ul>
 	 * @see #testAbort
@@ -100,6 +101,7 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	 * @see ngat.liric.Liric#getStatus
 	 * @see ngat.liric.LiricStatus#incConfigId
 	 * @see ngat.liric.LiricStatus#setConfigName
+	 * @see ngat.liric.LiricStatus#setCoaddExposureLength
 	 * @see ngat.phase2.LiricConfig
 	 */
 	public COMMAND_DONE processCommand(COMMAND command)
@@ -202,6 +204,9 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	// Store name of configuration used in status object
 	// This is queried when saving FITS headers to get the CONFNAME value.
 		status.setConfigName(configName);
+        // Store the newly configured coadd exposure length in the status reference,
+	// so the Multrun (and other commands) can use it to calculate exposure everheads
+		status.setCoaddExposureLength(config.getCoaddExposureLength());
 	// setup return object.
 		configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_NO_ERROR);
 		configDone.setErrorString("");
