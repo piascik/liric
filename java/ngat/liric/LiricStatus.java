@@ -79,6 +79,12 @@ public class LiricStatus
 	 * we get an error about setup not being complete, rather than an error about NULL FITS values.
 	 */
 	private String configName = "UNKNOWN";
+	/**
+	 * A cached copy of the last coadd exposure length used to configure LIRIC.
+	 * This is passed to the C layer by the CONFIG command, we cache it here as we need to know the value
+	 * to accurately calculate the exposure overheads used to configure the Multrun ACK time.
+	 */
+	private int coaddExposureLength;
 	
 	/**
 	 * Default constructor. Initialises the properties.
@@ -273,6 +279,26 @@ public class LiricStatus
 	public synchronized String getConfigName()
 	{
 		return configName;
+	}
+
+	/**
+	 * Method to set the last coadd exposure length used to configure the detector.
+	 * @param l The coadd exposure length, as an integer, in milliseconds.
+	 * @see #coaddExposureLength
+	 */
+	public synchronized void setCoaddExposureLength(int l)
+	{
+		coaddExposureLength = l;
+	}
+
+	/**
+	 * Method to get the last coadd exposure length used to configure the detector.
+	 * @return The coadd exposure length, as an integer, in milliseconds.
+	 * @see #coaddExposureLength
+	 */
+	public synchronized int getCoaddExposureLength()
+	{
+		return coaddExposureLength;
 	}
 
 	/**
