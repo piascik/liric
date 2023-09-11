@@ -59,8 +59,20 @@ public class MULTRUNImplementation extends HardwareImplementation implements JMS
 	}
 
 	/**
-	 * This method returns the MULTRUN command's acknowledge time. We multiply the MULTRUN's exposureCount by
-	 * it's exposureLength (in milliseconds) and add the default acknowledge time (getDefaultAcknowledgeTime).
+	 * This method returns the MULTRUN command's acknowledge time. 
+         * <ul>
+         * <li>We retrieve the exposureLength and exposureCount from the multrunCommand parameters.
+         * <li>We retrieve the coaddExposureLength from the Liric status object (where the last CONFIG command implementation cached it).
+         * <li>If coaddExposureLength is zero, it has not been set by a previous config. The multrun should fail, but we reset the
+	 *     coaddExposureLength to 100 so we don't get a division by zero in this method.
+         * <li>We retrieve a coaddReadoutOverhead from the property file  key "liric.coadd.readout.overhead".
+         * <li>We retrieve a nudgematicOverhead from the property file  key "liric.nudgematic.overhead".
+         * <li>We calculate the total number of coadds over the multrun (exposureLength/coaddExposureLength)*exposureCount.
+         * <li>We calculate the total  coadd readout overhead (coaddReadoutOverhead*coaddCount).
+         * <li>We calclulate the total nudgematic overhead (nudgematicOverhead*exposureCount).
+         * <li>We calculate the total exposure length  (exposureLength*exposureCount);
+         * <li>The ack time is set to the total exposure length plus the total coadd readout overhead plus the total nudgematic overhead.
+         * </ul>
 	 * @param command The command instance we are implementing.
 	 * @return An instance of ACK with the timeToComplete set.
 	 * @see ngat.message.base.ACK#setTimeToComplete
@@ -69,19 +81,42 @@ public class MULTRUNImplementation extends HardwareImplementation implements JMS
 	 * @see #serverConnectionThread
 	 * @see MULTRUN#getExposureTime
 	 * @see MULTRUN#getNumberExposures
+	 * @see LiricStatus#getCoaddExposureLength
+	 * @see LiricStatus#getPropertyInteger
 	 */
 	public ACK calculateAcknowledgeTime(COMMAND command)
 	{
 		MULTRUN multRunCommand = (MULTRUN)command;
 		ACK acknowledge = null;
-		int exposureLength,exposureCount,ackTime=0;
+		int coaddCount,coaddExposureLength,totalExposureLength,exposureLength,exposureCount,ackTime=0;
+		int coaddReadoutOverhead,nudgematicOverhead,totalCoaddOverhead,totalNudgematicOverhead;
 
 		exposureLength = multRunCommand.getExposureTime();
 		exposureCount = multRunCommand.getNumberExposures();
+		coaddExposureLength = status.getCoaddExposureLength();
+		// if the coaddExposureLength has not been set by a previous config the multrun command should fail.
+		// Nevertheless, set coaddExposureLength to some sensible default to prevent division by zero in this method.
+		if(coaddExposureLength == 0)
+			coaddExposureLength = 100;
 		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
 			   ":calculateAcknowledgeTime:exposureLength = "+exposureLength+
-			   " :exposureCount = "+exposureCount);
-		ackTime = exposureLength*exposureCount;
+			   " :exposureCount = "+exposureCount+" :coaddExposureLength = "+coaddExposureLength);
+		coaddReadoutOverhead = status.getPropertyInteger("liric.coadd.readout.overhead");
+		nudgematicOverhead = status.getPropertyInteger("liric.nudgematic.overhead");
+		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
+			   ":calculateAcknowledgeTime:coaddReadoutOverhead = "+coaddReadoutOverhead+
+			   " :nudgematicOverhead = "+nudgematicOverhead+".");
+		coaddCount = (exposureLength/coaddExposureLength)*exposureCount;
+		totalCoaddOverhead = coaddReadoutOverhead*coaddCount;
+		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
+			   ":calculateAcknowledgeTime:coaddCount = "+coaddCount+
+			   " :totalCoaddOverhead = "+totalCoaddOverhead+".");
+		totalNudgematicOverhead = nudgematicOverhead*exposureCount;
+		totalExposureLength = exposureLength*exposureCount;
+		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
+			   ":calculateAcknowledgeTime:totalNudgematicOverhead = "+totalNudgematicOverhead+
+			   " :totalExposureLength = "+totalExposureLength+".");
+		ackTime = totalExposureLength+totalCoaddOverhead+totalNudgematicOverhead;
 		liric.log(Logging.VERBOSITY_VERBOSE,this.getClass().getName()+
 			   ":calculateAcknowledgeTime:ackTime = "+ackTime);
 		acknowledge = new ACK(command.getId());
