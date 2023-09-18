@@ -177,6 +177,7 @@ int Liric_Server_Stop(void)
  * @see liric_command.html#Liric_Command_MultBias
  * @see liric_command.html#Liric_Command_MultDark
  * @see liric_command.html#Liric_Command_Status
+ * @see liric_command.html#Liric_Command_Temperature
  * @see liric_general.html#Liric_General_Error_Number
  * @see liric_general.html#Liric_General_Error_String
  * @see liric_general.html#Liric_General_Log_Format
@@ -401,7 +402,8 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tstatus nudgematic [offsetsize|position|status]\n"
 			   "\tstatus exposure [status|count|length|start_time]\n"
 			   "\tstatus exposure [index|multrun|run]\n"
-			   "\tshutdown\n");
+			   "\tshutdown\n"
+			   "\ttemperature <degrees centigrade>\n");
 	}
 	else if(strncmp(client_message,"multbias",8) == 0)
 	{
@@ -586,6 +588,46 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			Liric_General_Error("server","liric_server.c",
 						 "Liric_Server_Connection_Callback",
 						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
+		}
+	}
+	else if(strncmp(client_message,"temperature",11) == 0)
+	{
+#if LIRIC_DEBUG > 1
+		Liric_General_Log("server","liric_server.c","Liric_Server_Connection_Callback",
+				       LOG_VERBOSITY_VERY_TERSE,"SERVER","temperature detected.");
+#endif
+		/* normal thread priority */
+		if(!Liric_General_Thread_Priority_Set_Normal())
+		{
+			Liric_General_Error("server","liric_server.c",
+						 "Liric_Server_Connection_Callback",
+						 LOG_VERBOSITY_VERY_TERSE,"SERVER");
+		}
+		retval = Liric_Command_Temperature(client_message,&reply_string);
+		if(retval == TRUE)
+		{
+			retval = Send_Reply(connection_handle,reply_string);
+			if(reply_string != NULL)
+				free(reply_string);
+			if(retval == FALSE)
+			{
+				Liric_General_Error("server","liric_server.c",
+							 "Liric_Server_Connection_Callback",
+							 LOG_VERBOSITY_VERY_TERSE,"SERVER");
+			}
+		}
+		else
+		{
+			Liric_General_Error("server","liric_server.c",
+					     "Liric_Server_Connection_Callback",
+					     LOG_VERBOSITY_VERY_TERSE,"SERVER");
+			retval = Send_Reply(connection_handle, "1 Liric_Command_Temperature failed.");
+			if(retval == FALSE)
+			{
+				Liric_General_Error("server","liric_server.c",
+						     "Liric_Server_Connection_Callback",
+						     LOG_VERBOSITY_VERY_TERSE,"SERVER");
+			}
 		}
 	}
 	else

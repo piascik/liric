@@ -1637,6 +1637,73 @@ int Liric_Command_Status(char *command_string,char **reply_string)
 }
 
 /**
+ * Command to set the detectors target temperature : "temperature <degrees centigrade>".
+ * Note this will only take effect until the next Config/coadd exposure length change occurs,
+ * as loading a new .fmt file will reset the target to that contained in the .fmt file.
+ * @param command_string The command. This is not changed during this routine.
+ * @param reply_string The address of a pointer to allocate and set the reply string.
+ * @return The routine returns TRUE on success and FALSE on failure.
+ * @see liric_general.html#Liric_General_Log
+ * @see liric_general.html#Liric_General_Error_Number
+ * @see liric_general.html#Liric_General_Error_String
+ * @see liric_general.html#Liric_General_Add_String
+ * @see liric_general.html#Liric_General_Add_Integer_To_String
+ * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_Set_TEC_Setpoint
+ */
+int Liric_Command_Temperature(char *command_string,char **reply_string)
+{
+	int retval,parameter_index;
+	double target_temperature;
+
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("command","liric_command.c","Liric_Command_Temperature",LOG_VERBOSITY_TERSE,
+			   "COMMAND","started.");
+#endif
+	/* parse command */
+	retval = sscanf(command_string,"temperature %lf",&target_temperature);
+	if(retval != 1)
+	{
+		Liric_General_Error_Number = 551;
+		sprintf(Liric_General_Error_String,"Liric_Command_Temperature:"
+			"Failed to parse command %s (%d).",command_string,retval);
+		Liric_General_Error("command","liric_command.c","Liric_Command_Temperature",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if LIRIC_DEBUG > 1
+		Liric_General_Log("command","liric_command.c","Liric_Command_Temperature",
+				       LOG_VERBOSITY_TERSE,"COMMAND","finished (command parse failed).");
+#endif
+		if(!Liric_General_Add_String(reply_string,"1 Failed to parse temperature command."))
+			return FALSE;
+		return TRUE;
+	}
+	/* change the detector's target temperature
+	** Note this will only take effect until the next Config/coadd exposure length change occurs,
+	** as loading a new .fmt file will reset the target to that contained in the .fmt file. */
+	if(!Detector_Temperature_Set_TEC_Setpoint(target_temperature))
+	{
+		Liric_General_Error_Number = 552;
+		sprintf(Liric_General_Error_String,"Liric_Command_Temperature:"
+			"Failed to set detector target temperature to %.2f C.",target_temperature);
+		Liric_General_Error("command","liric_command.c","Liric_Command_Temperature",
+				     LOG_VERBOSITY_TERSE,"COMMAND");
+#if LIRIC_DEBUG > 1
+		Liric_General_Log_Format("command","liric_command.c","Liric_Command_Temperature",
+					 LOG_VERBOSITY_TERSE,"COMMAND",
+					 "Failed to set detector target temperature to %.2f C.",
+					 target_temperature);
+#endif
+		if(!Liric_General_Add_String(reply_string,"1 Failed to set detector target temperatur."))
+			return FALSE;
+		return TRUE;
+	}
+#if LIRIC_DEBUG > 1
+	Liric_General_Log("command","liric_command.c","Liric_Command_Temperature",LOG_VERBOSITY_TERSE,
+			   "COMMAND","finished.");
+#endif
+	return TRUE;
+}
+
+/**
  * On a change in coadd exposure length, the whole connection to xclib / the detector needs to be closed and
  * re-opened again: the library needs to read a different format '.fmt' file.
  * <ul>
