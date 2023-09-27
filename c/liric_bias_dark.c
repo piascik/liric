@@ -427,7 +427,7 @@ int Liric_Bias_Dark_MultDark(int exposure_length_ms,int exposure_count,char ***f
 	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.x",&flip_x))
 		return FALSE;		
 	if(!Liric_Config_Get_Boolean("liric.multrun.image.flip.y",&flip_y))
-		return FALSE;		
+		return FALSE;
 	Detector_Exposure_Flip_Set(flip_x,flip_y);
 	/* move filter wheel to mirror position */
 	if(Liric_Config_Filter_Wheel_Is_Enabled())
