@@ -1223,6 +1223,7 @@ int Liric_Command_MultDark(char *command_string,char **reply_string)
  * @see liric_multrun.html#Liric_Multrun_Exposure_Index_Get
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Exposure_Length_Get
  * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_Start_Time_Get
+ * @see ../detector/cdocs/detector_exposure.html#Detector_Exposure_In_Progress
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Multrun_Get
  * @see ../detector/cdocs/detector_fits_filename.html#Detector_Fits_Filename_Run_Get
  * @see ../detector/cdocs/detector_temperature.html#Detector_Temperature_Get
@@ -1272,12 +1273,18 @@ int Liric_Command_Status(char *command_string,char **reply_string)
 	{
 		if(strncmp(command_string+command_string_index,"status",6)==0)
 		{
+			if(Detector_Exposure_In_Progress())
+				strcat(return_string,"true");
+			else
+				strcat(return_string,"false");
+			/*
 			if(Liric_Multrun_In_Progress())
 				strcat(return_string,"true");
 			else if(Liric_Bias_Dark_In_Progress())
 				strcat(return_string,"true");
 			else
 				strcat(return_string,"false");
+			*/
 		}
 		else if(strncmp(command_string+command_string_index,"coadd-length",12)==0)
 		{
