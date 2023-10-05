@@ -1279,6 +1279,16 @@ int Liric_Command_Status(char *command_string,char **reply_string)
 			else
 				strcat(return_string,"false");
 		}
+		else if(strncmp(command_string+command_string_index,"coadd-length",12)==0)
+		{
+			ivalue = Detector_Exposure_Coadd_Frame_Exposure_Length_Get();
+			sprintf(return_string+strlen(return_string),"%d",ivalue);
+		}
+		else if(strncmp(command_string+command_string_index,"coadd-count",12)==0)
+		{
+			ivalue = Detector_Exposure_Coadd_Count_Get();
+			sprintf(return_string+strlen(return_string),"%d",ivalue);
+		}
 		else if(strncmp(command_string+command_string_index,"count",5)==0)
 		{
 			if(Liric_Multrun_In_Progress())

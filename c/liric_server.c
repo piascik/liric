@@ -400,7 +400,7 @@ static void Server_Connection_Callback(Command_Server_Handle_T connection_handle
 			   "\tstatus temperature [get|pcb]\n"
 			   "\tstatus filterwheel [filter|position|status]\n"
 			   "\tstatus nudgematic [offsetsize|position|status]\n"
-			   "\tstatus exposure [status|count|length|start_time]\n"
+			   "\tstatus exposure [status|count|length|coadd-count|coadd-length|start_time]\n"
 			   "\tstatus exposure [index|multrun|run]\n"
 			   "\tshutdown\n"
 			   "\ttemperature <degrees centigrade>\n");
