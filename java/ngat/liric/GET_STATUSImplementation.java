@@ -104,7 +104,8 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * <li>The "currentCommand" status hashtable value is set to the currently executing command.
 	 * <li>getStatusExposureIndex / getStatusExposureCount / getStatusExposureMultrun / getStatusExposureRun / 
 	 *     getStatusExposureWindow / getStatusExposureLength / 
-	 *     getStatusExposureStartTime are called to add some basic status to the hashtable.
+	 *     getStatusExposureStartTime / getStatusExposureCoaddCount / getStatusExposureCoaddLength	
+         *     are called to add some basic status to the hashtable.
 	 * <li>getIntermediateStatus is called if the GET_STATUS command level is at least intermediate.
 	 * <li>getFullStatusis called if the GET_STATUS command level is at least full.
 	 * </ul>
@@ -123,6 +124,8 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 	 * @see #getStatusExposureRun
 	 * @see #getStatusExposureLength
 	 * @see #getStatusExposureStartTime
+	 * @see #getStatusExposureCoaddCount
+	 * @see #getStatusExposureCoaddLength
 	 * @see #getIntermediateStatus
 	 * @see #getFullStatus
 	 * @see #currentMode
@@ -175,7 +178,10 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 			// already been inserted by getStatusExposureLength/getStatusExposureStartTime
 			getStatusExposureElapsedTime();
 			// "Exposure Number" is added in getStatusExposureIndex
-			getStatusExposureIndex(); 
+			getStatusExposureIndex();
+			// Coadd exposure length and count
+			getStatusExposureCoaddCount();
+			getStatusExposureCoaddLength();
 			getStatusExposureMultrun(); 
 			getStatusExposureRun();
 		}
@@ -573,7 +579,94 @@ public class GET_STATUSImplementation extends CommandImplementation implements J
 		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureIndex:finished for C layer ("+
 			   cLayerHostname+":"+cLayerPortNumber+") with index:"+exposureIndex);
 	}
+	
+	/**
+	 * Get the coadd exposure count. An instance of StatusExposureCoaddCountCommand is used to send the command
+	 * to the C layer, The returned value is stored in
+	 * the hashTable, under the "Coadd Exposure Count" key. 
+	 * @exception Exception Thrown if an error occurs.
+	 * @see #hashTable
+	 * @see #cLayerHostname
+	 * @see #cLayerPortNumber
+	 * @see ngat.liric.command.StatusExposureCountCommand
+	 */
+	protected void getStatusExposureCoaddCount() throws Exception
+	{
+		StatusExposureCoaddCountCommand statusCommand = null;
+		int returnCode,coaddExposureCount;
+		String errorString = null;
 
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCoaddCount:started for C layer ("+
+			   cLayerHostname+":"+cLayerPortNumber+").");
+		statusCommand = new StatusExposureCoaddCountCommand();
+		statusCommand.setAddress(cLayerHostname);
+		statusCommand.setPortNumber(cLayerPortNumber);
+		// actually send the command to the C layer
+		statusCommand.sendCommand();
+		// check the parsed reply
+		if(statusCommand.getParsedReplyOK() == false)
+		{
+			returnCode = statusCommand.getReturnCode();
+			errorString = statusCommand.getParsedReply();
+			liric.log(Logging.VERBOSITY_TERSE,
+				   "getStatusExposureCoaddCount:exposure coadd count command failed ("+
+				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
+				   returnCode+" and error string:"+errorString);
+				throw new Exception(this.getClass().getName()+
+						    ":getStatusExposureCoaddCount:"+
+						    "exposure coadd count command failed ("+cLayerHostname+":"+
+						    cLayerPortNumber+") with return code "+returnCode+
+						    " and error string:"+errorString);
+		}
+		coaddExposureCount = statusCommand.getExposureCoaddCount();
+		hashTable.put("Coadd Exposure Count",new Integer(coaddExposureCount));
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCoaddCount:finished for C layer ("+
+			   cLayerHostname+":"+cLayerPortNumber+") with coadd exposure count:"+coaddExposureCount);
+	}
+
+	/**
+	 * Get the exposure coadd length. An instance of StatusExposureCoaddLengthCommand is used to send the command
+	 * to the C layer. The returned value is stored in
+	 * the hashTable, under the "Coadd Exposure Length" key.
+	 * @exception Exception Thrown if an error occurs.
+	 * @see #hashTable
+	 * @see #cLayerHostname
+	 * @see #cLayerPortNumber
+	 * @see ngat.liric.command.StatusExposureCoaddLengthCommand
+	 */
+	protected void getStatusExposureCoaddLength() throws Exception
+	{
+		StatusExposureCoaddLengthCommand statusCommand = null;
+		int returnCode,coaddExposureLength;
+		String errorString = null;
+
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCoaddLength:started for C layer ("+
+			   cLayerHostname+":"+cLayerPortNumber+").");
+		statusCommand = new StatusExposureCoaddLengthCommand();
+		statusCommand.setAddress(cLayerHostname);
+		statusCommand.setPortNumber(cLayerPortNumber);
+		// actually send the command to the C layer
+		statusCommand.sendCommand();
+		// check the parsed reply
+		if(statusCommand.getParsedReplyOK() == false)
+		{
+			returnCode = statusCommand.getReturnCode();
+			errorString = statusCommand.getParsedReply();
+			liric.log(Logging.VERBOSITY_TERSE,
+				   "getStatusExposureCoaddLength:exposure coadd length command failed for C layer ("+
+				   cLayerHostname+":"+cLayerPortNumber+") with return code "+
+				   returnCode+" and error string:"+errorString);
+			throw new Exception(this.getClass().getName()+":getStatusExposureCoaddLength:"+
+					    "exposure coadd length command failed for C layer ("+
+					    cLayerHostname+":"+cLayerPortNumber+
+					    ") with return code "+returnCode+" and error string:"+errorString);
+		}
+		coaddExposureLength = statusCommand.getExposureCoaddLength();
+		hashTable.put("Coadd Exposure Length",new Integer(coaddExposureLength));
+		liric.log(Logging.VERBOSITY_INTERMEDIATE,"getStatusExposureCoaddLength:finished for C layer ("+
+			   cLayerHostname+":"+cLayerPortNumber+") with coadd exposure length:"+coaddExposureLength+ " ms.");
+	}
+	
 	/**
 	 * Get the exposure multrun. An instance of StatusExposureMultrunCommand is used to send the command
 	 * to the C layer. The returned value is stored inthe hashTable, under the "Exposure Multrun" key.
