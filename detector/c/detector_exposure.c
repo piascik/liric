@@ -43,6 +43,7 @@
  * <dt>Coadd_Count</dt> <dd>The number of coadds needed (each of length Coadd_Frame_Exposure_Length_Ms), 
  *                      to do the requested exposure length of length Exposure_Length_Ms.</dd>
  * <dt>Exposure_Start_Timestamp</dt> <dd>A timestamp taken at the start of an exposure.</dd>
+ * <dt>In_Progress</dt> <dd>An integer as a boolean, TRUE if an exposure/bias is in progress, false otherwise.</dd>
  * <dt>Abort</dt> <dd>An integer, used as a boolean. Set to FALSE at the start of an exposure, if another
  *                thread calls  Detector_Exposure_Abort to set this to TRUE, the exposure will abort.
  * </dl>
@@ -55,6 +56,7 @@ struct Exposure_Struct
 	int Exposure_Length_Ms;
 	int Coadd_Count;
 	struct timespec Exposure_Start_Timestamp;
+	int In_Progress;
 	int Abort;
 };
 
@@ -72,12 +74,13 @@ static char rcsid[] = "$Id$";
  * <dt>Exposure_Length_Ms</dt> <dd>0</dd>
  * <dt>Coadd_Count</dt> <dd>0</dd>
  * <dt>Exposure_Start_Timestamp</dt> <dd>{0,0}</dd>
+ * <dt>In_Progress</dt> <dd>FALSE</dd>
  * <dt>Abort</dt> <dd>FALSE</dd>
  * </dl>
  */
 static struct Exposure_Struct Exposure_Data = 
 {
-	0,FALSE,FALSE,0,0,{0,0},FALSE
+	0,FALSE,FALSE,0,0,{0,0},FALSE,FALSE
 };
 
 /**
@@ -185,6 +188,7 @@ int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
  * <li>We initialise the coadd image buffer to 0 by calling Detector_Buffer_Initialise_Coadd_Image.
  * <li>We reset the Abort flag in Exposure_Data.
  * <li>We take a timestamp for the start of this 'exposure' and store it in Exposure_Data.Exposure_Start_Timestamp.
+ * <li>We set Exposure_Data.In_Progress flag to be TRUE.
  * <li>We initialise captured_field_count to the last field count captured (pxd_capturedFieldCount(1)).
  * <li>We call pxd_goLivePair to start camera 1 saving frames to frame grabber buffers 1 and 2.
  * <li>We enter a for loop over Exposure_Data.Coadd_Count:
@@ -215,6 +219,7 @@ int Detector_Exposure_Flip_Set(int flip_x,int flip_y)
  * <li>If Exposure_Data.Flip_Y is TRUE, we flip the Coadd image in Y by calling Detector_Buffer_Coadd_Flip_Y.
  * <li>We create a mean image from the acquired coadds, by calling Detector_Buffer_Create_Mean_Image.
  * <li>We write the image to a FITS image by calling Exposure_Save.
+ * <li>We set Exposure_Data.In_Progress flag to be FALSE.
  * </ul>
  * Before this routine is called, the following must have been done:
  * <ul>
@@ -308,6 +313,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	Exposure_Data.Abort = FALSE;
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
+	Exposure_Data.In_Progress = TRUE;
 	/* initialise captured_field_count */
 	/* we initialise the captured_field_count to the current last captured field count. This will then increment after the pxd_goLivePair
 	** starts capturing new fields */
@@ -326,6 +332,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	retval = pxd_goLivePair(1,1,2);
 	if(retval < 0)
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 11;
 		sprintf(Exposure_Error_String,"Detector_Exposure_Expose:pxd_goLivePair failed: '%s' (%d).",
 			pxd_mesgErrorCode(retval),retval);
@@ -353,6 +360,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 			if(fdifftime(current_time,coadd_start_time) >
 			   (((double)(Exposure_Data.Coadd_Frame_Exposure_Length_Ms*10))/DETECTOR_GENERAL_ONE_SECOND_MS))
 			{
+				Exposure_Data.In_Progress = FALSE;
 				Exposure_Error_Number = 6;
 				sprintf(Exposure_Error_String,
 					"Detector_Exposure_Expose:Timed out whilst waiting for a new capture buffer "
@@ -365,6 +373,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 			/* check for abort */
 			if(Exposure_Data.Abort)
 			{
+				Exposure_Data.In_Progress = FALSE;
 				Exposure_Error_Number = 29;
 				sprintf(Exposure_Error_String,"Detector_Exposure_Expose:Aborted.");
 				pxd_goAbortLive(1);
@@ -399,6 +408,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 					Detector_Buffer_Get_Mono_Image(),Detector_Buffer_Get_Pixel_Count(),"Grey");
 		if(retval < 0)
 		{
+			Exposure_Data.In_Progress = FALSE;
 			Exposure_Error_Number = 7;
 			sprintf(Exposure_Error_String,
 				"Detector_Exposure_Expose:pxd_readushort failed: '%s' (%d).",
@@ -409,6 +419,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		/* check pxd_readushort read out the whole image */
 		if(retval != Detector_Buffer_Get_Pixel_Count())
 		{
+			Exposure_Data.In_Progress = FALSE;
 			Exposure_Error_Number = 8;
 			sprintf(Exposure_Error_String,
 				"Detector_Exposure_Expose:pxd_readushort read %d of %d pixels.",
@@ -419,6 +430,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		/* Add mono image buffer to coadd image buffer */
 		if(!Detector_Buffer_Add_Mono_To_Coadd_Image())
 		{
+			Exposure_Data.In_Progress = FALSE;
 			pxd_goAbortLive(1);
 			Exposure_Error_Number = 9;
 			sprintf(Exposure_Error_String,
@@ -428,6 +440,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 		/* check for abort */
 		if(Exposure_Data.Abort)
 		{
+			Exposure_Data.In_Progress = FALSE;
 			pxd_goAbortLive(1);
 			Exposure_Error_Number = 30;
 			sprintf(Exposure_Error_String,"Detector_Exposure_Expose:Aborted.");
@@ -438,6 +451,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	retval = pxd_goAbortLive(1);
 	if(retval < 0)
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 12;
 		sprintf(Exposure_Error_String,"Detector_Exposure_Expose:pxd_goAbortLive failed: '%s' (%d).",
 			pxd_mesgErrorCode(retval),retval);
@@ -451,6 +465,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	/* create mean image from coadds */
 	if(!Detector_Buffer_Create_Mean_Image(Exposure_Data.Coadd_Count))
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 10;
 		sprintf(Exposure_Error_String,
 			"Detector_Exposure_Expose:Failed to create mean image from coadd image with %d coadds.",
@@ -460,9 +475,11 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
 	/* write FITS image */
 	if(!Exposure_Save(fits_filename))
 	{
+		Exposure_Data.In_Progress = FALSE;
 		/* Exposure_Error_Number set internally to Exposure_Save */
 		return FALSE;
 	}
+	Exposure_Data.In_Progress = FALSE;
 #if LOGGING > 1
 	Detector_General_Log_Format(LOG_VERBOSITY_TERSE,
 				    "Detector_Exposure_Expose(exposure_length=%d ms,fits_filename = '%s'):Finished.",
@@ -482,6 +499,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
  * <li>We initialise the coadd image buffer to 0 by calling Detector_Buffer_Initialise_Coadd_Image.
  * <li>We reset the Abort flag in Exposure_Data.
  * <li>We take a timestamp for the start of this 'exposure' and store it in Exposure_Data.Exposure_Start_Timestamp.
+ * <li>We set Exposure_Data.In_Progress flag to be TRUE.
  * <li>We initialise captured_field_count to the last field count captured (pxd_capturedFieldCount(1)).
  * <li>We call pxd_goLivePair to start camera 1 saving frames to frame grabber buffers 1 and 2.
  * <li>We get a timestamp for the start of this coadd.
@@ -509,6 +527,7 @@ int Detector_Exposure_Expose(int exposure_length_ms,char* fits_filename)
  * <li>If Exposure_Data.Flip_Y is TRUE, we flip the Coadd image in Y by calling Detector_Buffer_Coadd_Flip_Y.
  * <li>We create a mean image from the acquired coadds, by calling Detector_Buffer_Create_Mean_Image.
  * <li>We write the image to a FITS image by calling Exposure_Save.
+ * <li>We set Exposure_Data.In_Progress flag to be FALSE.
  * </ul>
  * Before this routine is called, the following must have been done:
  * <ul>
@@ -583,12 +602,14 @@ int Detector_Exposure_Bias(char* fits_filename)
 	Exposure_Data.Abort = FALSE;
 	/* take start of exposure timestamp */
 	clock_gettime(CLOCK_REALTIME,&(Exposure_Data.Exposure_Start_Timestamp));
+	Exposure_Data.In_Progress = TRUE;
 	/* initialise captured field count */
 	captured_field_count = pxd_capturedFieldCount(1);
 	/* turn on image capture into frame buffers 1 and 2 */
 	retval = pxd_goLivePair(1,1,2);
 	if(retval < 0)
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 36;
 		sprintf(Exposure_Error_String,"Detector_Exposure_Bias:pxd_goLivePair failed: '%s' (%d).",
 			pxd_mesgErrorCode(retval),retval);
@@ -610,6 +631,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 		clock_gettime(CLOCK_REALTIME,&current_time);
 		if(fdifftime(current_time,coadd_start_time) > 1.0)
 		{
+			Exposure_Data.In_Progress = FALSE;
 			Exposure_Error_Number = 37;
 			sprintf(Exposure_Error_String,
 				"Detector_Exposure_Bias:Timed out whilst waiting for a new capture buffer, timeout length 1 s.");
@@ -619,6 +641,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 		/* check for abort */
 		if(Exposure_Data.Abort)
 		{
+			Exposure_Data.In_Progress = FALSE;
 			Exposure_Error_Number = 38;
 			sprintf(Exposure_Error_String,"Detector_Exposure_Bias:Aborted.");
 			pxd_goAbortLive(1);
@@ -636,6 +659,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 				Detector_Buffer_Get_Mono_Image(),Detector_Buffer_Get_Pixel_Count(),"Grey");
 	if(retval < 0)
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 39;
 		sprintf(Exposure_Error_String,
 			"Detector_Exposure_Bias:pxd_readushort failed: '%s' (%d).",
@@ -646,6 +670,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 	/* check pxd_readushort read out the whole image */
 	if(retval != Detector_Buffer_Get_Pixel_Count())
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 40;
 		sprintf(Exposure_Error_String,
 			"Detector_Exposure_Bias:pxd_readushort read %d of %d pixels.",
@@ -656,6 +681,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 	/* Add mono image buffer to coadd image buffer */
 	if(!Detector_Buffer_Add_Mono_To_Coadd_Image())
 	{
+		Exposure_Data.In_Progress = FALSE;
 		pxd_goAbortLive(1);
 		Exposure_Error_Number = 41;
 		sprintf(Exposure_Error_String,
@@ -665,6 +691,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 	/* check for abort */
 	if(Exposure_Data.Abort)
 	{
+		Exposure_Data.In_Progress = FALSE;
 		pxd_goAbortLive(1);
 		Exposure_Error_Number = 42;
 		sprintf(Exposure_Error_String,"Detector_Exposure_Bias:Aborted.");
@@ -674,6 +701,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 	retval = pxd_goAbortLive(1);
 	if(retval < 0)
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 43;
 		sprintf(Exposure_Error_String,"Detector_Exposure_Bias:pxd_goAbortLive failed: '%s' (%d).",
 			pxd_mesgErrorCode(retval),retval);
@@ -687,6 +715,7 @@ int Detector_Exposure_Bias(char* fits_filename)
 	/* create mean image from coadds */
 	if(!Detector_Buffer_Create_Mean_Image(Exposure_Data.Coadd_Count))
 	{
+		Exposure_Data.In_Progress = FALSE;
 		Exposure_Error_Number = 44;
 		sprintf(Exposure_Error_String,
 			"Detector_Exposure_Bias:Failed to create mean image from coadd image with %d coadds.",
@@ -696,9 +725,11 @@ int Detector_Exposure_Bias(char* fits_filename)
 	/* write FITS image */
 	if(!Exposure_Save(fits_filename))
 	{
+		Exposure_Data.In_Progress = FALSE;
 		/* Exposure_Error_Number set internally to Exposure_Save */
 		return FALSE;
 	}
+	Exposure_Data.In_Progress = FALSE;
 #if LOGGING > 1
 	Detector_General_Log_Format(LOG_VERBOSITY_TERSE,"Detector_Exposure_Bias(fits_filename = '%s'):Finished.",fits_filename);
 #endif
@@ -758,7 +789,17 @@ struct timespec Detector_Exposure_Start_Time_Get(void)
 {
 	return Exposure_Data.Exposure_Start_Timestamp;
 }
-	
+
+/**
+ * Routine to return whether or not an exposure (or bias) is in progress.
+ * @return An integer as a boolean, TRUE if an exposure is in progress and FALSE if it is not.
+ * @see #Exposure_Data
+ */
+int Detector_Exposure_In_Progress(void)
+{
+	return Exposure_Data.In_Progress;
+}
+
 /**
  * Get the current value of the error number.
  * @return The current value of the error number.

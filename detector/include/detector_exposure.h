@@ -15,6 +15,7 @@ extern int Detector_Exposure_Coadd_Frame_Exposure_Length_Get(void);
 extern int Detector_Exposure_Exposure_Length_Get(void);
 extern int Detector_Exposure_Coadd_Count_Get(void);
 extern struct timespec Detector_Exposure_Start_Time_Get(void);
+extern int Detector_Exposure_In_Progress(void);
 
 extern int Detector_Exposure_Get_Error_Number(void);
 extern void Detector_Exposure_Error(void);
