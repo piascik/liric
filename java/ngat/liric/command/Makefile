@@ -11,8 +11,8 @@ SRCS 		= Command.java BooleanReplyCommand.java DoubleReplyCommand.java IntegerRe
 		FitsHeaderAddCommand.java FitsHeaderClearCommand.java FitsHeaderDeleteCommand.java \
 		MultrunCommand.java \
 		ShutdownCommand.java \
-		StatusExposureCountCommand.java StatusExposureIndexCommand.java \
-		StatusExposureLengthCommand.java StatusExposureStartTimeCommand.java \
+		StatusExposureCountCommand.java StatusExposureIndexCommand.java StatusExposureCoaddCountCommand.java  \
+		StatusExposureLengthCommand.java StatusExposureStartTimeCommand.java StatusExposureCoaddLengthCommand.java \
 		StatusExposureMultrunCommand.java StatusExposureRunCommand.java StatusExposureStatusCommand.java \
 		StatusFilterWheelFilterCommand.java StatusFilterWheelPositionCommand.java \
 		StatusFilterWheelStatusCommand.java \
