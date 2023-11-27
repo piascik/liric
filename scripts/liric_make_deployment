@@ -289,7 +289,7 @@ foreach file ( ${file_list} )
 end
 echo "${file_count} configuration files copied."
 echo "Copying camera configuration files..."
-set file_list = "config/${camera_name}.current.filter.properties"
+set file_list = "config/${camera_name}.current.filter.properties config/${camera_name}.filter.properties"
 set file_count = 0
 cd ${dev_dir}
 foreach file ( ${file_list} )

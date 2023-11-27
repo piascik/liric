@@ -36,6 +36,14 @@ public class LiricStatus
 	 */
 	private final static String DEFAULT_FITS_PROPERTY_FILE_NAME = "./fits.properties";
 	/**
+	 * Default filename containing filter wheel properties for liric.
+	 */
+	private final static String DEFAULT_CURRENT_FILTER_PROPERTY_FILE_NAME = "/icc/config/current.filter.properties";
+	/**
+	 * Default filename containing filter wheel properties for liric.
+	 */
+	private final static String DEFAULT_FILTER_PROPERTY_FILE_NAME = "/icc/config/filter.properties";
+	/**
 	 * The logging level. An absolute filter is used by the loggers. See:
 	 * <ul>
 	 * <li><a href="http://ltdevsrv.livjm.ac.uk/~dev/log_udp/cdocs/log_udp.html#LOG_VERBOSITY">LOG_VERBOSITY</a>
@@ -104,6 +112,8 @@ public class LiricStatus
 	 * @see #DEFAULT_NET_PROPERTY_FILE_NAME
 	 * @see #DEFAULT_PROPERTY_FILE_NAME
 	 * @see #DEFAULT_FITS_PROPERTY_FILE_NAME
+	 * @see #DEFAULT_CURRENT_FILTER_PROPERTY_FILE_NAME
+	 * @see #DEFAULT_FILTER_PROPERTY_FILE_NAME
 	 * @exception FileNotFoundException Thrown if a configuration file is not found.
 	 * @exception IOException Thrown if an IO error occurs whilst loading a configuration file.
 	 */
@@ -130,6 +140,16 @@ public class LiricStatus
 		fileInputStream = new FileInputStream(filename);
 		properties.load(fileInputStream);
 		fileInputStream.close();
+	// current filter properties laod
+		filename = DEFAULT_CURRENT_FILTER_PROPERTY_FILE_NAME;
+		fileInputStream = new FileInputStream(filename);
+		properties.load(fileInputStream);
+		fileInputStream.close();
+	// filter properties laod
+		filename = DEFAULT_FILTER_PROPERTY_FILE_NAME;
+		fileInputStream = new FileInputStream(filename);
+		properties.load(fileInputStream);
+		fileInputStream.close();
 	// initialise configId
 		initialiseConfigId();
 	}
@@ -146,6 +166,8 @@ public class LiricStatus
 	 * @see #DEFAULT_NET_PROPERTY_FILE_NAME
 	 * @see #DEFAULT_PROPERTY_FILE_NAME
 	 * @see #DEFAULT_FITS_PROPERTY_FILE_NAME
+	 * @see #DEFAULT_CURRENT_FILTER_PROPERTY_FILE_NAME
+	 * @see #DEFAULT_FILTER_PROPERTY_FILE_NAME
 	 * @exception FileNotFoundException Thrown if a configuration file is not found.
 	 * @exception IOException Thrown if an IO error occurs whilst loading a configuration file.
 	 */
@@ -162,6 +184,16 @@ public class LiricStatus
 		fileInputStream.close();
 	// fits properties load
 		filename = DEFAULT_FITS_PROPERTY_FILE_NAME;
+		fileInputStream = new FileInputStream(filename);
+		properties.load(fileInputStream);
+		fileInputStream.close();
+	// current filter properties laod
+		filename = DEFAULT_CURRENT_FILTER_PROPERTY_FILE_NAME;
+		fileInputStream = new FileInputStream(filename);
+		properties.load(fileInputStream);
+		fileInputStream.close();
+	// filter properties laod
+		filename = DEFAULT_FILTER_PROPERTY_FILE_NAME;
 		fileInputStream = new FileInputStream(filename);
 		properties.load(fileInputStream);
 		fileInputStream.close();
@@ -556,6 +588,53 @@ public class LiricStatus
 							   p+":Illegal value:"+valueString+".");
 		}
 		return timePeriod;
+	}
+	
+	/**
+	 * Method to get a filter's Id name from it's type name. This information is stored in the
+	 * per-semester filter property file, under the 'filterwheel.<filterTypeName>.id' property.
+	 * @param filterTypeName The filter type name to get the actual filter id from.
+	 * @return A string, which is the unique filter id for this type of filter.
+	 * @exception IllegalArgumentException Thrown if the specified property cannot be found.
+	 */
+	public String getFilterIdName(String filterTypeName)
+	{
+		String s = null;
+
+	// get the filter id name into s
+		s = getProperty("filterwheel."+filterTypeName+".id");
+		if(s == null)
+		{
+			throw new IllegalArgumentException(this.getClass().getName()+
+				":getFilterIdName:Filter id name not found in property:filterwheel."+
+				filterTypeName+".id");
+		}
+		return s;
+	}
+
+	/**
+	 * Method to get a filter's Id optical thickness from it's name . This information is stored in the
+	 * filter database property file, under the 'filter.<filterIdName>.optical_thickness' property.
+	 * The filter's Id string can be retrieved from a filter type string using getFilterIdName.
+	 * @param filterIdName The filter id name to get the optical thickness for.
+	 * @return A double, which is the optical thickness of the given filter.
+	 * @exception IllegalArgumentException Thrown if the specified property/filter id cannot be found.
+	 * @exception NumberFormatException Thrown if the property cannot be parsed.
+	 * @see #getFilterIdName
+	 */
+	public double getFilterIdOpticalThickness(String filterIdName) throws NumberFormatException
+	{
+		String s = null;
+
+	// get the filter id name into s
+		s = getProperty("filter."+filterIdName+".optical_thickness");
+		if(s == null)
+		{
+			throw new IllegalArgumentException(this.getClass().getName()+
+				":getFilterIdOpticalThickness:Property not found/is null:filter."+
+				filterIdName+".optical_thickness");
+		}
+		return Double.parseDouble(s);
 	}
 
 	/**

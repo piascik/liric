@@ -110,7 +110,8 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 		LiricConfig config = null;
 		CONFIG_DONE configDone = null;
 		String configName = null;
-		float focusOffset;
+		String filterIdName = null;
+		float focusOffset,filterFocusOffset;
 
 		liric.log(Logging.VERBOSITY_VERY_TERSE,"CONFIGImplementation:processCommand:Started.");
 	// test contents of command.
@@ -169,12 +170,12 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 	// test abort
 		if(testAbort(configCommand,configDone) == true)
 			return configDone;
-	// Issue ISS OFFSET_FOCUS commmand. 
+	// Get overall instrument focus offset
 		try
 		{
 			focusOffset = status.getPropertyFloat("liric.focus.offset");
-			liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+
-				   configCommand.getClass().getName()+":focus offset = "+focusOffset+".");
+			liric.log(Logging.VERBOSITY_TERSE,"Command:"+
+				   configCommand.getClass().getName()+":instrument focus offset = "+focusOffset+".");
 		}
 		catch(NumberFormatException e)
 		{
@@ -184,6 +185,27 @@ public class CONFIGImplementation extends CommandImplementation implements JMSCo
 			configDone.setSuccessful(false);
 			return configDone;
 		}
+	// Get filter focus offset
+		try
+		{
+			
+			filterIdName = status.getFilterIdName(config.getFilterName());
+			filterFocusOffset = (float)(status.getFilterIdOpticalThickness(filterIdName));
+			liric.log(Logging.VERBOSITY_TERSE,"Command:"+
+				   configCommand.getClass().getName()+":filter focus offset = "+filterFocusOffset+".");
+			focusOffset += filterFocusOffset;
+			liric.log(Logging.VERBOSITY_VERY_TERSE,"Command:"+
+				   configCommand.getClass().getName()+":overall focus offset = "+focusOffset+".");
+		}
+		catch(NumberFormatException e)
+		{
+			liric.error(this.getClass().getName()+":processCommand:"+command,e);
+			configDone.setErrorNum(LiricConstants.LIRIC_ERROR_CODE_BASE+802);
+			configDone.setErrorString(e.toString());
+			configDone.setSuccessful(false);
+			return configDone;
+		}
+	// actually issue ISS OFFSET_FOCUS commmand to telescope/ISS. 
 		if(setFocusOffset(configCommand.getId(),focusOffset,configDone) == false)
 			return configDone;
 	// Increment unique config ID.
