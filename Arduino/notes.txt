@@ -1,0 +1,4 @@
+Temperature sensor allocation for T 
+T0 = External (fixed plastic )
+T1 = Radiator block (moveable metal )
+T2 = Internal (fixed metal)
